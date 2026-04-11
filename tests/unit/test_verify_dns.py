@@ -17,7 +17,6 @@ import pytest
 from coldreach.verify._types import CheckStatus
 from coldreach.verify.dns_check import check_dns, domain_exists, get_mx_records
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

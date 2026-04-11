@@ -7,6 +7,7 @@ Uses environment variable injection — no .env file required.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from coldreach.config import Settings, get_settings
 
@@ -37,19 +38,19 @@ class TestSettings:
         assert s.has_groq is True
 
     def test_invalid_database_url_raises(self) -> None:
-        with pytest.raises(Exception):  # pydantic ValidationError
+        with pytest.raises(ValidationError):
             Settings(database_url="mysql://localhost/db")
 
     def test_cache_ttl_below_1_raises(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Settings(cache_ttl_days=0)
 
     def test_max_concurrent_sources_above_20_raises(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Settings(max_concurrent_sources=21)
 
     def test_max_concurrent_sources_below_1_raises(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Settings(max_concurrent_sources=0)
 
     def test_env_prefix_is_coldreach(self, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -31,7 +31,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: uv sync --all-extras
 
       - name: Run unit tests
         run: |
@@ -62,7 +62,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync
 
       - name: Ruff lint
         run: uv run ruff check coldreach tests
@@ -89,7 +89,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Build package
-        run: uv build
+        run: uv build --no-sources
 
       - name: Publish to PyPI
         run: uv publish

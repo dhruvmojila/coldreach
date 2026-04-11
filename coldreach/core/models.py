@@ -16,12 +16,11 @@ Design rules
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -74,7 +73,7 @@ class EmailSource(StrEnum):
 
 def _utcnow() -> datetime:
     """Return current UTC time as a timezone-naive datetime."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class SourceRecord(BaseModel):

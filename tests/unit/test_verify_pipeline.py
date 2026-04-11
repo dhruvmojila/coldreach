@@ -6,15 +6,12 @@ DNS is mocked — no real network calls.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import dns.resolver
 import pytest
 
-from coldreach.verify._types import CheckStatus
 from coldreach.verify.pipeline import PipelineResult, run_basic_pipeline
-
 
 # ---------------------------------------------------------------------------
 # Helpers

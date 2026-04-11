@@ -2,6 +2,23 @@
 
 ---
 
+## [2026-04-11] — Fixed ruff B017/PT011 violations; CI lint passes cleanly
+
+### What Was Done
+- Replaced four `pytest.raises(Exception)` calls in `test_config.py` with `pytest.raises(ValidationError)`
+- Added `from pydantic import ValidationError` import
+- All 134 tests still pass; `ruff check coldreach tests` reports 0 violations
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `tests/unit/test_config.py` | Modified | Replaced broad Exception with specific ValidationError in pytest.raises |
+
+### Major Logic / Code Changes
+- No logic changes — purely a test quality fix to satisfy ruff B017 (no `pytest.raises(Exception)`) and PT011 (pytest.raises must match specific exception type)
+
+---
+
 ## [2026-04-11 01:30] — Phase 1 scaffold + verification layer complete, 134 tests passing
 
 ### What Was Done

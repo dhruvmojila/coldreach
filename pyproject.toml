@@ -103,7 +103,13 @@ all = [
   "coldreach[postgres,full,dashboard,cache]",
 ]
 
-# Development toolchain
+[project.scripts]
+coldreach = "coldreach.cli:main"
+
+# ---------------------------------------------------------------------------
+# Dependency groups (uv native — installed by `uv sync`, never published to PyPI)
+# ---------------------------------------------------------------------------
+[dependency-groups]
 dev = [
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
@@ -115,9 +121,6 @@ dev = [
   "faker>=33.0",
   "types-redis>=4.6",
 ]
-
-[project.scripts]
-coldreach = "coldreach.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/coldreach"
@@ -158,9 +161,7 @@ select = [
   "RUF", # ruff-specific rules
 ]
 ignore = [
-  "ANN101", # missing type annotation for self
-  "ANN102", # missing type annotation for cls
-  "ANN401", # dynamically typed expressions (Any)
+  "ANN401", # dynamically typed expressions (Any) — needed for metadata dicts
 ]
 
 [tool.ruff.lint.isort]

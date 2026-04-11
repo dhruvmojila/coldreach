@@ -7,8 +7,6 @@ No network calls, no external services.
 
 from __future__ import annotations
 
-import pytest
-
 from coldreach.verify.disposable import (
     _load_domains,
     check_disposable,
