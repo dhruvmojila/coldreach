@@ -1,0 +1,143 @@
+###############################################################################
+# ColdReach — Docker Compose service stack
+#
+# Quick start:
+#   docker compose up -d
+#
+# Start only the core services (SQLite + Reacher — no Redis, no SearXNG):
+#   docker compose up reacher -d
+#
+# Full stack (all sources + verification services):
+#   docker compose up -d
+#
+# Services map:
+#   postgres    :5432   — persistent storage (switch from SQLite for production)
+#   redis       :6379   — result caching (TTL 7 days)
+#   searxng     :8080   — metasearch engine (rate-limit aware proxy)
+#   reacher     :8083   — SMTP email verification microservice (Rust)
+#   spiderfoot  :5001   — deep OSINT: WHOIS / DNS / social graph
+#   firecrawl   :3002   — JS-heavy site crawler (React/SPA support)
+###############################################################################
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: coldreach-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: coldreach
+      POSTGRES_USER: coldreach
+      POSTGRES_PASSWORD: coldreach_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - coldreach_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coldreach -d coldreach"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: coldreach-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+    volumes:
+      - coldreach_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── SearXNG ────────────────────────────────────────────────────────────────
+  # Privacy-first metasearch engine — queries 40+ search engines simultaneously.
+  # Rate-limiting note: underlying engines (Google, Bing, Brave) will throttle
+  # queries from a shared IP. ColdReach implements automatic fallback to
+  # DuckDuckGo Lite → Brave Search when SearXNG returns empty results.
+  searxng:
+    image: searxng/searxng:latest
+    container_name: coldreach-searxng
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config/searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8080/"
+      SEARXNG_SECRET_KEY: "coldreach-searxng-change-this-in-production"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  # ── Reacher ────────────────────────────────────────────────────────────────
+  # Rust-based SMTP email verification microservice.
+  # Much better than raw smtplib — handles Hotmail/Yahoo quirks, proper TLS,
+  # catch-all detection, and SMTP rate limiting.
+  # API: POST http://localhost:8083/v0/check_email {"to_email": "user@domain.com"}
+  reacher:
+    image: reacherhq/backend:latest
+    container_name: coldreach-reacher
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      RCH_HTTP_HOST: "0.0.0.0"
+      RCH_HTTP_PORT: "8083"
+      # Optional: set your own sending domain for HELO
+      # RCH_HELLO_NAME: "coldreach.local"
+
+  # ── SpiderFoot ─────────────────────────────────────────────────────────────
+  # Deep OSINT engine — WHOIS, DNS, social profiles, related entities.
+  # Complements theHarvester (subprocess) with structured REST API output.
+  # API: http://localhost:5001/api/
+  spiderfoot:
+    image: smicallef/spiderfoot:latest
+    container_name: coldreach-spiderfoot
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      - coldreach_spiderfoot_data:/home/spiderfoot/.spiderfoot
+
+  # ── Firecrawl ──────────────────────────────────────────────────────────────
+  # JS-heavy / SPA site crawler. Use when Crawl4AI fails on React/Vue sites.
+  # Requires Redis (shared with coldreach-redis).
+  # API: http://localhost:3002
+  firecrawl:
+    image: ghcr.io/mendableai/firecrawl:latest
+    container_name: coldreach-firecrawl
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: "3002"
+      REDIS_URL: "redis://redis:6379"
+      # Disable telemetry
+      TELEMETRY_ENABLED: "false"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# ── Named volumes ──────────────────────────────────────────────────────────
+volumes:
+  coldreach_pg_data:
+    name: coldreach_pg_data
+  coldreach_redis_data:
+    name: coldreach_redis_data
+  coldreach_spiderfoot_data:
+    name: coldreach_spiderfoot_data

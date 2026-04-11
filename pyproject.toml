@@ -1,0 +1,218 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
+[project]
+name = "coldreach"
+version = "0.1.0"
+description = "Open-source email finder and lead discovery — the free alternative to Hunter.io and Apollo.io"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "ColdReach Contributors" }]
+keywords = [
+  "email-finder",
+  "lead-generation",
+  "osint",
+  "cold-email",
+  "hunter-alternative",
+  "apollo-alternative",
+  "sales-tools",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Communications :: Email",
+  "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+  "Topic :: Office/Business",
+  "Typing :: Typed",
+]
+
+# ---------------------------------------------------------------------------
+# Core dependencies — always installed, zero paid-API requirement
+# ---------------------------------------------------------------------------
+dependencies = [
+  # HTTP client (async, HTTP/2)
+  "httpx[http2]>=0.27",
+  # DNS lookups (async resolver)
+  "dnspython>=2.6",
+  # WHOIS
+  "python-whois>=0.9",
+  # Email address RFC validation
+  "email-validator>=2.2",
+  # TUI framework
+  "textual>=0.75",
+  # CLI framework
+  "click>=8.1",
+  # FastAPI server (Chrome extension + TUI backend)
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  # Config (pydantic v2)
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  # ORM (async)
+  "sqlalchemy[asyncio]>=2.0",
+  # Async SQLite driver (default DB, zero-config)
+  "aiosqlite>=0.20",
+  # Rich terminal output
+  "rich>=13.9",
+  # Async helpers
+  "anyio>=4.6",
+]
+
+# ---------------------------------------------------------------------------
+# Optional extras
+# ---------------------------------------------------------------------------
+[project.optional-dependencies]
+
+# PostgreSQL driver (requires docker compose up postgres)
+postgres = [
+  "asyncpg>=0.30",
+]
+
+# Full AI / scraping stack (heavier install)
+full = [
+  "crawl4ai>=0.4",
+  "holehe>=1.15",
+  "groq>=0.12",
+  "playwright>=1.48",
+]
+
+# Optional Streamlit web dashboard
+dashboard = [
+  "streamlit>=1.40",
+]
+
+# Redis cache (requires docker compose up redis)
+cache = [
+  "redis[hiredis]>=5.2",
+]
+
+# Everything
+all = [
+  "coldreach[postgres,full,dashboard,cache]",
+]
+
+# Development toolchain
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "pre-commit>=4.0",
+  "respx>=0.21",
+  "faker>=33.0",
+  "types-redis>=4.6",
+]
+
+[project.scripts]
+coldreach = "coldreach.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/coldreach"
+Repository = "https://github.com/yourusername/coldreach"
+"Bug Tracker" = "https://github.com/yourusername/coldreach/issues"
+Changelog = "https://github.com/yourusername/coldreach/blob/main/CHANGELOG.md"
+
+# ---------------------------------------------------------------------------
+# Hatchling build — include bundled data files
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["coldreach"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"coldreach/data" = "coldreach/data"
+
+# ---------------------------------------------------------------------------
+# Ruff — linting + formatting (replaces flake8, isort, pyupgrade)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["coldreach", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "UP",  # pyupgrade
+  "ANN", # flake8-annotations
+  "PT",  # flake8-pytest-style
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports
+  "RUF", # ruff-specific rules
+]
+ignore = [
+  "ANN101", # missing type annotation for self
+  "ANN102", # missing type annotation for cls
+  "ANN401", # dynamically typed expressions (Any)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["coldreach"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# Mypy — static type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = [
+  "--tb=short",
+  "-q",
+]
+markers = [
+  "unit: pure unit tests — no network, no services",
+  "integration: requires running Docker services",
+  "slow: takes more than 2 seconds",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["coldreach"]
+omit = ["coldreach/cli.py", "coldreach/dashboard.py"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@(abc\\.)?abstractmethod",
+]
