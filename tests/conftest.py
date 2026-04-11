@@ -33,6 +33,7 @@ def settings() -> Settings:
 
 # ── Email fixtures ────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def valid_email() -> str:
     return "john.smith@example.com"

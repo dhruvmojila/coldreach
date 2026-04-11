@@ -48,9 +48,7 @@ def _configure_logging(verbose: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
-@click.group(
-    context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100}
-)
+@click.group(context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100})
 @click.version_option(__version__, "-V", "--version", prog_name="coldreach")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Enable debug logging.")
 @click.pass_context
@@ -84,7 +82,8 @@ def main(ctx: click.Context, verbose: bool) -> None:
 @main.command()
 @click.argument("email")
 @click.option(
-    "--json", "output_json",
+    "--json",
+    "output_json",
     is_flag=True,
     default=False,
     help="Print raw JSON result instead of styled output.",

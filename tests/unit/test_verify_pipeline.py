@@ -36,18 +36,21 @@ class TestPipelineResult:
 
     def test_score_clamped_to_100(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="x@example.com", base_score=90)
         result.checks["a"] = CheckResult.pass_(score_delta=30)
         assert result.score == 100
 
     def test_score_clamped_to_0(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="x@example.com", base_score=10)
         result.checks["a"] = CheckResult.fail("bad", score_delta=-100)
         assert result.score == 0
 
     def test_passed_false_when_any_check_fails(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="x@example.com")
         result.checks["syntax"] = CheckResult.pass_()
         result.checks["dns"] = CheckResult.fail("no mx")
@@ -55,6 +58,7 @@ class TestPipelineResult:
 
     def test_passed_true_when_all_checks_pass(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="user@example.com")
         result.checks["syntax"] = CheckResult.pass_(normalized="user@example.com")
         result.checks["disposable"] = CheckResult.pass_()
@@ -63,6 +67,7 @@ class TestPipelineResult:
 
     def test_normalized_email_from_syntax_metadata(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="User@Example.COM")
         result.checks["syntax"] = CheckResult.pass_(normalized="user@example.com")
         assert result.normalized_email == "user@example.com"
@@ -73,6 +78,7 @@ class TestPipelineResult:
 
     def test_mx_records_from_dns_metadata(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="user@example.com")
         result.checks["dns"] = CheckResult.pass_(mx_records=["mx1.example.com"])
         assert result.mx_records == ["mx1.example.com"]
@@ -83,18 +89,21 @@ class TestPipelineResult:
 
     def test_failure_reason_returns_first_fail_reason(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="bad")
         result.checks["syntax"] = CheckResult.fail("Bad syntax")
         assert result.failure_reason == "Bad syntax"
 
     def test_failure_reason_none_when_all_pass(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="user@example.com")
         result.checks["syntax"] = CheckResult.pass_()
         assert result.failure_reason is None
 
     def test_to_dict_structure(self) -> None:
         from coldreach.verify._types import CheckResult
+
         result = PipelineResult(email="user@example.com")
         result.checks["syntax"] = CheckResult.pass_(normalized="user@example.com")
         d = result.to_dict()

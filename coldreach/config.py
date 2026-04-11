@@ -91,10 +91,7 @@ class Settings(BaseSettings):
     @classmethod
     def validate_database_url(cls, v: str) -> str:
         if not (v.startswith("sqlite") or v.startswith("postgresql")):
-            raise ValueError(
-                "database_url must start with 'sqlite' or 'postgresql'. "
-                f"Got: {v!r}"
-            )
+            raise ValueError(f"database_url must start with 'sqlite' or 'postgresql'. Got: {v!r}")
         return v
 
     @field_validator("cache_ttl_days")

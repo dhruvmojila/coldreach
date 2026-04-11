@@ -24,9 +24,7 @@ class TestSettings:
         assert s.using_sqlite is True
 
     def test_using_sqlite_property_false_for_postgresql(self) -> None:
-        s = Settings(
-            database_url="postgresql+asyncpg://user:pw@localhost:5432/db"
-        )
+        s = Settings(database_url="postgresql+asyncpg://user:pw@localhost:5432/db")
         assert s.using_sqlite is False
 
     def test_has_groq_false_when_no_key(self) -> None:
