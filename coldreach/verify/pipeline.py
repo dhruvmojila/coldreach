@@ -76,7 +76,8 @@ class PipelineResult:
         """RFC-normalised email if syntax check passed, else raw input."""
         syntax = self.checks.get("syntax")
         if syntax and syntax.passed:
-            return syntax.metadata.get("normalized", self.email)
+            normalized = syntax.metadata.get("normalized", self.email)
+            return str(normalized)
         return self.email
 
     @property
@@ -100,7 +101,8 @@ class PipelineResult:
         """MX records returned by the DNS check, if available."""
         dns_result = self.checks.get("dns")
         if dns_result and not dns_result.failed:
-            return dns_result.metadata.get("mx_records", [])
+            records = dns_result.metadata.get("mx_records", [])
+            return list(records)
         return []
 
     @property
