@@ -3,8 +3,9 @@ ColdReach CLI — entry point for all terminal commands.
 
 Commands
 --------
-    coldreach verify <email>   — run basic verification pipeline
-    coldreach version          — print version and exit
+    coldreach verify <email>     — run basic verification pipeline
+    coldreach find --domain ...  — discover emails for a domain
+    coldreach version            — print version and exit
 
 Rich is used for all styled output. Pass ``--no-color`` to disable.
 Pass ``--json`` to any command that supports it for machine-readable output.
@@ -22,6 +23,8 @@ from rich.console import Console
 from rich.table import Table
 
 from coldreach import __version__
+from coldreach.core.finder import FinderConfig, find_emails
+from coldreach.core.models import DomainResult
 from coldreach.verify._types import CheckStatus
 from coldreach.verify.pipeline import PipelineResult, run_basic_pipeline
 
@@ -124,42 +127,102 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
 
 
 # ---------------------------------------------------------------------------
-# find command (stub — implemented in Phase 2)
+# find command
 # ---------------------------------------------------------------------------
 
 
 @main.command()
 @click.option("--domain", "-d", default=None, help="Domain to search (e.g. stripe.com).")
-@click.option("--company", "-c", default=None, help="Company name to look up.")
-@click.option("--name", "-n", default=None, help="Person name to search for.")
+@click.option("--company", "-c", default=None, help="Company name (used as domain hint).")
+@click.option("--name", "-n", default=None, help="Person full name (narrows search).")
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    default=False,
+    help="Print raw JSON result instead of styled output.",
+)
+@click.option(
+    "--min-confidence",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Hide results below this confidence score.",
+)
+@click.option("--no-web", is_flag=True, default=False, help="Skip website crawler.")
+@click.option("--no-whois", is_flag=True, default=False, help="Skip WHOIS lookup.")
+@click.option("--no-github", is_flag=True, default=False, help="Skip GitHub mining.")
+@click.option("--no-reddit", is_flag=True, default=False, help="Skip Reddit search.")
+@click.option(
+    "--timeout",
+    type=float,
+    default=10.0,
+    show_default=True,
+    metavar="SECONDS",
+    help="Per-source request timeout.",
+)
 @click.pass_context
 def find(
     ctx: click.Context,
     domain: str | None,
     company: str | None,
     name: str | None,
+    output_json: bool,
+    min_confidence: int,
+    no_web: bool,
+    no_whois: bool,
+    no_github: bool,
+    no_reddit: bool,
+    timeout: float,
 ) -> None:
     """Find email addresses for a domain or company.
 
     \b
     Examples:
       coldreach find --domain stripe.com
-      coldreach find --company "Stripe" --name "Patrick Collison"
-
-    \b
-    Note: This command is implemented in Phase 2.
-    Start with: coldreach verify <email>
+      coldreach find --domain acme.com --name "John Smith"
+      coldreach find --domain acme.com --no-github --json
+      coldreach find --domain acme.com --min-confidence 40
     """
     if not domain and not company:
         err_console.print("[red]Error:[/red] Provide --domain or --company")
         raise click.UsageError("Provide at least --domain or --company")
 
-    console.print(
-        "[yellow]⚠[/yellow]  [bold]find[/bold] is coming in Phase 2.\n"
-        "    Track progress: https://github.com/yourusername/coldreach\n\n"
-        "    For now, try:\n"
-        "      [dim]coldreach verify john@stripe.com[/dim]"
+    target_domain = domain or company or ""
+
+    cfg = FinderConfig(
+        use_web_crawler=not no_web,
+        use_whois=not no_whois,
+        use_github=not no_github,
+        use_reddit=not no_reddit,
+        min_confidence=min_confidence,
+        request_timeout=timeout,
     )
+
+    if not output_json:
+        active_sources = [
+            s
+            for s, enabled in [
+                ("web", not no_web),
+                ("whois", not no_whois),
+                ("github", not no_github),
+                ("reddit", not no_reddit),
+            ]
+            if enabled
+        ]
+        console.print(
+            f"\n  [dim]Searching [bold]{target_domain}[/bold] "
+            f"via {', '.join(active_sources)}…[/dim]\n"
+        )
+
+    result = asyncio.run(find_emails(target_domain, person_name=name, config=cfg))
+
+    if output_json:
+        click.echo(json.dumps(_domain_result_to_dict(result), indent=2))
+    else:
+        _render_find(result)
+
+    sys.exit(0 if result.emails else 1)
 
 
 # ---------------------------------------------------------------------------
@@ -218,3 +281,62 @@ def _render_verify(result: PipelineResult) -> None:
         console.print(f"\n  [red dim]Reason:[/red dim] {result.failure_reason}")
 
     console.print()
+
+
+def _render_find(result: DomainResult) -> None:
+    """Print a styled email discovery report to stdout."""
+    if not result.emails:
+        console.print(f"  [yellow]No emails found for [bold]{result.domain}[/bold][/yellow]\n")
+        return
+
+    console.print(
+        f"  Found [bold green]{len(result.emails)}[/bold green] email(s) "
+        f"for [bold]{result.domain}[/bold]\n"
+    )
+
+    table = Table(
+        show_header=True,
+        header_style="bold dim",
+        box=None,
+        padding=(0, 2),
+        show_edge=False,
+    )
+    table.add_column("Email", min_width=30)
+    table.add_column("Score", width=6, justify="right")
+    table.add_column("Source(s)", min_width=22)
+    table.add_column("Status", width=12)
+
+    _status_colour = {
+        "valid": "green",
+        "invalid": "red",
+        "risky": "yellow",
+        "unknown": "dim",
+        "catch_all": "dim",
+        "disposable": "red",
+        "undeliverable": "red",
+    }
+
+    for record in result.emails:
+        colour = _status_colour.get(record.status.value, "dim")
+        score_colour = (
+            "green" if record.confidence >= 60 else ("yellow" if record.confidence >= 30 else "red")
+        )
+        table.add_row(
+            f"[bold]{record.email}[/bold]",
+            f"[{score_colour}]{record.confidence}[/{score_colour}]",
+            ", ".join(record.source_names[:2]),
+            f"[{colour}]{record.status.value}[/{colour}]",
+        )
+
+    console.print(table)
+    console.print()
+
+
+def _domain_result_to_dict(result: DomainResult) -> dict[str, object]:
+    """Serialise DomainResult to a plain dict for JSON output."""
+    return {
+        "domain": result.domain,
+        "company_name": result.company_name,
+        "total": len(result.emails),
+        "emails": [r.to_dict() for r in result.emails],
+    }

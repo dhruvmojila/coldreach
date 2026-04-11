@@ -2,6 +2,42 @@
 
 ---
 
+## [2026-04-11] — Phase 2: sources layer + find_emails() orchestrator + CLI find command
+
+### What Was Done
+- Built `coldreach/sources/` package with `BaseSource` ABC and 3 concrete sources
+- `WebCrawlerSource`: crawls `/contact`, `/team`, `/about` etc. with httpx, regex + mailto + obfuscation extraction, asset-TLD filter
+- `WhoisSource`: python-whois in thread executor, filters privacy-proxy emails
+- `GitHubSource`: mines public commits via GitHub REST API, filters noreply + off-domain emails
+- `RedditSource`: Reddit JSON API (no auth), 1 req/s rate limit, extracts domain emails from posts
+- `core/finder.py`: `find_emails()` orchestrator — runs all sources concurrently via `asyncio.gather`, merges results, runs verification pipeline, returns ranked `DomainResult`
+- `cli.py` `find` command: full implementation with `--no-web/whois/github/reddit`, `--min-confidence`, `--json`, `--timeout`, Rich table output
+- 58 new unit tests (192 total, all passing); ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/__init__.py` | Added | Package init |
+| `coldreach/sources/base.py` | Added | BaseSource ABC, SourceResult, SourceSummary |
+| `coldreach/sources/web_crawler.py` | Added | httpx crawler, regex + mailto + obfuscation extraction |
+| `coldreach/sources/whois_source.py` | Added | WHOIS registrant email extraction |
+| `coldreach/sources/github.py` | Added | GitHub commit email mining |
+| `coldreach/sources/reddit.py` | Added | Reddit JSON API email search |
+| `coldreach/core/finder.py` | Added | find_emails() orchestrator with FinderConfig |
+| `coldreach/cli.py` | Modified | Replaced find stub with full implementation |
+| `tests/unit/test_sources_base.py` | Added | 13 tests for BaseSource/SourceResult |
+| `tests/unit/test_sources_web_crawler.py` | Added | 14 tests for crawler + helpers |
+| `tests/unit/test_sources_github.py` | Added | 16 tests for GitHub source |
+| `tests/unit/test_sources_reddit.py` | Added | 15 tests for Reddit source |
+
+### Major Logic / Code Changes
+- `BaseSource.run()` is a safe wrapper — never raises, catches all exceptions and returns empty list + error summary
+- `find_emails()` scores = pipeline.score + max(source confidence_hints) clamped to [0,100]
+- Sources run concurrently but gated by `asyncio.Semaphore(max_concurrent_sources)`
+- `_extract_emails()` filters asset-extension TLDs (png, jpg, css, js…) to avoid false positives
+
+---
+
 ## [2026-04-11] — Fixed ruff B017/PT011 violations; CI lint passes cleanly
 
 ### What Was Done
