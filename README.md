@@ -2,11 +2,11 @@
 
 **Open-source email finder and lead discovery — the free alternative to Hunter.io and Apollo.io.**
 
-[![CI](https://github.com/yourusername/coldreach/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/coldreach/actions)
+[![CI](https://github.com/dhruvmojila/coldreach/actions/workflows/ci.yml/badge.svg)](https://github.com/dhruvmojila/coldreach/actions)
 [![PyPI](https://img.shields.io/pypi/v/coldreach)](https://pypi.org/project/coldreach/)
 [![Python](https://img.shields.io/pypi/pyversions/coldreach)](https://pypi.org/project/coldreach/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Coverage](https://codecov.io/gh/yourusername/coldreach/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/coldreach)
+[![Coverage](https://codecov.io/gh/dhruvmojila/coldreach/branch/main/graph/badge.svg)](https://codecov.io/gh/dhruvmojila/coldreach)
 
 ---
 
@@ -27,16 +27,16 @@ $ coldreach verify patrick@stripe.com
 
 ## Why ColdReach?
 
-| | Hunter.io | Apollo.io | **ColdReach** |
-|---|---|---|---|
-| Cost | $34–$399/mo | $49–$149/mo | **Free forever** |
-| Self-hosted | No | No | **Yes** |
-| Source code | Closed | Closed | **Open source** |
-| Rate limits | 25k/mo | 10k/mo | **None (local)** |
-| API keys required | Yes | Yes | **No** (Groq optional) |
-| Privacy | Their servers | Their servers | **Your machine only** |
-| Job board extension | Paid | Paid | **Free** |
-| TUI interface | No | No | **Yes** |
+|                     | Hunter.io     | Apollo.io     | **ColdReach**          |
+| ------------------- | ------------- | ------------- | ---------------------- |
+| Cost                | $34–$399/mo   | $49–$149/mo   | **Free forever**       |
+| Self-hosted         | No            | No            | **Yes**                |
+| Source code         | Closed        | Closed        | **Open source**        |
+| Rate limits         | 25k/mo        | 10k/mo        | **None (local)**       |
+| API keys required   | Yes           | Yes           | **No** (Groq optional) |
+| Privacy             | Their servers | Their servers | **Your machine only**  |
+| Job board extension | Paid          | Paid          | **Free**               |
+| TUI interface       | No            | No            | **Yes**                |
 
 **ColdReach is honest about accuracy**: we'll find fewer emails than paid tools that have years of indexed data. But it's free, private, and you own everything.
 
@@ -108,17 +108,17 @@ Ranked result [0–100 confidence]
 
 ### Discovery Sources (Phase 2)
 
-| Source | What it finds | Free? |
-|--------|--------------|-------|
-| Website crawler (Crawl4AI) | Emails on /contact /team /about | ✓ |
-| Firecrawl (self-hosted) | JS/React sites | ✓ |
-| theHarvester | OSINT: certs, Bing, Google, PGP | ✓ |
-| SpiderFoot (self-hosted) | WHOIS, DNS, social graph | ✓ |
-| GitHub commit mining | Dev team emails | ✓ |
-| Reddit JSON API | Person/company mentions | ✓ |
-| WHOIS lookup | Domain registrant | ✓ |
-| SearXNG (self-hosted) | Web search (40+ engines) | ✓ |
-| Common Crawl CDX | 300B+ page index | ✓ |
+| Source                     | What it finds                   | Free? |
+| -------------------------- | ------------------------------- | ----- |
+| Website crawler (Crawl4AI) | Emails on /contact /team /about | ✓     |
+| Firecrawl (self-hosted)    | JS/React sites                  | ✓     |
+| theHarvester               | OSINT: certs, Bing, Google, PGP | ✓     |
+| SpiderFoot (self-hosted)   | WHOIS, DNS, social graph        | ✓     |
+| GitHub commit mining       | Dev team emails                 | ✓     |
+| Reddit JSON API            | Person/company mentions         | ✓     |
+| WHOIS lookup               | Domain registrant               | ✓     |
+| SearXNG (self-hosted)      | Web search (40+ engines)        | ✓     |
+| Common Crawl CDX           | 300B+ page index                | ✓     |
 
 ---
 
@@ -136,14 +136,14 @@ docker compose up searxng -d          # Metasearch
 docker compose up spiderfoot -d       # Deep OSINT
 ```
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| `postgres` | 5432 | Persistent storage (optional — SQLite is default) |
-| `redis` | 6379 | Result cache (7-day TTL) |
-| `searxng` | 8080 | Metasearch (40+ engines) |
-| `reacher` | 8083 | SMTP email verification (Rust) |
-| `spiderfoot` | 5001 | Deep OSINT |
-| `firecrawl` | 3002 | JS-heavy site crawling |
+| Service      | Port | Purpose                                           |
+| ------------ | ---- | ------------------------------------------------- |
+| `postgres`   | 5432 | Persistent storage (optional — SQLite is default) |
+| `redis`      | 6379 | Result cache (7-day TTL)                          |
+| `searxng`    | 8080 | Metasearch (40+ engines)                          |
+| `reacher`    | 8083 | SMTP email verification (Rust)                    |
+| `spiderfoot` | 5001 | Deep OSINT                                        |
+| `firecrawl`  | 3002 | JS-heavy site crawling                            |
 
 ---
 
@@ -166,13 +166,13 @@ Everything else has sensible defaults. See [.env.example](.env.example) for full
 
 ## Project Status
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| **Phase 1** | ✅ In progress | Scaffold + email verification (syntax, disposable, DNS) |
-| Phase 2 | Planned | Multi-source discovery (website, GitHub, Reddit, OSINT) |
-| Phase 3 | Planned | Chrome extension (job board → find hiring manager contact) |
-| Phase 4 | Planned | Cold email outreach (templates, LLM personalization, Listmonk) |
-| Phase 5 | Planned | BYOK (Hunter.io, Apollo.io, Clearbit) |
+| Phase       | Status         | Description                                                    |
+| ----------- | -------------- | -------------------------------------------------------------- |
+| **Phase 1** | ✅ In progress | Scaffold + email verification (syntax, disposable, DNS)        |
+| Phase 2     | Planned        | Multi-source discovery (website, GitHub, Reddit, OSINT)        |
+| Phase 3     | Planned        | Chrome extension (job board → find hiring manager contact)     |
+| Phase 4     | Planned        | Cold email outreach (templates, LLM personalization, Listmonk) |
+| Phase 5     | Planned        | BYOK (Hunter.io, Apollo.io, Clearbit)                          |
 
 ---
 
@@ -206,8 +206,8 @@ uv run pre-commit install
 
 ColdReach is **honest** about what it can and cannot do:
 
-- **Phase 1** (this release): Email *verification* only — tells you if an email is likely valid
-- **Phase 2** (coming): Email *discovery* — finding emails via OSINT and crawling
+- **Phase 1** (this release): Email _verification_ only — tells you if an email is likely valid
+- **Phase 2** (coming): Email _discovery_ — finding emails via OSINT and crawling
 - **Expected accuracy**: 50–65% for cold domains (vs 85–90% for Hunter.io)
 - **Why lower?** Hunter.io has 100M+ indexed emails from years of crawling. We start at 0.
 - **Catch-all domains** (Gmail Workspace, Office 365): SMTP verification is unreliable. We use Holehe platform checks instead.
