@@ -27,7 +27,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from coldreach.core.models import (
     DomainResult,
@@ -38,13 +37,12 @@ from coldreach.core.models import (
 )
 from coldreach.sources.base import BaseSource, SourceResult
 from coldreach.sources.github import GitHubSource
+from coldreach.sources.harvester import HarvesterSource
 from coldreach.sources.reddit import RedditSource
+from coldreach.sources.search_engine import SearchEngineSource
 from coldreach.sources.web_crawler import WebCrawlerSource
 from coldreach.sources.whois_source import WhoisSource
 from coldreach.verify.pipeline import run_basic_pipeline
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +80,14 @@ class FinderConfig:
     use_whois: bool = True
     use_github: bool = True
     use_reddit: bool = True
+    use_search_engine: bool = True
+    use_harvester: bool = True
     github_token: str | None = None
+    searxng_url: str | None = "http://localhost:8080"
+    brave_api_key: str | None = None
     min_confidence: int = 0
     request_timeout: float = 10.0
-    max_concurrent_sources: int = 4
+    max_concurrent_sources: int = 6
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +148,16 @@ async def find_emails(
         sources.append(GitHubSource(token=cfg.github_token, timeout=cfg.request_timeout))
     if cfg.use_reddit:
         sources.append(RedditSource(timeout=cfg.request_timeout))
+    if cfg.use_search_engine:
+        sources.append(
+            SearchEngineSource(
+                searxng_url=cfg.searxng_url,
+                brave_api_key=cfg.brave_api_key,
+                timeout=cfg.request_timeout,
+            )
+        )
+    if cfg.use_harvester:
+        sources.append(HarvesterSource(timeout=60.0))
 
     logger.info("Running %d source(s) for domain: %s", len(sources), domain)
 

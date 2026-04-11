@@ -153,6 +153,8 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
 @click.option("--no-whois", is_flag=True, default=False, help="Skip WHOIS lookup.")
 @click.option("--no-github", is_flag=True, default=False, help="Skip GitHub mining.")
 @click.option("--no-reddit", is_flag=True, default=False, help="Skip Reddit search.")
+@click.option("--no-search", is_flag=True, default=False, help="Skip SearXNG/DDG search.")
+@click.option("--no-harvester", is_flag=True, default=False, help="Skip theHarvester.")
 @click.option(
     "--timeout",
     type=float,
@@ -173,6 +175,8 @@ def find(
     no_whois: bool,
     no_github: bool,
     no_reddit: bool,
+    no_search: bool,
+    no_harvester: bool,
     timeout: float,
 ) -> None:
     """Find email addresses for a domain or company.
@@ -195,6 +199,8 @@ def find(
         use_whois=not no_whois,
         use_github=not no_github,
         use_reddit=not no_reddit,
+        use_search_engine=not no_search,
+        use_harvester=not no_harvester,
         min_confidence=min_confidence,
         request_timeout=timeout,
     )
@@ -207,6 +213,8 @@ def find(
                 ("whois", not no_whois),
                 ("github", not no_github),
                 ("reddit", not no_reddit),
+                ("search", not no_search),
+                ("harvester", not no_harvester),
             ]
             if enabled
         ]

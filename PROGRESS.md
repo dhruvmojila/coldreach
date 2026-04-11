@@ -2,6 +2,44 @@
 
 ---
 
+## [2026-04-11] — Phase 2 complete: all sources, pattern generator, catch-all, Reacher SMTP
+
+### What Was Done
+- `SearchEngineSource`: SearXNG → DuckDuckGo Lite → Brave API fallback chain
+- `HarvesterSource`: theHarvester subprocess wrapper, skips gracefully if not installed
+- `generate/patterns.py`: 12-format email pattern generator with unicode/accent/suffix normalisation
+- `generate/patterns.py`: `most_likely_format()` infers domain format from known emails
+- `verify/catchall.py`: catch-all domain probe via Reacher with per-session cache
+- `verify/reacher.py`: full Reacher SMTP client — deliverable/catch-all/full-inbox/disabled handling
+- `core/finder.py`: wired all 6 sources into `FinderConfig`; `--no-search` / `--no-harvester` CLI flags added
+- 259 unit tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/search_engine.py` | Added | SearXNG/DDG/Brave fallback search source |
+| `coldreach/sources/harvester.py` | Added | theHarvester subprocess wrapper |
+| `coldreach/generate/__init__.py` | Added | Package init |
+| `coldreach/generate/patterns.py` | Added | 12-format pattern generator + format inferrer |
+| `coldreach/verify/catchall.py` | Added | Catch-all detection via Reacher probe + cache |
+| `coldreach/verify/reacher.py` | Added | Reacher SMTP verification client |
+| `coldreach/core/finder.py` | Modified | Added search_engine + harvester sources to pipeline |
+| `coldreach/cli.py` | Modified | Added --no-search / --no-harvester flags |
+| `tests/unit/test_generate_patterns.py` | Added | 20 pattern generator tests |
+| `tests/unit/test_verify_reacher.py` | Added | 14 Reacher client tests |
+| `tests/unit/test_verify_catchall.py` | Added | 11 catch-all detection tests |
+| `tests/unit/test_sources_harvester.py` | Added | 7 harvester tests |
+| `tests/unit/test_sources_search_engine.py` | Added | 8 search engine tests |
+
+### Major Logic / Code Changes
+- `SearchEngineSource._run_query()`: tries backends in order, returns first non-empty result
+- `HarvesterSource`: uses `shutil.which()` to detect installation, silent skip if absent
+- Pattern generator: strips unicode accents, splits hyphens, drops middle names + suffixes before expanding 12 formats
+- `check_catchall()`: probes with a `cr-probe-<random20>@domain` address; caches result per domain for session lifetime
+- `_parse_reacher_response()`: maps Reacher JSON fields to CheckResult — handles 5 distinct SMTP states
+
+---
+
 ## [2026-04-11] — Phase 2: sources layer + find_emails() orchestrator + CLI find command
 
 ### What Was Done
