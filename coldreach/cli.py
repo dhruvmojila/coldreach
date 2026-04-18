@@ -28,6 +28,8 @@ from rich.table import Table
 from coldreach import __version__
 from coldreach.core.finder import FinderConfig, find_emails
 from coldreach.core.models import DomainResult
+from coldreach.export import export_results
+from coldreach.resolve import resolve_domain
 from coldreach.storage.cache import CacheStore
 from coldreach.verify._types import CheckStatus
 from coldreach.verify.pipeline import PipelineResult, run_basic_pipeline
@@ -161,6 +163,20 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
 @click.option("--no-harvester", is_flag=True, default=False, help="Skip theHarvester.")
 @click.option("--no-spiderfoot", is_flag=True, default=False, help="Skip SpiderFoot.")
 @click.option(
+    "--firecrawl",
+    "use_firecrawl",
+    is_flag=True,
+    default=False,
+    help="Enable Firecrawl JS scraping (requires firecrawl-py + self-hosted server).",
+)
+@click.option(
+    "--crawl4ai",
+    "use_crawl4ai",
+    is_flag=True,
+    default=False,
+    help="Enable crawl4ai Playwright scraping (requires: pip install crawl4ai && crawl4ai-setup).",
+)
+@click.option(
     "--no-reacher",
     is_flag=True,
     default=False,
@@ -201,6 +217,13 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
     metavar="SECONDS",
     help="Per-source request timeout.",
 )
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    metavar="FILE",
+    help="Export results to FILE (.csv or .json). Inferred from extension.",
+)
 @click.pass_context
 def find(
     ctx: click.Context,
@@ -216,6 +239,8 @@ def find(
     no_search: bool,
     no_harvester: bool,
     no_spiderfoot: bool,
+    use_firecrawl: bool,
+    use_crawl4ai: bool,
     no_reacher: bool,
     use_holehe: bool,
     no_cache: bool,
@@ -223,6 +248,7 @@ def find(
     quick: bool,
     use_full: bool,
     timeout: float,
+    output: str | None,
 ) -> None:
     """Find email addresses for a domain or company.
 
@@ -235,7 +261,9 @@ def find(
     \b
     Examples:
       coldreach find --domain stripe.com --quick
-      coldreach find --domain acme.com --full
+      coldreach find --company "Stripe" --name "Patrick Collison"
+      coldreach find --domain acme.com --output leads.csv
+      coldreach find --domain acme.com --output leads.json
       coldreach find --domain acme.com --name "John Smith"
       coldreach find --domain acme.com --no-github --json
       coldreach find --domain acme.com --min-confidence 40
@@ -244,7 +272,30 @@ def find(
         err_console.print("[red]Error:[/red] Provide --domain or --company")
         raise click.UsageError("Provide at least --domain or --company")
 
-    target_domain = domain or company or ""
+    # Validate --output extension early so we fail fast before the slow find
+    if output:
+        from pathlib import Path
+
+        ext = Path(output).suffix.lower()
+        if ext not in (".csv", ".json"):
+            err_console.print(f"[red]Error:[/red] --output must end in .csv or .json (got {ext!r})")
+            raise click.UsageError("--output must end in .csv or .json")
+
+    # Resolve company name → domain when --domain is not given
+    target_domain = domain or ""
+    if not domain and company:
+        if not output_json:
+            console.print(f"\n  [dim]Resolving domain for '{company}'…[/dim]")
+        resolved = asyncio.run(resolve_domain(company))
+        if not resolved:
+            err_console.print(
+                f"[red]Error:[/red] Could not resolve a domain for '{company}'. "
+                "Try passing --domain directly."
+            )
+            raise click.Abort()
+        target_domain = resolved
+        if not output_json:
+            console.print(f"  [dim]→ {resolved}[/dim]\n")
 
     # --quick skips slow CLI-based OSINT tools
     if quick:
@@ -259,6 +310,8 @@ def find(
         use_search_engine=not no_search,
         use_harvester=not no_harvester,
         use_spiderfoot=not no_spiderfoot,
+        use_firecrawl=use_firecrawl,
+        use_crawl4ai=use_crawl4ai,
         harvester_sources="all" if use_full else None,
         use_reacher=not no_reacher,
         use_holehe=use_holehe,
@@ -279,6 +332,8 @@ def find(
                 ("search", not no_search),
                 ("harvester", not no_harvester),
                 ("spiderfoot", not no_spiderfoot),
+                ("firecrawl", use_firecrawl),
+                ("crawl4ai", use_crawl4ai),
                 ("reacher", not no_reacher),
                 ("holehe", use_holehe),
             ]
@@ -301,6 +356,18 @@ def find(
         click.echo(json.dumps(_domain_result_to_dict(result), indent=2))
     else:
         _render_find(result)
+
+    if output:
+        try:
+            written = export_results(result, output)
+            if not output_json:
+                console.print(
+                    f"  [dim]Exported {len(result.emails)} email(s) → "
+                    f"[bold]{written}[/bold][/dim]\n"
+                )
+        except (ValueError, OSError) as exc:
+            err_console.print(f"[red]Export failed:[/red] {exc}")
+            sys.exit(2)
 
     sys.exit(0 if result.emails else 1)
 

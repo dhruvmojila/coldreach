@@ -2,6 +2,92 @@
 
 ---
 
+## [2026-04-18 22:00] — Integrate crawl4ai, Firecrawl, and role email sources from other project
+
+### What Was Done
+- Ported `firecrawl_tool.py` as `coldreach/sources/firecrawl.py` — proper async BaseSource with sitemap discovery, multi-page scraping, and email extraction via Firecrawl SDK
+- Ported `crawl4ai_tool.py` as `coldreach/sources/crawl4ai_source.py` — Playwright JS rendering for SPA sites; fixed broken `config.settings` import and wrong `asyncio.new_event_loop()` pattern
+- Added `generate_role_emails()` to `coldreach/generate/patterns.py` — the missing piece from `email_permutator.py` (personal pattern generation was already complete)
+- Wired all three into `FinderConfig` and `finder.py`; added `--firecrawl` and `--crawl4ai` CLI flags
+- Added `firecrawl_url` back to `config.py` (now properly used by `FirecrawlSource`)
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/firecrawl.py` | Added | BaseSource using Firecrawl SDK + sitemap discovery; httpx for availability/sitemap, `asyncio.to_thread` for SDK calls |
+| `coldreach/sources/crawl4ai_source.py` | Added | BaseSource using crawl4ai Playwright renderer; fixed broken sync patterns |
+| `coldreach/generate/patterns.py` | Modified | Added `generate_role_emails()` returning info/sales/contact/etc candidates |
+| `coldreach/core/finder.py` | Modified | Added imports, `use_firecrawl/use_crawl4ai/use_role_emails` to FinderConfig, wired sources and role email generation |
+| `coldreach/config.py` | Modified | Re-added `firecrawl_url` field (now actually used) |
+| `coldreach/cli.py` | Modified | Added `--firecrawl` and `--crawl4ai` flags; pass to FinderConfig |
+
+### Major Logic / Code Changes
+- **FirecrawlSource**: opt-in (`use_firecrawl=False`); skips gracefully if `firecrawl-py` not installed or server unreachable; `_scrape_with_sdk()` runs sync SDK in `asyncio.to_thread()`
+- **Crawl4AISource**: opt-in (`use_crawl4ai=False`); skips if `crawl4ai` not installed; pure async via `AsyncWebCrawler`; junk-content detection filters bot-block pages
+- **Role emails**: always-on (`use_role_emails=True`); adds 10 role candidates (info, contact, sales, marketing, etc.) with `confidence_hint=5`; skips any already found by real sources
+- **email_permutator.py assessment**: coldreach already has a superior pattern system (`generate/patterns.py` + `learner.py`); role emails were the only missing piece
+
+### Notes
+- Both crawl4ai and firecrawl are opt-in to keep the default run fast; enable with `--crawl4ai` / `--firecrawl`
+- 363 tests pass, 7 skipped (holehe)
+
+---
+
+## [2026-04-18 21:30] — Fix critical status bug: map Reacher results to VerificationStatus; fix confidence scoring; remove dead Firecrawl config
+
+### What Was Done
+- Fixed `finder.py`: emails verified by Reacher now show `valid`, `catch_all`, or `undeliverable` instead of always `unknown`
+- Fixed confidence scoring: changed `max()` of source hints to cumulative `sum()` so multiple sources confirming the same email raise confidence
+- Removed dead `firecrawl_url` config field from `config.py` (Firecrawl was never integrated, Docker image requires extra setup)
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/core/finder.py` | Modified | Status mapping now uses `pipeline.checks["reacher"]` to set VALID/CATCH_ALL/UNDELIVERABLE; confidence uses sum not max |
+| `coldreach/config.py` | Modified | Removed `firecrawl_url` field |
+
+### Major Logic / Code Changes
+- **Status mapping** (`finder.py` lines 262-280): Added `reacher_check = pipeline.checks.get("reacher")`. Priority: FAIL → INVALID, reacher.passed → VALID, reacher.warned → CATCH_ALL, reacher.failed → UNDELIVERABLE, mx_records → UNKNOWN, else → RISKY
+- **Confidence scoring**: `max_hint` replaced with `source_hint = sum(sr.confidence_hint for sr in source_results)` — multiple discovery sources now stack their hints cumulatively
+- **Firecrawl removal**: The `firecrawl_url` field in `ColdReachConfig` was never read by any source module; removed to avoid confusion
+
+### Notes
+- 363 tests pass, 7 skipped (holehe optional extra not installed)
+- `firecrawl_tool.py` in project root is a stale scratch file not imported by any `coldreach/` module — can be deleted separately
+
+---
+
+## [2026-04-18 20:00] — Add company→domain resolver, CSV/JSON export, holehe skip marker
+
+### What Was Done
+- Created `coldreach/resolve/company.py` — resolves company name to domain via Clearbit Autocomplete (primary) + DDG Lite (fallback); no API keys required
+- Created `coldreach/export/writer.py` — exports `DomainResult` to `.csv` or `.json`; format inferred from extension
+- Wired both into `coldreach/cli.py`: `--company "Stripe"` auto-resolves domain before find; `--output leads.csv` exports results after find
+- Added `requires_holehe` skip marker to `test_verify_holehe.py` — 7 tests now skip cleanly when holehe optional extra is not installed (CI installs it via `--all-extras`; local dev doesn't need to)
+- Fixed duplicate data file warning in wheel build (removed redundant `force-include` from `pyproject.toml`)
+- Added `tags: ["v*"]` trigger to `ci.yml` so PyPI publish fires on version tag pushes
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/resolve/__init__.py` | Added | Package init, exports `resolve_domain` |
+| `coldreach/resolve/company.py` | Added | Company→domain resolver (Clearbit + DDG fallback) |
+| `coldreach/export/__init__.py` | Added | Package init, exports `export_results` |
+| `coldreach/export/writer.py` | Added | CSV and JSON export for `DomainResult` |
+| `coldreach/cli.py` | Modified | Added `--output` flag, company resolution before find |
+| `tests/unit/test_resolve_company.py` | Added | 16 tests for resolver (all HTTP mocked with respx) |
+| `tests/unit/test_export_writer.py` | Added | 20 tests for CSV/JSON export (all using tmp_path) |
+| `tests/unit/test_verify_holehe.py` | Modified | Added `requires_holehe` skip marker |
+
+### Major Logic / Code Changes
+- `--company "Stripe"` flow: resolves domain first (prints "Resolving…" + "→ stripe.com"), then runs find as normal
+- Extension validation on `--output` happens before the slow find runs (fail fast)
+- Clearbit Autocomplete is free, no key, returns JSON array; first result's `domain` field is used
+- DDG fallback posts to `duckduckgo.com/lite/`, parses href attributes, skips noise domains (LinkedIn, Twitter, etc.)
+- Export appends a confirmation line after the results table when not in `--json` mode
+
+---
+
 ## [2026-04-18 18:30] — Add MkDocs documentation site with GitHub Pages deployment
 
 ### What Was Done

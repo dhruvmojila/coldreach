@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     """Self-hosted SearXNG metasearch instance. docker compose up searxng"""
 
     firecrawl_url: str = "http://localhost:3002"
-    """Self-hosted Firecrawl JS-site crawler. docker compose up firecrawl"""
+    """Self-hosted Firecrawl JS-site crawler. See https://github.com/mendableai/firecrawl"""
 
     spiderfoot_url: str = "http://localhost:5001"
     """Self-hosted SpiderFoot OSINT engine. docker compose up spiderfoot"""

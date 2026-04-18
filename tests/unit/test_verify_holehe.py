@@ -6,12 +6,20 @@ holehe HTTP calls are mocked — no real network traffic.
 
 from __future__ import annotations
 
+import importlib.util
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from coldreach.verify._types import CheckStatus
 from coldreach.verify.holehe import check_holehe
+
+# Tests that patch holehe.core require the module to be importable.
+# Skip them when holehe is not installed (it's an optional extra: pip install coldreach[full]).
+_holehe_installed = importlib.util.find_spec("holehe") is not None
+requires_holehe = pytest.mark.skipif(
+    not _holehe_installed, reason="holehe not installed (pip install coldreach[full])"
+)
 
 
 def _make_modules(results: list[dict]) -> list:
@@ -45,6 +53,7 @@ class TestCheckHolehe:
             result = await check_holehe("test@example.com")
         assert result.status == CheckStatus.SKIP
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_returns_pass_with_high_score_for_two_platforms(self) -> None:
         mods = _make_modules(
@@ -59,6 +68,7 @@ class TestCheckHolehe:
         assert result.score_delta == 15
         assert result.metadata["platform_count"] == 2
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_returns_pass_with_low_score_for_one_platform(self) -> None:
         mods = _make_modules(
@@ -73,6 +83,7 @@ class TestCheckHolehe:
         assert result.score_delta == 5
         assert result.metadata["platform_count"] == 1
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_returns_warn_for_zero_platforms(self) -> None:
         mods = _make_modules(
@@ -86,6 +97,7 @@ class TestCheckHolehe:
         assert result.score_delta == 0
         assert result.metadata["platform_count"] == 0
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_handles_module_exception_gracefully(self) -> None:
         async def _bad_module(_email, _client, _out):
@@ -96,6 +108,7 @@ class TestCheckHolehe:
         # Exception is caught; 0 platforms → WARN
         assert result.status == CheckStatus.WARN
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_custom_min_platforms_threshold(self) -> None:
         # 3 found, but min_platforms=4 → only +5
@@ -110,6 +123,7 @@ class TestCheckHolehe:
             result = await check_holehe("test@example.com", min_platforms=4)
         assert result.score_delta == 5
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_platform_names_in_metadata(self) -> None:
         mods = _make_modules(
@@ -123,6 +137,7 @@ class TestCheckHolehe:
         assert "github" in result.metadata["platforms"]
         assert "spotify" in result.metadata["platforms"]
 
+    @requires_holehe
     @pytest.mark.asyncio
     async def test_no_modules_returns_warn(self) -> None:
         with _patch_holehe_core([]):

@@ -36,7 +36,10 @@ from coldreach.core.models import (
     VerificationStatus,
 )
 from coldreach.generate.learner import targeted_patterns
+from coldreach.generate.patterns import generate_role_emails
 from coldreach.sources.base import BaseSource, SourceResult
+from coldreach.sources.crawl4ai_source import Crawl4AISource
+from coldreach.sources.firecrawl import FirecrawlSource
 from coldreach.sources.github import GitHubSource
 from coldreach.sources.harvester import HarvesterSource
 from coldreach.sources.reddit import RedditSource
@@ -86,8 +89,12 @@ class FinderConfig:
     use_search_engine: bool = True
     use_harvester: bool = True
     use_spiderfoot: bool = True
+    use_firecrawl: bool = False  # opt-in: requires firecrawl-py + Docker stack
+    use_crawl4ai: bool = False  # opt-in: requires pip install crawl4ai + playwright
+    use_role_emails: bool = True  # generate info@/sales@/contact@ candidates
     github_token: str | None = None
     searxng_url: str | None = "http://localhost:8088"
+    firecrawl_url: str = "http://localhost:3002"
     brave_api_key: str | None = None
     spiderfoot_container: str = "coldreach-spiderfoot"
     harvester_container: str = "coldreach-theharvester"
@@ -196,6 +203,12 @@ async def find_emails(
         )
     if cfg.use_spiderfoot:
         sources.append(SpiderFootSource(container=cfg.spiderfoot_container, max_wait=300.0))
+    if cfg.use_firecrawl:
+        sources.append(
+            FirecrawlSource(firecrawl_url=cfg.firecrawl_url, timeout=cfg.request_timeout)
+        )
+    if cfg.use_crawl4ai:
+        sources.append(Crawl4AISource(timeout=cfg.request_timeout))
 
     logger.info("Running %d source(s) for domain: %s", len(sources), domain)
 
@@ -238,6 +251,21 @@ async def find_emails(
                 domain,
             )
 
+    # ── Role emails (info@, sales@, contact@, …) ──────────────────────────────
+    if cfg.use_role_emails:
+        existing = {r.email.strip().lower() for r in all_raw}
+        for rp in generate_role_emails(domain):
+            if rp.email not in existing:
+                all_raw.append(
+                    SourceResult(
+                        email=rp.email,
+                        source=EmailSource.PATTERN_GENERATED,
+                        url="",
+                        context=rp.format_name,
+                        confidence_hint=5,
+                    )
+                )
+
     # ── Deduplicate + build source map ────────────────────────────────────────
     grouped = _merge_results(all_raw)
 
@@ -253,18 +281,23 @@ async def find_emails(
             run_holehe=cfg.use_holehe,
         )
 
-        # Aggregate confidence hints from all sources that found this email
-        max_hint = max((sr.confidence_hint for sr in source_results), default=0)
-
-        # Pipeline base score + source hint, clamped [0,100]
-        confidence = min(100, pipeline.score + max_hint)
+        # Cumulative confidence: pipeline score + sum of source hints (clamped)
+        source_hint = sum(sr.confidence_hint for sr in source_results)
+        confidence = min(100, pipeline.score + source_hint)
 
         # Map pipeline result to VerificationStatus
+        reacher_check = pipeline.checks.get("reacher")
         if not pipeline.passed:
             status = VerificationStatus.INVALID
             confidence = 0
+        elif reacher_check and reacher_check.passed:
+            status = VerificationStatus.VALID
+        elif reacher_check and reacher_check.warned:
+            status = VerificationStatus.CATCH_ALL
+        elif reacher_check and reacher_check.failed:
+            status = VerificationStatus.UNDELIVERABLE
         elif pipeline.mx_records:
-            status = VerificationStatus.UNKNOWN  # DNS OK, SMTP not yet checked
+            status = VerificationStatus.UNKNOWN  # DNS OK, SMTP not verified
         else:
             status = VerificationStatus.RISKY
 

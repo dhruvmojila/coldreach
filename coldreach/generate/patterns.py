@@ -178,6 +178,44 @@ def generate_patterns(full_name: str, domain: str) -> list[EmailPattern]:
     return results
 
 
+# Role-based addresses common in B2B outreach — ordered by usefulness
+_ROLE_LOCALS = [
+    "info",
+    "contact",
+    "hello",
+    "sales",
+    "marketing",
+    "partnerships",
+    "press",
+    "support",
+    "business",
+    "growth",
+]
+
+
+def generate_role_emails(domain: str) -> list[EmailPattern]:
+    """Generate common role-based email candidates for *domain*.
+
+    Returns candidates like ``info@domain.com``, ``sales@domain.com``.
+    These are low-confidence guesses — always verify before using.
+
+    Parameters
+    ----------
+    domain:
+        The company domain, e.g. ``"acme.com"``.
+
+    Returns
+    -------
+    list[EmailPattern]
+        Role email candidates with ``format_name`` like ``"role:info"``.
+    """
+    domain = domain.strip().lower().removeprefix("www.")
+    return [
+        EmailPattern(email=f"{role}@{domain}", format_name=f"role:{role}")
+        for role in _ROLE_LOCALS
+    ]
+
+
 def most_likely_format(known_emails: list[str], domain: str) -> str | None:
     """Infer the most common email format from a list of known addresses.
 
