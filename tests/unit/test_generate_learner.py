@@ -6,8 +6,6 @@ All tests are pure (no network, no I/O).
 
 from __future__ import annotations
 
-import pytest
-
 from coldreach.generate.learner import learn_format, targeted_patterns
 from coldreach.generate.patterns import EmailPattern
 
@@ -33,7 +31,7 @@ class TestLearnFormat:
         assert result is None
 
     def test_most_common_wins(self) -> None:
-        # 2× first.last vs 1× flast → first.last wins
+        # 2x first.last vs 1x flast -> first.last wins
         emails = [
             "john.smith@acme.com",
             "jane.doe@acme.com",

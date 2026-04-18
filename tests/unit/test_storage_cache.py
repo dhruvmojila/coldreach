@@ -30,7 +30,7 @@ def _make_result(domain: str, emails: list[str] | None = None) -> DomainResult:
     return result
 
 
-@pytest.fixture()
+@pytest.fixture
 def store(tmp_path) -> CacheStore:
     db = str(tmp_path / "test_cache.db")
     return CacheStore(db_path=db, ttl_days=7)
@@ -86,8 +86,10 @@ class TestCacheStoreSetGet:
         store.set("b.com", _make_result("b.com", ["x@b.com"]))
         a = store.get("a.com")
         b = store.get("b.com")
-        assert a is not None and a.domain == "a.com"
-        assert b is not None and b.domain == "b.com"
+        assert a is not None
+        assert a.domain == "a.com"
+        assert b is not None
+        assert b.domain == "b.com"
 
 
 class TestCacheStoreExpiry:

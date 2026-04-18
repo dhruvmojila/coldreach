@@ -167,6 +167,9 @@ ignore = [
   "ANN401", # dynamically typed expressions (Any) — needed for metadata dicts
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]   # type annotations in test helpers add noise without benefit
+
 [tool.ruff.lint.isort]
 known-first-party = ["coldreach"]
 
