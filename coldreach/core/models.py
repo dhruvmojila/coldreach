@@ -97,7 +97,7 @@ class SourceRecord(BaseModel):
 class EmailRecord(BaseModel):
     """A single email address with its verification state and discovery sources.
 
-    Parameters
+    Attributes
     ----------
     email:
         The email address (normalized to lowercase on input).
@@ -187,7 +187,7 @@ class EmailRecord(BaseModel):
 class DomainResult(BaseModel):
     """All email addresses discovered for one domain.
 
-    Parameters
+    Attributes
     ----------
     domain:
         The domain that was scanned (e.g. ``"stripe.com"``).

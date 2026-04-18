@@ -35,13 +35,16 @@ from coldreach.core.models import (
     SourceRecord,
     VerificationStatus,
 )
+from coldreach.generate.learner import targeted_patterns
 from coldreach.sources.base import BaseSource, SourceResult
 from coldreach.sources.github import GitHubSource
 from coldreach.sources.harvester import HarvesterSource
 from coldreach.sources.reddit import RedditSource
 from coldreach.sources.search_engine import SearchEngineSource
+from coldreach.sources.spiderfoot import SpiderFootSource
 from coldreach.sources.web_crawler import WebCrawlerSource
 from coldreach.sources.whois_source import WhoisSource
+from coldreach.storage.cache import CacheStore
 from coldreach.verify.pipeline import run_basic_pipeline
 
 logger = logging.getLogger(__name__)
@@ -82,9 +85,21 @@ class FinderConfig:
     use_reddit: bool = True
     use_search_engine: bool = True
     use_harvester: bool = True
+    use_spiderfoot: bool = True
     github_token: str | None = None
-    searxng_url: str | None = "http://localhost:8080"
+    searxng_url: str | None = "http://localhost:8088"
     brave_api_key: str | None = None
+    spiderfoot_container: str = "coldreach-spiderfoot"
+    harvester_container: str = "coldreach-theharvester"
+    harvester_sources: str | None = None  # None = free sources; "all" = all sources
+    reacher_url: str | None = "http://localhost:8083"
+    use_reacher: bool = True
+    use_holehe: bool = False  # opt-in — slow (~30s per email)
+    cache_db: str | None = "~/.coldreach/cache.db"
+    redis_url: str | None = None
+    cache_ttl_days: int = 7
+    use_cache: bool = True
+    refresh_cache: bool = False  # if True, ignore cached result but still overwrite
     min_confidence: int = 0
     request_timeout: float = 10.0
     max_concurrent_sources: int = 6
@@ -138,6 +153,21 @@ async def find_emails(
     cfg = config or FinderConfig()
     domain = domain.strip().lower().removeprefix("www.")
 
+    # ── Cache lookup ──────────────────────────────────────────────────────────
+    cache: CacheStore | None = None
+    if cfg.use_cache and cfg.cache_db:
+        cache = CacheStore(
+            db_path=cfg.cache_db,
+            redis_url=cfg.redis_url,
+            ttl_days=cfg.cache_ttl_days,
+        )
+        if not cfg.refresh_cache:
+            cached = cache.get(domain)
+            if cached is not None:
+                logger.info("Cache hit for %s — skipping sources", domain)
+                cached.emails = cached.sorted_emails(min_confidence=cfg.min_confidence)
+                return cached
+
     # ── Build source list ─────────────────────────────────────────────────────
     sources: list[BaseSource] = []
     if cfg.use_web_crawler:
@@ -157,7 +187,15 @@ async def find_emails(
             )
         )
     if cfg.use_harvester:
-        sources.append(HarvesterSource(timeout=60.0))
+        sources.append(
+            HarvesterSource(
+                container=cfg.harvester_container,
+                sources=cfg.harvester_sources,
+                max_wait=120.0,
+            )
+        )
+    if cfg.use_spiderfoot:
+        sources.append(SpiderFootSource(container=cfg.spiderfoot_container, max_wait=300.0))
 
     logger.info("Running %d source(s) for domain: %s", len(sources), domain)
 
@@ -176,14 +214,44 @@ async def find_emails(
 
     logger.info("Sources returned %d raw email candidate(s) for %s", len(all_raw), domain)
 
+    # ── Pattern generation (when person_name is given) ────────────────────────
+    if person_name:
+        found_emails = [r.email for r in all_raw]
+        # Higher confidence_hint when format is inferred from real emails
+        has_known = bool(found_emails)
+        patterns = targeted_patterns(person_name, domain, found_emails)
+        for pat in patterns:
+            all_raw.append(
+                SourceResult(
+                    email=pat.email,
+                    source=EmailSource.PATTERN_GENERATED,
+                    url="",
+                    context=f"pattern: {pat.format_name}",
+                    confidence_hint=10 if has_known else 5,
+                )
+            )
+        if patterns:
+            logger.debug(
+                "Pattern learner added %d candidate(s) for '%s' at %s",
+                len(patterns),
+                person_name,
+                domain,
+            )
+
     # ── Deduplicate + build source map ────────────────────────────────────────
     grouped = _merge_results(all_raw)
 
     # ── Verify each unique candidate ──────────────────────────────────────────
     domain_result = DomainResult(domain=domain)
 
+    reacher_url = cfg.reacher_url if cfg.use_reacher else None
+
     for email, source_results in grouped.items():
-        pipeline = await run_basic_pipeline(email)
+        pipeline = await run_basic_pipeline(
+            email,
+            reacher_url=reacher_url,
+            run_holehe=cfg.use_holehe,
+        )
 
         # Aggregate confidence hints from all sources that found this email
         max_hint = max((sr.confidence_hint for sr in source_results), default=0)
@@ -222,6 +290,10 @@ async def find_emails(
             mx_records=pipeline.mx_records,
         )
         domain_result.add_email(record)
+
+    # ── Store full result in cache (before min_confidence filter) ────────────
+    if cache is not None:
+        cache.set(domain, domain_result)
 
     # ── Filter + sort ─────────────────────────────────────────────────────────
     domain_result.emails = domain_result.sorted_emails(min_confidence=cfg.min_confidence)

@@ -75,6 +75,14 @@ logs/
 ehthumbs.db
 Thumbs.db
 
+# ── MkDocs build output ───────────────────────────────────────────────────────
+site/
+
 # ── SearXNG config (generated) ───────────────────────────────────────────────
 config/searxng/settings.yml
 config/searxng/uwsgi.ini
+
+# ── External OSINT tools (cloned by scripts/setup.sh, NOT committed) ─────────
+# Run `./scripts/setup.sh` to download these.
+theHarvester/
+spiderfoot/

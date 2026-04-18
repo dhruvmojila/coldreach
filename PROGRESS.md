@@ -2,6 +2,268 @@
 
 ---
 
+## [2026-04-18 18:30] — Add MkDocs documentation site with GitHub Pages deployment
+
+### What Was Done
+- Added `docs` dependency group to `pyproject.toml` (`mkdocs`, `mkdocs-material`, `mkdocstrings[python]`, `mkdocs-autorefs`)
+- Created `mkdocs.yml` — Material theme, NumPy docstring style, strict build, full nav
+- Created `docs/` with 6 content pages + 6 API reference pages auto-generated from docstrings
+- Created `.github/workflows/docs.yml` — deploys to GitHub Pages on push to main
+- Fixed `coldreach/core/models.py` Pydantic model docstrings: `Parameters` → `Attributes` (griffe requires `Attributes` for class fields)
+- Added `site/` to `.gitignore`
+- Trimmed `README.md` to ~50 lines — overview + install + links to docs site
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `mkdocs.yml` | Added | MkDocs configuration — Material theme, mkdocstrings, nav |
+| `pyproject.toml` | Modified | Added `docs` dependency group |
+| `.github/workflows/docs.yml` | Added | GitHub Pages deployment on push to main |
+| `docs/index.md` | Added | Landing page with comparison table and feature cards |
+| `docs/getting-started.md` | Added | Full step-by-step install guide |
+| `docs/cli-reference.md` | Added | Complete CLI reference for all commands |
+| `docs/configuration.md` | Added | Full `.env` reference |
+| `docs/how-it-works.md` | Added | Pipeline diagrams, scoring table, cache architecture |
+| `docs/sources.md` | Added | All 8 discovery sources with speed/accuracy comparison |
+| `docs/api/index.md` | Added | API overview with usage example |
+| `docs/api/models.md` | Added | Auto-generated from `coldreach.core.models` |
+| `docs/api/verify.md` | Added | Auto-generated from `coldreach.verify.*` |
+| `docs/api/sources.md` | Added | Auto-generated from `coldreach.sources.*` |
+| `docs/api/generate.md` | Added | Auto-generated from `coldreach.generate.*` |
+| `docs/api/storage.md` | Added | Auto-generated from `coldreach.storage.*` and `coldreach.core.finder` |
+| `coldreach/core/models.py` | Modified | `Parameters` → `Attributes` in Pydantic model docstrings |
+| `.gitignore` | Modified | Added `site/` build output |
+| `README.md` | Modified | Trimmed to 50-line overview with link to docs site |
+
+### Major Logic / Code Changes
+- MkDocs `--strict` mode enabled: build fails if any warning is raised — ensures docs stay in sync with code
+- `mkdocstrings` uses griffe for static analysis (no runtime import) — optional deps missing is fine
+- API reference pages auto-update when docstrings change — zero maintenance overhead
+
+### Notes
+- `site/` is gitignored; GitHub Pages is deployed via CI only
+- MkDocs 2.0 compatibility warning from Material team is a banner (not a build warning) — not treated as strict failure
+- To preview locally: `uv run mkdocs serve`
+- To deploy manually: `uv run mkdocs gh-deploy`
+
+---
+
+## [2026-04-18 17:30] — Rewrite README.md for Phase 1 completion
+
+### What Was Done
+- Rewrote README.md from scratch with accurate Phase 1 content
+- Fixed stale ports in services table (5432→5433, 6379→6380, 8080→8088)
+- Removed references to Firecrawl (not implemented) and Phase 2 placeholder commands
+- Added correct install flow: clone → setup.sh → docker compose build → docker compose up → pip install
+- Added full CLI reference for `verify`, `find` (all flags), and `cache` subcommands
+- Updated project status: Phase 1 marked complete, Phase 2 as next
+- Added discovery sources table with correct `Requires` column
+- Added pattern generation + Holehe/Reacher to How It Works section
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `README.md` | Modified | Full rewrite — accurate ports, correct install flow, complete CLI reference, Phase 1 status |
+
+### Major Logic / Code Changes
+- No code changes — documentation only
+
+---
+
+## [2026-04-18 15:00] — Add domain format learner + wire pattern generation into find_emails()
+
+### What Was Done
+- Created `coldreach/generate/learner.py` — `learn_format()` wraps `most_likely_format()` with logging; `targeted_patterns()` generates only the domain's inferred format (+ companion) instead of all 12
+- Wired learner into `find_emails()`: after sources return, if `person_name` given → infer format from found emails → append targeted `SourceResult(source=PATTERN_GENERATED)` candidates
+- Confidence hint: +10 when format inferred from real emails, +5 for blind fallback guesses
+- Fallback when format unknown: top-3 B2B formats (`first.last`, `flast`, `first`)
+- 334 tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/generate/learner.py` | Added | `learn_format()` + `targeted_patterns()` |
+| `coldreach/core/finder.py` | Modified | Pattern generation step after sources; appends to `all_raw` before dedup/verify |
+| `tests/unit/test_generate_learner.py` | Added | 17 tests: format detection, targeted generation, companion formats, fallback, edge cases |
+
+### Major Logic / Code Changes
+- **Companion formats**: `first.last` always includes `flast` companion (and vice versa) — these two dominate B2B email patterns and often coexist
+- **Format inference order**: inferred format comes first in output, companions second — preserves confidence ordering
+- **No shotgun generation**: `coldreach find --domain acme.com --name "John Smith"` now generates ≤3 candidates (vs 12 before), all matching the company's real pattern
+- **Integration point**: generated candidates join the same dedup + verification pipeline as discovered emails; pipeline scores them independently
+
+---
+
+## [2026-04-18 14:15] — Add SQLite/Redis cache layer + cache CLI subcommand
+
+### What Was Done
+- Created `coldreach/storage/cache.py` — two-layer cache (SQLite always-on + optional Redis); 7-day TTL; Pydantic JSON round-trip for `DomainResult`
+- Created `coldreach/storage/__init__.py`
+- Wired `CacheStore` into `find_emails()`: checks cache on entry (skips all sources on hit), stores result after scan; `refresh_cache` flag bypasses read but still overwrites
+- Added `cache_db`, `redis_url`, `cache_ttl_days`, `use_cache`, `refresh_cache` fields to `FinderConfig`
+- Added `--no-cache` and `--refresh` flags to `coldreach find`
+- Added `coldreach cache list|clear|stats` subcommand group to CLI
+- 317 tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/storage/__init__.py` | Added | Package init, exports CacheStore |
+| `coldreach/storage/cache.py` | Added | CacheStore with SQLite + optional Redis, 7-day TTL |
+| `coldreach/core/finder.py` | Modified | Cache lookup/store in find_emails(); new FinderConfig fields |
+| `coldreach/cli.py` | Modified | `--no-cache`, `--refresh` flags; `cache list/clear/stats` subcommands |
+| `tests/unit/test_storage_cache.py` | Added | 18 tests covering hit/miss/expiry/clear/list/stats/Redis-fallback |
+
+### Major Logic / Code Changes
+- **Cache-first pattern**: `find_emails()` checks SQLite (then Redis) before running any source; on hit returns immediately with `min_confidence` filter applied
+- **Store before filter**: full result (all emails) is stored in cache, then `min_confidence` is applied — future calls with different thresholds still work
+- **Redis optional**: uses `redis.Redis.from_url()` with ping check; if unavailable, silently falls back to SQLite only
+- **TTL stored as Unix timestamp**: `expires_at = time.time() + ttl_seconds`; expired rows deleted on read (lazy eviction)
+- **CLI cache subcommand**: `coldreach cache list` shows domain + cache timestamp + expired status; `clear` returns row count; `stats` shows total/valid/expired
+
+---
+
+## [2026-04-18 13:30] — Add Holehe platform check + wire Reacher into verification pipeline
+
+### What Was Done
+- Created `coldreach/verify/holehe.py` — calls holehe's 120+ platform checkers programmatically via asyncio (no trio dependency, runs modules directly with httpx.AsyncClient + semaphore)
+- Extended `run_basic_pipeline()` with optional Reacher SMTP step (step 4) and Holehe platform step (step 5); both are no-ops when disabled so existing behavior is unchanged
+- Added `reacher_url`, `use_reacher`, `use_holehe` fields to `FinderConfig`; `find_emails()` now passes them to the pipeline
+- Added `--no-reacher` and `--holehe` flags to the `find` CLI command
+- 299 tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/verify/holehe.py` | Added | Programmatic holehe check; +15 for ≥2 platforms, +5 for 1 |
+| `coldreach/verify/pipeline.py` | Modified | Added Reacher + Holehe as optional steps 4 and 5 |
+| `coldreach/core/finder.py` | Modified | `FinderConfig` gets `reacher_url`, `use_reacher`, `use_holehe`; passed to pipeline |
+| `coldreach/cli.py` | Modified | `--no-reacher` and `--holehe` flags wired through to `FinderConfig` |
+| `tests/unit/test_verify_holehe.py` | Added | 8 tests covering pass/warn/skip/exception/threshold cases |
+
+### Major Logic / Code Changes
+- **Pipeline now 5 steps**: syntax → disposable → DNS → Reacher (optional) → Holehe (optional)
+- **Reacher is on by default** (`use_reacher=True`, `reacher_url="http://localhost:8083"`); gracefully SKIPs if container not running
+- **Holehe is opt-in** (`use_holehe=False` by default) — slow (15-45s per email), enable with `--holehe`
+- **Holehe score**: +15 if registered on ≥2 platforms, +5 for 1, WARN+0 for none — never hard-fails
+- **holehe programmatic API**: `import_submodules("holehe.modules")` + `get_functions()` gives module list; each module is `async def(email, client, out)` compatible with asyncio httpx
+
+---
+
+## [2026-04-18 12:00] — Rewrite HarvesterSource to CLI, add quick/full modes, fix HTML entity emails
+
+### What Was Done
+- Rewrote `HarvesterSource` entirely: dropped REST API approach, switched to `docker exec theHarvester` CLI with `-f /tmp/output` JSON file output (same pattern as SpiderFoot CLI rewrite)
+- Added `_HTML_ENTITY_PREFIX_RE` to filter JS unicode-escape artifacts (`u003caccount@domain.com`) in both harvester and web crawler
+- Added `--quick` and `--full` CLI flags to `coldreach find`: quick skips harvester+spiderfoot (~10s), default uses free harvester sources (~2min), full uses `-b all` (~5min)
+- Added `harvester_sources` field to `FinderConfig` to pass `"all"` in full mode
+- Added `--no-spiderfoot` toggle alongside existing `--no-harvester`
+- Removed `-x` (strict) flag from SpiderFoot CLI — it blocked chained module execution and returned 0 emails
+- Rewrote `tests/unit/test_sources_harvester.py` to match new CLI-based interface
+- 291 tests passing, ruff + mypy clean
+- Live test confirmed: `coldreach find --domain kayak.com --quick` returns 12 emails in ~5s
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/harvester.py` | Rewritten | CLI-based via `docker exec theHarvester -f /tmp/output`; reads JSON output file |
+| `coldreach/sources/web_crawler.py` | Modified | Added HTML entity prefix filter in `_add()` |
+| `coldreach/core/finder.py` | Modified | Added `harvester_sources`, `use_spiderfoot` fields to `FinderConfig` |
+| `coldreach/cli.py` | Modified | Added `--quick`, `--full`, `--no-spiderfoot` flags; mode tag display |
+| `tests/unit/test_sources_harvester.py` | Rewritten | 20 tests for CLI-based interface incl. timeout, docker-not-found, HTML entity filter |
+
+### Major Logic / Code Changes
+- **HarvesterSource._run_cli**: `docker exec coldreach-theharvester theHarvester -d <domain> -b <sources> -l 500 -q -f /tmp/cr-<domain>` → reads `/tmp/cr-<domain>.json` via second `docker exec cat`
+- **HarvesterSource._filter_emails**: lowercase → regex validate → HTML entity check → domain filter → dedup
+- **_HTML_ENTITY_PREFIX_RE**: `r"^u[0-9a-f]{3,4}"` — catches `u003c` (`<`), `u002f` (`/`) etc. from JS unicode escapes
+- **Quick mode**: `--quick` sets `no_harvester=True, no_spiderfoot=True` — only fast HTTP sources run
+- **Full mode**: `--full` passes `harvester_sources="all"` → CLI gets `-b all`; default passes free sources list
+
+### Notes
+- SpiderFoot still takes 5+ minutes for large domains; `--quick` is the recommended default for interactive use
+- `_FREE_SOURCES` list contains 15 sources that work without API keys
+
+---
+
+## [2026-04-12 20:40] — Fix all sources: SearXNG config, harvester params, SpiderFoot CLI rewrite
+
+### What Was Done
+- Created `config/searxng/settings.yml` (directory was owned by Docker's UID 977, written via `docker run alpine`) — enables JSON search format that our API client requires
+- Fixed theHarvester `_FREE_SOURCES`: removed `bing` (not in this version's source list), added `commoncrawl`, `waybackarchive`, `sublist3r`, `robtex`, `yahoo`, `baidu`, `threatcrowd`
+- Fixed theHarvester params format: changed from CSV string (`source=bing%2Cduckduckgo`) to repeated params (`source=bing&source=duckduckgo`) — FastAPI endpoint declares `source` as `List[str]`
+- Rewrote `SpiderFootSource` entirely: dropped CherryPy web API (broken — `usecase=footprint` finds zero modules in container config), switched to `docker exec` + `sf.py` CLI (same approach as reference `spiderfoot_tool.py`)
+- Remapped Docker host ports to avoid clashing with local dev services (postgres→5433, redis→6380, searxng→8088, theharvester→5050)
+- Updated `FinderConfig` defaults to match new ports (`searxng_url=:8088`, `harvester_url=:5050`), `spiderfoot_url` replaced with `spiderfoot_container` name
+- Removed temp reference files (`spiderfoot_tool.py`, `theharvester_tool.py`)
+- 280 unit tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/spiderfoot.py` | Rewritten | CLI-based via `docker exec sf.py` — no more web API |
+| `coldreach/sources/harvester.py` | Modified | Fixed `_FREE_SOURCES` list; params as `list[tuple]` for repeated keys |
+| `coldreach/core/finder.py` | Modified | `spiderfoot_url` → `spiderfoot_container`; harvester timeout 60→120s |
+| `docker-compose.yml` | Modified | Remapped ports to avoid local dev conflicts |
+| `config/searxng/settings.yml` | Added | SearXNG config with JSON format enabled |
+| `tests/unit/test_sources_spiderfoot.py` | Rewritten | 20 tests for new CLI-based interface |
+| `tests/unit/test_sources_harvester.py` | Modified | Updated `_FREE_SOURCES` reference |
+| `tests/unit/test_config.py` | Modified | Fixed `pytest.raises(Exception)` → `pytest.raises(ValidationError)` |
+
+### Major Logic / Code Changes
+- **SpiderFoot CLI command**: `docker exec -w /home/spiderfoot coldreach-spiderfoot /opt/venv/bin/python sf.py -s <domain> -t EMAILADDR -u passive -o json -f -q` — `-f` filters output to EMAILADDR events only, `-u passive` avoids active probing
+- **SpiderFoot web API root cause**: `POST /startscan?usecase=footprint` iterates `self.config['__modules__']` to build a module list — this dict is empty in the container's CherryPy startup config, so no modules are found and the scan always errors. CLI mode loads modules from the filesystem directly.
+- **theHarvester params**: httpx encodes `dict[str, list]` as `source=bing%2Cduckduckgo` (comma URL-encoded as a single value). FastAPI then receives `["bing,duckduckgo"]` as a single item and fails validation. Fix: use `list[tuple[str, str|int|...]]` which httpx encodes as `source=bing&source=duckduckgo`.
+- **SpiderFoot scan duration**: passive scans on large domains (stripe.com) can take 5–10+ minutes. `max_wait=300s` (5 min) is a hard cutoff — use `--no-spiderfoot` for fast queries.
+
+### Notes
+- SearXNG settings.yml is owned by root inside the Docker volume (written via `docker run alpine`). If recreating from scratch, re-run: `docker run --rm -v ./config/searxng:/etc/searxng alpine sh -c 'cat > /etc/searxng/settings.yml ...'`
+- SpiderFoot with `--no-spiderfoot` skips the slow scan; SearXNG + theHarvester + GitHub cover most email discovery needs for known domains
+- theHarvester free sources that reliably find emails: `duckduckgo`, `yahoo`, `baidu` (search engine scraping); `crtsh`, `certspotter`, `hackertarget` (subdomain/cert data, rarely finds emails but useful for host discovery)
+
+---
+
+## [2026-04-11 19:30] — SpiderFoot source + harvester REST API rewrite + full test coverage
+
+### What Was Done
+- Rewrote `HarvesterSource` from subprocess wrapper to REST API client against theHarvester's `restfulHarvest` FastAPI server
+- Built `SpiderFootSource` — full async polling client for SpiderFoot's CherryPy web API
+- Rewired `FinderConfig` and CLI `find` command to support both new sources with `--no-harvester` / `--no-spiderfoot` flags
+- Rebuilt `docker-compose.yml`: removed Firecrawl (image access denied), added `spiderfoot` and `theharvester` services built from local clones
+- Rewrote `tests/unit/test_sources_harvester.py` to match REST API (dropped subprocess mocks)
+- Added `tests/unit/test_sources_spiderfoot.py` — 17 new tests covering start/poll/email-fetch/full-path
+- All 279 unit tests passing, ruff + mypy clean
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/spiderfoot.py` | Added | SpiderFoot REST API client: start scan → poll → fetch EMAILADDR results |
+| `coldreach/sources/harvester.py` | Modified | Rewritten from subprocess to `GET /query` REST API client |
+| `coldreach/core/finder.py` | Modified | Added `use_spiderfoot`, `spiderfoot_url`, `harvester_url` to `FinderConfig`; wired both sources |
+| `coldreach/cli.py` | Modified | Added `--no-spiderfoot` flag, wired into `FinderConfig` |
+| `docker-compose.yml` | Modified | Added spiderfoot + theharvester build-from-local services; removed Firecrawl |
+| `tests/unit/test_sources_harvester.py` | Modified | Rewritten for httpx REST API mocks (removed subprocess mocks) |
+| `tests/unit/test_sources_spiderfoot.py` | Added | 17 tests: _start_scan, _wait_for_scan, _get_emails, full fetch path |
+
+### Major Logic / Code Changes
+- `HarvesterSource._query()`: now calls `GET /query?domain=<d>&source=<csv>&limit=<n>` and reads `data["emails"]`; sources list is joined to CSV string for proper httpx QueryParams typing
+- `SpiderFootSource.fetch()`: three-phase async flow — POST `/startscan` (usecase=footprint) → poll GET `/scanstatus` (index 5 = status string) → GET `/scaneventresultsunique?eventType=EMAILADDR`; max wait 300s with 5s poll interval
+- `SpiderFootSource._start_scan()`: three fallback strategies for scan ID extraction — JSON body `["SUCCESS", {"id": ...}]`, redirect `Location` header, raw body regex
+- `SpiderFootSource._get_emails()`: HTML-unescapes `&#64;` / `&amp;` before domain-filtering; result deduped via `seen` set
+- Both sources return empty results gracefully when Docker services are not running (ConnectError caught and logged at DEBUG)
+- `docker-compose.yml` theharvester: ports `5000:80` (FastAPI runs on 80 inside container); volume-mounts `api-keys.yaml` and `proxies.yaml` read-only so keys can be edited without rebuilding
+
+### Removed / Deprecated
+- `HarvesterSource` subprocess-based implementation (removed `_is_available()`, `asyncio.create_subprocess_exec`, `_parse_emails()` helper)
+- `_FREE_SOURCES` list entry `"thc"` kept but `source` param now sent as CSV string instead of list
+- Firecrawl removed from `docker-compose.yml` — `ghcr.io/mendableai/firecrawl` image returns 403; their self-hosted stack requires multiple services beyond a single compose entry
+
+### Notes
+- theHarvester REST API docs: `http://localhost:5000/docs` — Swagger UI available once service is up
+- SpiderFoot Web UI: `http://localhost:5001/` — scan results browsable after `coldreach find` runs
+- `docker compose build spiderfoot theharvester` required on first run (builds from local clones in `./spiderfoot/` and `./theHarvester/`)
+
+---
+
 ## [2026-04-11] — Phase 2 complete: all sources, pattern generator, catch-all, Reacher SMTP
 
 ### What Was Done

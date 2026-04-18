@@ -1,22 +1,27 @@
 ###############################################################################
 # ColdReach — Docker Compose service stack
 #
-# Quick start:
+# Quick start (core services only):
+#   docker compose up postgres redis searxng reacher -d
+#
+# Full stack (all OSINT + verification services):
 #   docker compose up -d
 #
-# Start only the core services (SQLite + Reacher — no Redis, no SearXNG):
-#   docker compose up reacher -d
+# Build images for local services (first time, or after code changes):
+#   docker compose build spiderfoot theharvester
 #
-# Full stack (all sources + verification services):
-#   docker compose up -d
+# Services (non-default ports to avoid clashing with local dev services):
+#   postgres      :5433  — persistent storage       (avoids local :5432)
+#   redis         :6380  — result cache (TTL 7 days) (avoids local :6379)
+#   searxng       :8088  — metasearch engine         (avoids local :8080)
+#   reacher       :8083  — SMTP email verification (Rust microservice)
+#   spiderfoot    :5001  — deep OSINT REST API (builds from ./spiderfoot/)
+#   theharvester  :5050  — multi-source email/host harvester REST API
+#                          (builds from ./theHarvester/, avoids local :5000)
 #
-# Services map:
-#   postgres    :5432   — persistent storage (switch from SQLite for production)
-#   redis       :6379   — result caching (TTL 7 days)
-#   searxng     :8080   — metasearch engine (rate-limit aware proxy)
-#   reacher     :8083   — SMTP email verification microservice (Rust)
-#   spiderfoot  :5001   — deep OSINT: WHOIS / DNS / social graph
-#   firecrawl   :3002   — JS-heavy site crawler (React/SPA support)
+# Note: Firecrawl requires their full self-hosted stack (API + workers +
+# Playwright). httpx handles most crawling needs. To add Firecrawl, see:
+# https://github.com/mendableai/firecrawl/blob/main/docker-compose.yaml
 ###############################################################################
 
 services:
@@ -31,7 +36,7 @@ services:
       POSTGRES_USER: coldreach
       POSTGRES_PASSWORD: coldreach_dev
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - coldreach_pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +52,7 @@ services:
     container_name: coldreach-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     command: >
       redis-server
       --maxmemory 256mb
@@ -62,20 +67,18 @@ services:
       retries: 5
 
   # ── SearXNG ────────────────────────────────────────────────────────────────
-  # Privacy-first metasearch engine — queries 40+ search engines simultaneously.
-  # Rate-limiting note: underlying engines (Google, Bing, Brave) will throttle
-  # queries from a shared IP. ColdReach implements automatic fallback to
-  # DuckDuckGo Lite → Brave Search when SearXNG returns empty results.
+  # Privacy-first metasearch engine — queries 40+ search engines.
+  # ColdReach falls back automatically to DDG Lite → Brave when results are empty.
   searxng:
     image: searxng/searxng:latest
     container_name: coldreach-searxng
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8088:8080"
     volumes:
       - ./config/searxng:/etc/searxng:rw
     environment:
-      SEARXNG_BASE_URL: "http://localhost:8080/"
+      SEARXNG_BASE_URL: "http://localhost:8088/"
       SEARXNG_SECRET_KEY: "coldreach-searxng-change-this-in-production"
     cap_drop:
       - ALL
@@ -85,9 +88,7 @@ services:
       - SETUID
 
   # ── Reacher ────────────────────────────────────────────────────────────────
-  # Rust-based SMTP email verification microservice.
-  # Much better than raw smtplib — handles Hotmail/Yahoo quirks, proper TLS,
-  # catch-all detection, and SMTP rate limiting.
+  # Rust SMTP verifier. Handles catch-all, Hotmail/Yahoo quirks, TLS.
   # API: POST http://localhost:8083/v0/check_email {"to_email": "user@domain.com"}
   reacher:
     image: reacherhq/backend:latest
@@ -98,40 +99,54 @@ services:
     environment:
       RCH_HTTP_HOST: "0.0.0.0"
       RCH_HTTP_PORT: "8083"
-      # Optional: set your own sending domain for HELO
-      # RCH_HELLO_NAME: "coldreach.local"
+      # RCH_HELLO_NAME: "coldreach.local"   # optional: custom HELO domain
 
   # ── SpiderFoot ─────────────────────────────────────────────────────────────
-  # Deep OSINT engine — WHOIS, DNS, social profiles, related entities.
-  # Complements theHarvester (subprocess) with structured REST API output.
+  # Deep OSINT engine built from ./spiderfoot/ (local clone of v4.0).
+  # Covers: WHOIS, DNS, subdomains, social profiles, breach data, 200+ modules.
   # API: http://localhost:5001/api/
+  # Web UI: http://localhost:5001/
+  # Docs: https://www.spiderfoot.net/documentation/
+  #
+  # First run: docker compose build spiderfoot
   spiderfoot:
-    image: smicallef/spiderfoot:latest
+    build:
+      context: ./spiderfoot
+      dockerfile: Dockerfile
     container_name: coldreach-spiderfoot
     restart: unless-stopped
     ports:
       - "5001:5001"
     volumes:
-      - coldreach_spiderfoot_data:/home/spiderfoot/.spiderfoot
+      - coldreach_spiderfoot_data:/var/lib/spiderfoot
 
-  # ── Firecrawl ──────────────────────────────────────────────────────────────
-  # JS-heavy / SPA site crawler. Use when Crawl4AI fails on React/Vue sites.
-  # Requires Redis (shared with coldreach-redis).
-  # API: http://localhost:3002
-  firecrawl:
-    image: ghcr.io/mendableai/firecrawl:latest
-    container_name: coldreach-firecrawl
+  # ── theHarvester ───────────────────────────────────────────────────────────
+  # Multi-source email/host/subdomain harvester REST API.
+  # Built from ./theHarvester/ (local clone).
+  # API: GET http://localhost:5050/query?domain=acme.com&source=bing,crtsh&limit=500
+  # Swagger docs: http://localhost:5050/docs
+  # Source list: http://localhost:5050/sources
+  #
+  # First run: docker compose build theharvester
+  #
+  # Free sources (no API key): bing, duckduckgo, crtsh, hackertarget,
+  #   rapiddns, certspotter, dnsdumpster, urlscan, threatminer, otx
+  # API key sources: brave, github, hunter, virustotal, shodan, etc.
+  #   → set keys in ./theHarvester/theHarvester/data/api-keys.yaml
+  theharvester:
+    build:
+      context: ./theHarvester
+      dockerfile: Dockerfile
+    container_name: coldreach-theharvester
     restart: unless-stopped
     ports:
-      - "3002:3002"
-    environment:
-      PORT: "3002"
-      REDIS_URL: "redis://redis:6379"
-      # Disable telemetry
-      TELEMETRY_ENABLED: "false"
-    depends_on:
-      redis:
-        condition: service_healthy
+      - "5050:80"
+    volumes:
+      # Mount your api-keys.yaml so you can edit it without rebuilding
+      - ./theHarvester/theHarvester/data/api-keys.yaml:/root/.theHarvester/api-keys.yaml:ro
+      - ./theHarvester/theHarvester/data/api-keys.yaml:/etc/theHarvester/api-keys.yaml:ro
+      - ./theHarvester/theHarvester/data/proxies.yaml:/root/.theHarvester/proxies.yaml:ro
+      - ./theHarvester/theHarvester/data/proxies.yaml:/etc/theHarvester/proxies.yaml:ro
 
 # ── Named volumes ──────────────────────────────────────────────────────────
 volumes:

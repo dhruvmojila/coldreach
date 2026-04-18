@@ -3,9 +3,12 @@ ColdReach CLI — entry point for all terminal commands.
 
 Commands
 --------
-    coldreach verify <email>     — run basic verification pipeline
-    coldreach find --domain ...  — discover emails for a domain
-    coldreach version            — print version and exit
+    coldreach verify <email>       — run basic verification pipeline
+    coldreach find --domain ...    — discover emails for a domain
+    coldreach cache list           — show all cached domains
+    coldreach cache clear          — clear cache (all or one domain)
+    coldreach cache stats          — show cache size and TTL info
+    coldreach version              — print version and exit
 
 Rich is used for all styled output. Pass ``--no-color`` to disable.
 Pass ``--json`` to any command that supports it for machine-readable output.
@@ -25,6 +28,7 @@ from rich.table import Table
 from coldreach import __version__
 from coldreach.core.finder import FinderConfig, find_emails
 from coldreach.core.models import DomainResult
+from coldreach.storage.cache import CacheStore
 from coldreach.verify._types import CheckStatus
 from coldreach.verify.pipeline import PipelineResult, run_basic_pipeline
 
@@ -155,6 +159,40 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
 @click.option("--no-reddit", is_flag=True, default=False, help="Skip Reddit search.")
 @click.option("--no-search", is_flag=True, default=False, help="Skip SearXNG/DDG search.")
 @click.option("--no-harvester", is_flag=True, default=False, help="Skip theHarvester.")
+@click.option("--no-spiderfoot", is_flag=True, default=False, help="Skip SpiderFoot.")
+@click.option(
+    "--no-reacher",
+    is_flag=True,
+    default=False,
+    help="Skip SMTP verification via Reacher.",
+)
+@click.option(
+    "--holehe",
+    "use_holehe",
+    is_flag=True,
+    default=False,
+    help="Enable platform-presence check via holehe (slow, ~30s per email).",
+)
+@click.option("--no-cache", is_flag=True, default=False, help="Skip cache read and write.")
+@click.option(
+    "--refresh",
+    is_flag=True,
+    default=False,
+    help="Ignore cached result but overwrite cache with fresh data.",
+)
+@click.option(
+    "--quick",
+    is_flag=True,
+    default=False,
+    help="Quick mode: skip slow OSINT tools (theHarvester + SpiderFoot). ~10s vs ~5min.",
+)
+@click.option(
+    "--full",
+    "use_full",
+    is_flag=True,
+    default=False,
+    help="Full mode: use all sources including theHarvester with every available source.",
+)
 @click.option(
     "--timeout",
     type=float,
@@ -177,13 +215,27 @@ def find(
     no_reddit: bool,
     no_search: bool,
     no_harvester: bool,
+    no_spiderfoot: bool,
+    no_reacher: bool,
+    use_holehe: bool,
+    no_cache: bool,
+    refresh: bool,
+    quick: bool,
+    use_full: bool,
     timeout: float,
 ) -> None:
     """Find email addresses for a domain or company.
 
     \b
+    Speed presets:
+      --quick   ~10s  — web, WHOIS, GitHub, Reddit, SearXNG only
+      (default) ~2min — above + theHarvester (free sources)
+      --full    ~5min — all sources + theHarvester with every available source
+
+    \b
     Examples:
-      coldreach find --domain stripe.com
+      coldreach find --domain stripe.com --quick
+      coldreach find --domain acme.com --full
       coldreach find --domain acme.com --name "John Smith"
       coldreach find --domain acme.com --no-github --json
       coldreach find --domain acme.com --min-confidence 40
@@ -194,6 +246,11 @@ def find(
 
     target_domain = domain or company or ""
 
+    # --quick skips slow CLI-based OSINT tools
+    if quick:
+        no_harvester = True
+        no_spiderfoot = True
+
     cfg = FinderConfig(
         use_web_crawler=not no_web,
         use_whois=not no_whois,
@@ -201,6 +258,12 @@ def find(
         use_reddit=not no_reddit,
         use_search_engine=not no_search,
         use_harvester=not no_harvester,
+        use_spiderfoot=not no_spiderfoot,
+        harvester_sources="all" if use_full else None,
+        use_reacher=not no_reacher,
+        use_holehe=use_holehe,
+        use_cache=not no_cache,
+        refresh_cache=refresh,
         min_confidence=min_confidence,
         request_timeout=timeout,
     )
@@ -215,12 +278,21 @@ def find(
                 ("reddit", not no_reddit),
                 ("search", not no_search),
                 ("harvester", not no_harvester),
+                ("spiderfoot", not no_spiderfoot),
+                ("reacher", not no_reacher),
+                ("holehe", use_holehe),
             ]
             if enabled
         ]
+        if quick:
+            mode_tag = " [yellow](quick)[/yellow]"
+        elif use_full:
+            mode_tag = " [cyan](full)[/cyan]"
+        else:
+            mode_tag = ""
         console.print(
             f"\n  [dim]Searching [bold]{target_domain}[/bold] "
-            f"via {', '.join(active_sources)}…[/dim]\n"
+            f"via {', '.join(active_sources)}…[/dim]{mode_tag}\n"
         )
 
     result = asyncio.run(find_emails(target_domain, person_name=name, config=cfg))
@@ -348,3 +420,73 @@ def _domain_result_to_dict(result: DomainResult) -> dict[str, object]:
         "total": len(result.emails),
         "emails": [r.to_dict() for r in result.emails],
     }
+
+
+# ---------------------------------------------------------------------------
+# cache subcommand group
+# ---------------------------------------------------------------------------
+
+_CACHE_DB = "~/.coldreach/cache.db"
+
+
+@main.group()
+def cache() -> None:
+    """Manage the local result cache.
+
+    \b
+    Examples:
+      coldreach cache list
+      coldreach cache stats
+      coldreach cache clear
+      coldreach cache clear --domain stripe.com
+    """
+
+
+@cache.command(name="list")
+def cache_list() -> None:
+    """List all cached domains."""
+    store = CacheStore(db_path=_CACHE_DB)
+    domains = store.list_domains()
+    if not domains:
+        console.print("  [dim]Cache is empty.[/dim]")
+        return
+
+    table = Table(
+        show_header=True, header_style="bold dim", box=None, padding=(0, 2), show_edge=False
+    )
+    table.add_column("Domain", min_width=30)
+    table.add_column("Cached at (UTC)", width=22)
+    table.add_column("Status", width=10)
+
+    for domain, cached_at, expired in domains:
+        status = "[red]expired[/red]" if expired else "[green]valid[/green]"
+        table.add_row(domain, cached_at.strftime("%Y-%m-%d %H:%M"), status)
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
+@cache.command(name="clear")
+@click.option("--domain", "-d", default=None, help="Clear only this domain.")
+def cache_clear(domain: str | None) -> None:
+    """Clear cached results (all or a specific domain)."""
+    store = CacheStore(db_path=_CACHE_DB)
+    deleted = store.clear(domain=domain)
+    if domain:
+        console.print(f"  Cleared cache for [bold]{domain}[/bold] ({deleted} record(s))")
+    else:
+        console.print(f"  Cleared entire cache ({deleted} record(s))")
+
+
+@cache.command(name="stats")
+def cache_stats() -> None:
+    """Show cache statistics."""
+    store = CacheStore(db_path=_CACHE_DB)
+    s = store.stats()
+    console.print()
+    console.print(f"  [bold]Cache:[/bold] {_CACHE_DB}")
+    console.print(f"  Total entries : [bold]{s['total']}[/bold]")
+    console.print(f"  Valid (fresh)  : [green]{s['valid']}[/green]")
+    console.print(f"  Expired        : [dim]{s['expired']}[/dim]")
+    console.print()

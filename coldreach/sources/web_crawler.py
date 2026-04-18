@@ -125,7 +125,7 @@ _CONFIDENCE_HINT: dict[EmailSource, int] = {
 
 _HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (compatible; ColdReach/0.1; +https://github.com/yourusername/coldreach)"
+        "Mozilla/5.0 (compatible; ColdReach/0.1; +https://github.com/dhruvmojila/coldreach)"
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
@@ -152,6 +152,10 @@ def _extract_emails(html: str, domain: str) -> list[str]:
         # Reject asset-extension TLDs (e.g. "icon@2x.png")
         tld = addr.rsplit(".", 1)[-1] if "." in addr else ""
         if tld in _ASSET_TLDS:
+            return
+        # Reject HTML/JS unicode-escape artifacts (e.g. "u003c<account@...")
+        local = addr.split("@")[0] if "@" in addr else addr
+        if re.match(r"u[0-9a-f]{3,4}", local, re.IGNORECASE):
             return
         if _belongs_to_domain(addr, domain):
             seen.add(addr)

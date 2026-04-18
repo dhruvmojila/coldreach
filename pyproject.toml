@@ -121,21 +121,24 @@ dev = [
   "faker>=33.0",
   "types-redis>=4.6",
 ]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.27",
+  "mkdocs-autorefs>=1.2",
+]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/coldreach"
-Repository = "https://github.com/yourusername/coldreach"
-"Bug Tracker" = "https://github.com/yourusername/coldreach/issues"
-Changelog = "https://github.com/yourusername/coldreach/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/dhruvmojila/coldreach"
+Repository = "https://github.com/dhruvmojila/coldreach"
+"Bug Tracker" = "https://github.com/dhruvmojila/coldreach/issues"
+Changelog = "https://github.com/dhruvmojila/coldreach/blob/main/CHANGELOG.md"
 
 # ---------------------------------------------------------------------------
 # Hatchling build — include bundled data files
 # ---------------------------------------------------------------------------
 [tool.hatch.build.targets.wheel]
 packages = ["coldreach"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"coldreach/data" = "coldreach/data"
 
 # ---------------------------------------------------------------------------
 # Ruff — linting + formatting (replaces flake8, isort, pyupgrade)

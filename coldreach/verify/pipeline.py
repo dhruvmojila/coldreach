@@ -1,16 +1,15 @@
 """
 Email verification pipeline — chains individual checkers in order.
 
-The basic pipeline (no external services required) runs three fast checks:
+Steps (in order):
     1. Syntax       — RFC 5322 structure validation
     2. Disposable   — known throwaway domain blocklist
     3. DNS / MX     — async domain existence + MX record lookup
+    4. Reacher      — SMTP verification via Reacher microservice (optional)
+    5. Holehe       — platform-presence check across 120+ sites (optional, slow)
 
 Each check contributes a ``score_delta`` to a running confidence score.
 The pipeline stops early on a hard FAIL so downstream checks aren't wasted.
-
-Future checkers (Reacher SMTP, Holehe platform, Gravatar) will be layered on
-top of this base pipeline in later modules.
 
 Score baseline
 --------------
@@ -19,9 +18,9 @@ All emails start at a neutral baseline of 30. Checks add or subtract:
     Syntax PASS:         implied (no delta — just a gate)
     Not disposable:     +5
     MX records found:   +10
-    SMTP valid:         +20  (Phase 2, Reacher)
-    Holehe platforms:   +15  (Phase 2, Holehe)
-    Found on website:   +35  (Phase 2, crawler sources)
+    SMTP valid:         +20  (Reacher — requires Docker service)
+    Holehe platforms:   +15  (Holehe — slow, opt-in)
+    Found on website:   +35  (source hint from crawler)
 
 Final score is clamped to [0, 100].
 """
@@ -35,6 +34,8 @@ from typing import Any
 from coldreach.verify._types import CheckResult, CheckStatus
 from coldreach.verify.disposable import check_disposable
 from coldreach.verify.dns_check import check_dns
+from coldreach.verify.holehe import check_holehe
+from coldreach.verify.reacher import check_reacher
 from coldreach.verify.syntax import check_syntax
 
 logger = logging.getLogger(__name__)
@@ -157,13 +158,14 @@ async def run_basic_pipeline(
     email: str,
     *,
     dns_timeout: float = 5.0,
+    reacher_url: str | None = None,
+    reacher_timeout: float = 15.0,
+    run_holehe: bool = False,
+    holehe_timeout: float = 30.0,
 ) -> PipelineResult:
-    """Run the dependency-free basic verification pipeline.
+    """Run the full verification pipeline for one email address.
 
-    Checks: syntax → disposable → DNS (MX).
-
-    Stops early at the first hard FAIL to avoid unnecessary network calls.
-    All three checks run without any external services or API keys.
+    Steps: syntax → disposable → DNS → Reacher (optional) → Holehe (optional).
 
     Parameters
     ----------
@@ -171,26 +173,16 @@ async def run_basic_pipeline(
         The email address to verify.
     dns_timeout:
         Timeout in seconds for the DNS resolver.
-
-    Returns
-    -------
-    PipelineResult
-        Contains all check results and the computed confidence score.
-
-    Examples
-    --------
-    >>> import asyncio
-    >>> result = asyncio.run(run_basic_pipeline("john@stripe.com"))
-    >>> result.passed
-    True
-    >>> result.score > 30
-    True
-
-    >>> result = asyncio.run(run_basic_pipeline("bad@@email"))
-    >>> result.passed
-    False
-    >>> result.score
-    0
+    reacher_url:
+        Base URL of the Reacher SMTP service (e.g. ``"http://localhost:8083"``).
+        Pass ``None`` to skip SMTP verification.
+    reacher_timeout:
+        HTTP timeout for Reacher requests (SMTP handshakes can be slow).
+    run_holehe:
+        If True, check whether the email is registered on 120+ platforms.
+        This is slow (15-45s) — only enable for high-value candidates.
+    holehe_timeout:
+        Per-request HTTP timeout for holehe module calls.
     """
     result = PipelineResult(email=email)
 
@@ -202,8 +194,7 @@ async def run_basic_pipeline(
         logger.debug("Pipeline stopped at syntax for %r", email)
         return result
 
-    # Use normalised email for all subsequent checks
-    normalized = syntax_result.metadata.get("normalized", email)
+    normalized = str(syntax_result.metadata.get("normalized", email))
 
     # ── Step 2: Disposable domain ─────────────────────────────────────────────
     disposable_result = check_disposable(normalized)
@@ -216,6 +207,27 @@ async def run_basic_pipeline(
     # ── Step 3: DNS / MX records ──────────────────────────────────────────────
     dns_result = await check_dns(normalized, timeout=dns_timeout)
     result.checks["dns"] = dns_result
+
+    if dns_result.failed:
+        logger.debug("Pipeline stopped at DNS for %r", normalized)
+        return result
+
+    # ── Step 4: Reacher SMTP verification (optional) ─────────────────────────
+    if reacher_url:
+        reacher_result = await check_reacher(
+            normalized,
+            reacher_url=reacher_url,
+            timeout=reacher_timeout,
+        )
+        result.checks["reacher"] = reacher_result
+        if reacher_result.failed:
+            logger.debug("Pipeline stopped at Reacher for %r", normalized)
+            return result
+
+    # ── Step 5: Holehe platform presence (optional, slow) ────────────────────
+    if run_holehe:
+        holehe_result = await check_holehe(normalized, timeout=holehe_timeout)
+        result.checks["holehe"] = holehe_result
 
     logger.debug(
         "Pipeline complete for %r — passed=%s score=%d",
