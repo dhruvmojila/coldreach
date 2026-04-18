@@ -51,17 +51,13 @@ class TestTargetedPatterns:
 
     def test_known_format_excludes_unrelated_formats(self) -> None:
         # first.last domain — should NOT include initials (js@acme.com)
-        patterns = targeted_patterns(
-            "John Smith", "acme.com", ["jane.doe@acme.com"]
-        )
+        patterns = targeted_patterns("John Smith", "acme.com", ["jane.doe@acme.com"])
         emails = [p.email for p in patterns]
         assert "js@acme.com" not in emails
 
     def test_companion_format_included(self) -> None:
         # first.last → companion is flast (jsmith@acme.com)
-        patterns = targeted_patterns(
-            "John Smith", "acme.com", ["jane.doe@acme.com"]
-        )
+        patterns = targeted_patterns("John Smith", "acme.com", ["jane.doe@acme.com"])
         emails = [p.email for p in patterns]
         assert "john.smith@acme.com" in emails
         assert "jsmith@acme.com" in emails
@@ -71,8 +67,8 @@ class TestTargetedPatterns:
         emails = [p.email for p in patterns]
         # Should include the top-3 fallback formats
         assert "john.smith@acme.com" in emails  # first.last
-        assert "jsmith@acme.com" in emails       # flast
-        assert "john@acme.com" in emails         # first
+        assert "jsmith@acme.com" in emails  # flast
+        assert "john@acme.com" in emails  # first
 
     def test_fallback_capped_at_max_fallback(self) -> None:
         patterns = targeted_patterns("John Smith", "acme.com", [], max_fallback=1)

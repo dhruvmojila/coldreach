@@ -99,6 +99,7 @@ class TestCacheStoreExpiry:
         store.set("expired.com", _make_result("expired.com"))
         # Force expires_at to be in the past
         import sqlite3
+
         db_path = str(tmp_path / "exp.db")
         with sqlite3.connect(db_path) as conn:
             conn.execute(
@@ -145,6 +146,7 @@ class TestCacheStoreList:
         store = CacheStore(db_path=str(tmp_path / "lst.db"), ttl_days=7)
         store.set("ok.com", _make_result("ok.com"))
         import sqlite3
+
         with sqlite3.connect(str(tmp_path / "lst.db")) as conn:
             conn.execute(
                 "UPDATE domain_cache SET expires_at = ? WHERE domain = ?",
@@ -162,6 +164,7 @@ class TestCacheStoreStats:
         store.set("valid.com", _make_result("valid.com"))
         store.set("old.com", _make_result("old.com"))
         import sqlite3
+
         with sqlite3.connect(str(tmp_path / "stats.db")) as conn:
             conn.execute(
                 "UPDATE domain_cache SET expires_at = ? WHERE domain = ?",

@@ -40,16 +40,19 @@ class TestCheckHolehe:
     @pytest.mark.asyncio
     async def test_skips_when_holehe_not_installed(self) -> None:
         import sys
+
         with patch.dict(sys.modules, {"holehe": None, "holehe.core": None}):
             result = await check_holehe("test@example.com")
         assert result.status == CheckStatus.SKIP
 
     @pytest.mark.asyncio
     async def test_returns_pass_with_high_score_for_two_platforms(self) -> None:
-        mods = _make_modules([
-            {"name": "github", "domain": "github.com", "exists": True},
-            {"name": "discord", "domain": "discord.com", "exists": True},
-        ])
+        mods = _make_modules(
+            [
+                {"name": "github", "domain": "github.com", "exists": True},
+                {"name": "discord", "domain": "discord.com", "exists": True},
+            ]
+        )
         with _patch_holehe_core(mods):
             result = await check_holehe("test@example.com")
         assert result.passed
@@ -58,10 +61,12 @@ class TestCheckHolehe:
 
     @pytest.mark.asyncio
     async def test_returns_pass_with_low_score_for_one_platform(self) -> None:
-        mods = _make_modules([
-            {"name": "github", "domain": "github.com", "exists": True},
-            {"name": "discord", "domain": "discord.com", "exists": False},
-        ])
+        mods = _make_modules(
+            [
+                {"name": "github", "domain": "github.com", "exists": True},
+                {"name": "discord", "domain": "discord.com", "exists": False},
+            ]
+        )
         with _patch_holehe_core(mods):
             result = await check_holehe("test@example.com")
         assert result.passed
@@ -70,9 +75,11 @@ class TestCheckHolehe:
 
     @pytest.mark.asyncio
     async def test_returns_warn_for_zero_platforms(self) -> None:
-        mods = _make_modules([
-            {"name": "github", "domain": "github.com", "exists": False},
-        ])
+        mods = _make_modules(
+            [
+                {"name": "github", "domain": "github.com", "exists": False},
+            ]
+        )
         with _patch_holehe_core(mods):
             result = await check_holehe("test@example.com")
         assert result.status == CheckStatus.WARN
@@ -92,21 +99,25 @@ class TestCheckHolehe:
     @pytest.mark.asyncio
     async def test_custom_min_platforms_threshold(self) -> None:
         # 3 found, but min_platforms=4 → only +5
-        mods = _make_modules([
-            {"name": "github", "exists": True},
-            {"name": "discord", "exists": True},
-            {"name": "spotify", "exists": True},
-        ])
+        mods = _make_modules(
+            [
+                {"name": "github", "exists": True},
+                {"name": "discord", "exists": True},
+                {"name": "spotify", "exists": True},
+            ]
+        )
         with _patch_holehe_core(mods):
             result = await check_holehe("test@example.com", min_platforms=4)
         assert result.score_delta == 5
 
     @pytest.mark.asyncio
     async def test_platform_names_in_metadata(self) -> None:
-        mods = _make_modules([
-            {"name": "github", "domain": "github.com", "exists": True},
-            {"name": "spotify", "domain": "spotify.com", "exists": True},
-        ])
+        mods = _make_modules(
+            [
+                {"name": "github", "domain": "github.com", "exists": True},
+                {"name": "spotify", "domain": "spotify.com", "exists": True},
+            ]
+        )
         with _patch_holehe_core(mods):
             result = await check_holehe("test@example.com")
         assert "github" in result.metadata["platforms"]

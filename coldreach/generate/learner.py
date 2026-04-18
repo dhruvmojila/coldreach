@@ -43,9 +43,9 @@ _FALLBACK_FORMATS = ["first.last", "flast", "first"]
 # E.g. if we see "first.last", also include "flast" since both are very common.
 _COMPANION_FORMATS: dict[str, list[str]] = {
     "first.last": ["flast"],
-    "flast":      ["first.last"],
-    "f.last":     ["first.last"],
-    "first":      ["first.last"],
+    "flast": ["first.last"],
+    "f.last": ["first.last"],
+    "first": ["first.last"],
 }
 
 
