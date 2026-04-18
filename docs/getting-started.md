@@ -14,9 +14,6 @@ coldreach find --domain acme.com --quick
 
 This works immediately with zero setup. Docker services are optional — ColdReach detects unavailable services and skips them automatically.
 
-!!! note "Not on PyPI yet"
-    The package is not published to PyPI yet. Use **Option B** (clone from source) until it is.
-
 ---
 
 ## Option B — Full install from source
@@ -44,8 +41,8 @@ cd coldreach
 3. Copies `.env.example` → `.env` (if `.env` doesn't exist yet)
 
 !!! note
-    `theHarvester/` and `spiderfoot/` are gitignored — they're external tools
-    built locally via Docker, not committed to this repo.
+`theHarvester/` and `spiderfoot/` are gitignored — they're external tools
+built locally via Docker, not committed to this repo.
 
 ---
 
@@ -86,18 +83,18 @@ docker compose up redis reacher -d
 
 ### Docker services
 
-| Service        | Port     | Purpose                                          |
-| -------------- | -------- | ------------------------------------------------ |
+| Service        | Port     | Purpose                                               |
+| -------------- | -------- | ----------------------------------------------------- |
 | `postgres`     | **5433** | Persistent storage (SQLite is the default — optional) |
-| `redis`        | **6380** | Result cache with 7-day TTL                      |
-| `searxng`      | **8088** | Metasearch across 40+ search engines             |
-| `reacher`      | **8083** | SMTP email verification (Rust microservice)      |
-| `spiderfoot`   | **5001** | Deep OSINT REST API                              |
-| `theharvester` | **5050** | Multi-source email/host harvester                |
+| `redis`        | **6380** | Result cache with 7-day TTL                           |
+| `searxng`      | **8088** | Metasearch across 40+ search engines                  |
+| `reacher`      | **8083** | SMTP email verification (Rust microservice)           |
+| `spiderfoot`   | **5001** | Deep OSINT REST API                                   |
+| `theharvester` | **5050** | Multi-source email/host harvester                     |
 
 !!! tip "Ports are offset from defaults"
-    Ports are shifted to avoid conflicts with common local dev services
-    (postgres :5432, redis :6379, searxng :8080).
+Ports are shifted to avoid conflicts with common local dev services
+(postgres :5432, redis :6379, searxng :8080).
 
 ---
 
