@@ -21,6 +21,7 @@ import asyncio
 import logging
 import re
 import urllib.parse
+from typing import Any
 from xml.etree import ElementTree
 
 import httpx
@@ -35,14 +36,14 @@ _APP_CLASS: type | None = None
 _SCRAPE_METHOD: str | None = None
 
 try:
-    from firecrawl import Firecrawl as _NewClient  # type: ignore[import]
+    from firecrawl import Firecrawl as _NewClient
 
     _APP_CLASS = _NewClient
     _SCRAPE_METHOD = "v2"
     logger.debug("firecrawl: using new SDK (Firecrawl class)")
 except ImportError:
     try:
-        from firecrawl import FirecrawlApp as _OldClient  # type: ignore[import]
+        from firecrawl import FirecrawlApp as _OldClient
 
         _APP_CLASS = _OldClient
         _SCRAPE_METHOD = "v1"
@@ -125,21 +126,21 @@ def _extract_emails_for_domain(text: str, domain: str) -> list[str]:
     return found
 
 
-def _scrape_with_sdk(app: object, url: str) -> str:
+def _scrape_with_sdk(app: Any, url: str) -> str:
     """Call the Firecrawl SDK synchronously (run via asyncio.to_thread)."""
     try:
         if _SCRAPE_METHOD == "v2":
-            result = app.scrape(url, formats=["markdown"])  # type: ignore[union-attr]
+            result = app.scrape(url, formats=["markdown"])
             if hasattr(result, "markdown"):
-                return (result.markdown or "")[:4000]
+                return str(result.markdown or "")[:4000]
             if isinstance(result, dict):
-                return (result.get("markdown") or result.get("content") or "")[:4000]
+                return str(result.get("markdown") or result.get("content") or "")[:4000]
         else:
-            result = app.scrape_url(url, formats=["markdown"])  # type: ignore[union-attr]
+            result = app.scrape_url(url, formats=["markdown"])
             if isinstance(result, dict):
-                return (result.get("markdown") or result.get("content") or "")[:4000]
+                return str(result.get("markdown") or result.get("content") or "")[:4000]
             if hasattr(result, "markdown"):
-                return (result.markdown or "")[:4000]
+                return str(result.markdown or "")[:4000]
     except Exception as exc:
         logger.debug("Firecrawl scrape failed for %s: %s", url, exc)
     return ""

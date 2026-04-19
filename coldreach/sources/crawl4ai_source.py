@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from coldreach.core.models import EmailSource
@@ -25,7 +26,7 @@ from coldreach.sources.base import BaseSource, SourceResult
 logger = logging.getLogger(__name__)
 
 try:
-    from crawl4ai import AsyncWebCrawler, CacheMode  # type: ignore[import]
+    from crawl4ai import AsyncWebCrawler, CacheMode
 
     _CRAWL4AI_AVAILABLE = True
 except ImportError:
@@ -182,10 +183,10 @@ class Crawl4AISource(BaseSource):
         self._log.debug("Crawl4AI found %d email(s) for %s", len(results), domain)
         return results
 
-    async def _fetch_page(self, crawler: object, url: str) -> str | None:
+    async def _fetch_page(self, crawler: Any, url: str) -> str | None:
         try:
             result = await asyncio.wait_for(
-                crawler.arun(  # type: ignore[union-attr]
+                crawler.arun(
                     url=url,
                     cache_mode=CacheMode.ENABLED,
                     word_count_threshold=10,
@@ -198,7 +199,7 @@ class Crawl4AISource(BaseSource):
                 timeout=self.timeout,
             )
             if result.success and result.markdown and not _is_junk(result.markdown):
-                return result.markdown[:3000]
+                return str(result.markdown[:3000])
             self._log.debug(
                 "crawl4ai: %s — %s",
                 url,
