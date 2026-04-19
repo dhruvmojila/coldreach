@@ -211,8 +211,7 @@ def generate_role_emails(domain: str) -> list[EmailPattern]:
     """
     domain = domain.strip().lower().removeprefix("www.")
     return [
-        EmailPattern(email=f"{role}@{domain}", format_name=f"role:{role}")
-        for role in _ROLE_LOCALS
+        EmailPattern(email=f"{role}@{domain}", format_name=f"role:{role}") for role in _ROLE_LOCALS
     ]
 
 

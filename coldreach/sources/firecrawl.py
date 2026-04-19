@@ -261,9 +261,7 @@ class FirecrawlSource(BaseSource):
                     root = ElementTree.fromstring(resp.text)
                     all_locs = [
                         el.text.strip()
-                        for el in root.iter(
-                            "{http://www.sitemaps.org/schemas/sitemap/0.9}loc"
-                        )
+                        for el in root.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")
                         if el.text
                     ]
                     for loc in all_locs:
