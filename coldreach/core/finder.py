@@ -97,7 +97,9 @@ class FinderConfig:
     firecrawl_url: str = "http://localhost:3002"
     brave_api_key: str | None = None
     spiderfoot_container: str = "coldreach-spiderfoot"
+    spiderfoot_max_wait: float = 600.0  # SpiderFoot passive scan can take 5-10 min
     harvester_container: str = "coldreach-theharvester"
+    harvester_max_wait: float = 300.0  # theHarvester across free sources ~2-4 min
     harvester_sources: str | None = None  # None = free sources; "all" = all sources
     reacher_url: str | None = "http://localhost:8083"
     use_reacher: bool = True
@@ -198,11 +200,16 @@ async def find_emails(
             HarvesterSource(
                 container=cfg.harvester_container,
                 sources=cfg.harvester_sources,
-                max_wait=120.0,
+                max_wait=cfg.harvester_max_wait,
             )
         )
     if cfg.use_spiderfoot:
-        sources.append(SpiderFootSource(container=cfg.spiderfoot_container, max_wait=300.0))
+        sources.append(
+            SpiderFootSource(
+                container=cfg.spiderfoot_container,
+                max_wait=cfg.spiderfoot_max_wait,
+            )
+        )
     if cfg.use_firecrawl:
         sources.append(
             FirecrawlSource(firecrawl_url=cfg.firecrawl_url, timeout=cfg.request_timeout)

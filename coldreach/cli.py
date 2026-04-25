@@ -22,8 +22,13 @@ import logging
 import sys
 
 import click
+from rich.align import Align
 from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.spinner import Spinner
 from rich.table import Table
+from rich.text import Text
 
 from coldreach import __version__
 from coldreach.core.finder import FinderConfig, find_emails
@@ -81,6 +86,184 @@ def main(ctx: click.Context, verbose: bool) -> None:
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
     _configure_logging(verbose)
+
+
+# ---------------------------------------------------------------------------
+# Banner
+# ---------------------------------------------------------------------------
+
+_BANNER_LINES = [
+    " ██████╗ ██████╗ ██╗     ██████╗ ██████╗ ███████╗ █████╗  ██████╗██╗  ██╗",
+    "██╔════╝██╔═══██╗██║     ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║  ██║",
+    "██║     ██║   ██║██║     ██║  ██║██████╔╝█████╗  ███████║██║     ███████║",
+    "██║     ██║   ██║██║     ██║  ██║██╔══██╗██╔══╝  ██╔══██║██║     ██╔══██║",
+    "╚██████╗╚██████╔╝███████╗██████╔╝██║  ██║███████╗██║  ██║╚██████╗██║  ██║",
+    " ╚═════╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝",
+]
+
+# Vertical gradient: blue → indigo → violet → magenta
+_BANNER_COLORS = [
+    "#5b8cff",
+    "#7b78ff",
+    "#9b64ff",
+    "#bb50ff",
+    "#d83cff",
+    "#e040fb",
+]
+
+
+def _banner() -> Panel:
+    art = Text()
+    for line, color in zip(_BANNER_LINES, _BANNER_COLORS, strict=True):
+        art.append(line + "\n", style=f"bold {color}")
+    subtitle = Text(
+        f"v{__version__}  ·  Open-source email discovery  ·  Free alternative to Hunter.io",
+        style="dim",
+        justify="center",
+    )
+    content = Text.assemble(art, "\n", subtitle)
+    return Panel(
+        Align.center(content),
+        border_style="#5b8cff",
+        padding=(0, 2),
+    )
+
+
+# ---------------------------------------------------------------------------
+# status command
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.pass_context
+def status(ctx: click.Context) -> None:
+    """Check which services are running and which packages are installed.
+
+    \b
+    Pings all Docker services (SearXNG, Reacher, SpiderFoot, theHarvester,
+    Firecrawl) and checks optional Python packages (holehe, crawl4ai,
+    firecrawl-py).
+
+    \b
+    Start all services:
+      docker compose up -d
+    """
+    from coldreach import diagnostics
+
+    console.print(_banner())
+    console.print()
+
+    checking = Spinner("dots2", text="[bold cyan]Pinging services…[/bold cyan]")
+
+    with Live(Align.center(checking), refresh_per_second=12, transient=True):
+        report = asyncio.run(diagnostics.run())
+
+    # ── Services table ────────────────────────────────────────────────────────
+    svc_table = Table(
+        show_header=True,
+        header_style="bold dim",
+        border_style="dim",
+        box=None,
+        padding=(0, 2),
+        expand=False,
+    )
+    svc_table.add_column("Service", style="bold", min_width=16)
+    svc_table.add_column("Status", min_width=12)
+    svc_table.add_column("Latency", justify="right", min_width=8)
+    svc_table.add_column("Port", style="dim", min_width=6)
+    svc_table.add_column("Role", style="dim")
+
+    for svc in report.services:
+        port = svc.url.split(":")[-1].split("/")[0]
+        if svc.online:
+            status_cell = Text("● ONLINE", style="bold green")
+            latency_cell = Text(f"{svc.latency_ms}ms", style="green")
+        else:
+            status_cell = Text("○ OFFLINE", style="bold red")
+            latency_cell = Text(f"({svc.detail})", style="dim red")
+        svc_table.add_row(svc.name, status_cell, latency_cell, port, svc.role)
+
+    online_count = report.services_online
+    total_svc = len(report.services)
+    svc_color = "green" if online_count == total_svc else ("yellow" if online_count > 0 else "red")
+
+    console.print(
+        Panel(
+            svc_table,
+            title=(
+                f"[bold]Docker Services[/bold]  "
+                f"[{svc_color}]{online_count}/{total_svc} online[/{svc_color}]"
+            ),
+            title_align="left",
+            border_style="dim",
+            padding=(0, 1),
+        )
+    )
+    console.print()
+
+    # ── Packages table ────────────────────────────────────────────────────────
+    pkg_table = Table(
+        show_header=True,
+        header_style="bold dim",
+        border_style="dim",
+        box=None,
+        padding=(0, 2),
+        expand=False,
+    )
+    pkg_table.add_column("Package", style="bold", min_width=14)
+    pkg_table.add_column("Status", min_width=14)
+    pkg_table.add_column("Version", style="dim", min_width=10)
+    pkg_table.add_column("Install", style="dim")
+
+    for pkg in report.packages:
+        if pkg.installed:
+            status_cell = Text("● installed", style="bold green")
+            ver_cell = Text(pkg.version or "—", style="dim")
+        else:
+            status_cell = Text("○ missing", style="bold dim")
+            ver_cell = Text("—", style="dim")
+        pkg_table.add_row(pkg.name, status_cell, ver_cell, pkg.install_hint)
+
+    pkg_count = report.packages_installed
+    total_pkg = len(report.packages)
+
+    console.print(
+        Panel(
+            pkg_table,
+            title=f"[bold]Optional Packages[/bold]  [dim]{pkg_count}/{total_pkg} installed[/dim]",
+            title_align="left",
+            border_style="dim",
+            padding=(0, 1),
+        )
+    )
+    console.print()
+
+    # ── Summary + hints ───────────────────────────────────────────────────────
+    offline = [s for s in report.services if not s.online]
+    if not offline:
+        console.print(
+            "  [bold green]✓[/bold green]  All services online — ready for full discovery.\n"
+        )
+    else:
+        console.print(
+            f"  [yellow]{len(offline)} service(s) offline.[/yellow]  Start the full stack with:\n"
+        )
+        console.print("    [bold]docker compose up -d[/bold]\n")
+        console.print("  Or start only what you need:\n")
+        svc_map = {
+            "SearXNG": "searxng",
+            "Reacher": "reacher",
+            "SpiderFoot": "spiderfoot",
+            "theHarvester": "theharvester",
+            "Firecrawl": "(see docs — requires separate stack)",
+        }
+        for svc in offline:
+            cmd = svc_map.get(svc.name, svc.name.lower())
+            if "docs" in cmd:
+                console.print(f"    [dim]{svc.name}: {cmd}[/dim]")
+            else:
+                console.print(f"    [bold]docker compose up -d {cmd}[/bold]")
+        console.print()
 
 
 # ---------------------------------------------------------------------------
@@ -322,6 +505,57 @@ def find(
     )
 
     if not output_json:
+        from coldreach import diagnostics
+
+        # ── Service status bar ────────────────────────────────────────────────
+        svc_status = asyncio.run(diagnostics.quick_service_check(timeout=3.0))
+
+        # Map source names to the Docker service that powers them
+        _SOURCE_SERVICE: dict[str, str] = {
+            "search": "SearXNG",
+            "harvester": "theHarvester",
+            "spiderfoot": "SpiderFoot",
+            "reacher": "Reacher",
+            "firecrawl": "Firecrawl",
+        }
+
+        status_parts: list[str] = []
+        for svc_name, svc_online in svc_status.items():
+            dot = "[green]●[/green]" if svc_online else "[red]○[/red]"
+            status_parts.append(f"{dot} [dim]{svc_name}[/dim]")
+
+        console.print()
+        console.print(
+            Panel(
+                "  ".join(status_parts),
+                title="[dim]Services[/dim]",
+                title_align="left",
+                border_style="dim",
+                padding=(0, 2),
+            )
+        )
+
+        # Warn if a requested service is offline
+        warnings: list[str] = []
+        for src, svc in _SOURCE_SERVICE.items():
+            enabled = {
+                "search": not no_search,
+                "harvester": not no_harvester,
+                "spiderfoot": not no_spiderfoot,
+                "reacher": not no_reacher,
+                "firecrawl": use_firecrawl,
+            }.get(src, False)
+            if enabled and not svc_status.get(svc, False):
+                warnings.append(
+                    f"  [yellow]⚠[/yellow]  [bold]{svc}[/bold] is offline"
+                    f" — run [bold]docker compose up -d {svc.lower()}[/bold]"
+                )
+        for w in warnings:
+            console.print(w)
+        if warnings:
+            console.print()
+
+        # ── Source + mode line ────────────────────────────────────────────────
         active_sources = [
             s
             for s, enabled in [
@@ -346,7 +580,7 @@ def find(
         else:
             mode_tag = ""
         console.print(
-            f"\n  [dim]Searching [bold]{target_domain}[/bold] "
+            f"  [dim]Searching [bold]{target_domain}[/bold] "
             f"via {', '.join(active_sources)}…[/dim]{mode_tag}\n"
         )
 
