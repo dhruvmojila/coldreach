@@ -2,6 +2,91 @@
 
 ---
 
+## [2026-04-25 22:30] — Zero-friction setup: health checks, Makefile, rewritten setup.sh, Firecrawl separation, status/find UI improvements
+
+### What Was Done
+- Added Docker health checks to every service (SearXNG, Reacher, SpiderFoot, theHarvester) so `docker compose up --wait` actually works
+- Pinned Reacher image from `:latest` to `0.11.6` to prevent silent breaking changes
+- Rewrote `scripts/setup.sh` as a full setup wizard with prereq checks, idempotent cloning, build step, wait-for-healthy, and coldreach status verification
+- Created `Makefile` with common commands: `make setup`, `make up`, `make down`, `make status`, `make logs`, `make test`, `make lint`, `make fmt`, `make find DOMAIN=...`
+- Added `ServiceResult.separate_stack` field to `diagnostics.py`; marked Firecrawl as separate-stack so it no longer appears as a failure in status/find
+- `quick_service_check()` now only pings core services — Firecrawl excluded from find-command warnings
+- Fixed `coldreach status` to show 4/4 core services cleanly; Firecrawl moved to "Optional add-ons (separate setup)" section
+- Fixed Reacher detection: `RemoteProtocolError` (port open, no HTTP root) now correctly treated as ONLINE
+- Added `coldreach status` service bar to `coldreach find` so users see what's running before the search
+- Added `coldreach status` command with big ASCII banner, animated spinner, per-service latency, and actionable fix hints
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `docker-compose.yml` | Modified | Health checks on SearXNG/Reacher/SpiderFoot/theHarvester; Reacher pinned to 0.11.6; header clarifies Firecrawl is separate |
+| `scripts/setup.sh` | Modified | Full rewrite — prereq checks, idempotent clone, docker build, wait-for-healthy, status verify |
+| `Makefile` | Added | Common dev commands with inline help |
+| `coldreach/diagnostics.py` | Modified | `ServiceResult.separate_stack` field; `_SERVICES` 4-tuple with bool; `quick_service_check()` skips separate-stack services |
+| `coldreach/cli.py` | Modified | `status` splits core vs add-ons; `find` bar only warns on core offline; Reacher `RemoteProtocolError` → online |
+
+### Major Logic / Code Changes
+- **Health check strategy**: each service uses the tool available in its base image — SearXNG/SpiderFoot use `wget`, Reacher uses `bash /dev/tcp` TCP probe (no HTTP root endpoint), theHarvester uses `python3 urllib.request`
+- **`docker compose up --wait`**: with health checks added, this command now reliably blocks until all services are genuinely ready, not just "started"
+- **`separate_stack` field**: cleanly separates Firecrawl (which requires a multi-service Firecrawl stack) from the four core services (SearXNG, Reacher, SpiderFoot, theHarvester). Status shows `4/4 online` instead of confusing `4/5`
+- **`quick_service_check()` filter**: find command only pings + warns about core services; removes false Firecrawl-offline warnings that confused users
+- **Reacher pinned**: `reacherhq/backend:0.11.6` — the running version from docker inspect; prevents future silent breakage from `:latest` updates
+
+### Notes
+- `make setup` is now the recommended first-time setup path — runs everything in sequence
+- Firecrawl source (`coldreach/sources/firecrawl.py`) is still wired in as opt-in (`--firecrawl` flag), but the status display no longer treats its absence as a problem
+- Next: Phase 3 planning (Chrome extension or API server)
+
+---
+
+## [2026-04-25 21:30] — `coldreach status` command + service bar in find + SpiderFoot/theHarvester timeout increases
+
+### What Was Done
+- Added `coldreach/diagnostics.py` — async parallel health checks for all Docker services and optional Python packages
+- Added `coldreach status` CLI command: gradient ASCII banner, animated spinner, services table (online/offline/latency), packages table, actionable hints for offline services
+- Added compact service status bar to `coldreach find` — shows service availability before searching, warns if a requested service is offline
+- Increased SpiderFoot max_wait: 300s → 600s; theHarvester max_wait: 120s → 300s
+- Exposed `spiderfoot_max_wait` and `harvester_max_wait` in `FinderConfig`
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/diagnostics.py` | Added | Async service pinger + package checker; `DiagnosticsReport` dataclass |
+| `coldreach/cli.py` | Modified | `status` command with Rich Live display; service bar in `find`; banner constants |
+
+### Major Logic / Code Changes
+- `diagnostics.run()` pings all services concurrently via `asyncio.gather`; `RemoteProtocolError` treated as online (Reacher has no HTTP root)
+- `quick_service_check()` for find command uses 3s timeout to keep find startup fast
+- `_BANNER_LINES`/`_BANNER_COLORS` hardcoded ANSI block-art with blue→magenta gradient; no pyfiglet dependency
+
+---
+
+## [2026-04-25 20:00] — Integrate crawl4ai, Firecrawl, and role email sources from other project
+
+### What Was Done
+- Ported `firecrawl_tool.py` as `coldreach/sources/firecrawl.py` — proper async BaseSource with sitemap discovery, multi-page scraping, and email extraction via Firecrawl SDK
+- Ported `crawl4ai_tool.py` as `coldreach/sources/crawl4ai_source.py` — Playwright JS rendering for SPA sites; fixed broken `config.settings` import and wrong `asyncio.new_event_loop()` pattern
+- Added `generate_role_emails()` to `coldreach/generate/patterns.py` — the missing piece from `email_permutator.py` (personal pattern generation was already complete)
+- Wired all three into `FinderConfig` and `finder.py`; added `--firecrawl` and `--crawl4ai` CLI flags
+- Added `firecrawl_url` back to `config.py` (now properly used by `FirecrawlSource`)
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/sources/firecrawl.py` | Added | BaseSource using Firecrawl SDK + sitemap discovery; httpx for availability/sitemap, `asyncio.to_thread` for SDK calls |
+| `coldreach/sources/crawl4ai_source.py` | Added | BaseSource using crawl4ai Playwright renderer; fixed broken sync patterns |
+| `coldreach/generate/patterns.py` | Modified | Added `generate_role_emails()` returning info/sales/contact/etc candidates |
+| `coldreach/core/finder.py` | Modified | Added imports, `use_firecrawl/use_crawl4ai/use_role_emails` to FinderConfig, wired sources and role email generation |
+| `coldreach/config.py` | Modified | Re-added `firecrawl_url` field (now actually used) |
+| `coldreach/cli.py` | Modified | Added `--firecrawl` and `--crawl4ai` flags; pass to FinderConfig |
+
+### Major Logic / Code Changes
+- **FirecrawlSource**: opt-in (`use_firecrawl=False`); skips gracefully if `firecrawl-py` not installed or server unreachable; `_scrape_with_sdk()` runs sync SDK in `asyncio.to_thread()`
+- **Crawl4AISource**: opt-in (`use_crawl4ai=False`); skips if `crawl4ai` not installed; pure async via `AsyncWebCrawler`; junk-content detection filters bot-block pages
+- **Role emails**: always-on (`use_role_emails=True`); adds 10 role candidates (info, contact, sales, marketing, etc.) with `confidence_hint=5`; skips any already found by real sources
+
+---
+
 ## [2026-04-18 22:00] — Integrate crawl4ai, Firecrawl, and role email sources from other project
 
 ### What Was Done
@@ -573,4 +658,15 @@
 
 ### Next
 - Use session_close.py at end of every coding session before handoff
+
+
+## [2026-04-25 10:13 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
 

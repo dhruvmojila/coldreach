@@ -1,6 +1,6 @@
 # CLI Reference
 
-ColdReach exposes three top-level commands: `verify`, `find`, and `cache`.
+ColdReach exposes four top-level commands: `status`, `verify`, `find`, and `cache`.
 
 ```
 coldreach [OPTIONS] COMMAND [ARGS]...
@@ -10,6 +10,40 @@ Options:
   -V, --version   Show version and exit.
   -h, --help      Show help message and exit.
 ```
+
+---
+
+## `coldreach status`
+
+Check which Docker services are running and which optional packages are installed.
+
+```bash
+coldreach status
+```
+
+Displays a gradient ASCII banner, then pings all services concurrently and reports:
+
+- **Docker Services** — SearXNG, Reacher, SpiderFoot, theHarvester with live latency and online/offline status
+- **Optional Packages** — holehe, crawl4ai, firecrawl-py with install commands
+- **Optional add-ons** — Firecrawl (separate stack, not part of default compose)
+- **Actionable hints** — exact `docker compose up -d <service>` commands for anything offline
+
+```
+╭─ Docker Services  4/4 online ────────────────╮
+│  SearXNG    ● ONLINE   84ms   8088  Metasearch ...
+│  Reacher    ● ONLINE   55ms   8083  SMTP verifier
+│  SpiderFoot ● ONLINE   49ms   5001  OSINT engine
+│  theHarvester ● ONLINE 35ms  5050  Harvester
+╰──────────────────────────────────────────────╯
+
+  Optional add-ons (separate setup):  ○ Firecrawl
+
+  ✓  All services online — ready for full discovery.
+     coldreach find --domain stripe.com --quick
+```
+
+!!! tip
+    Run `coldreach status` after `docker compose up -d` to confirm all services are healthy before a find run.
 
 ---
 
@@ -101,6 +135,13 @@ coldreach find [OPTIONS]
 | `--json` | off | Machine-readable JSON output |
 | `--min-confidence INT` | from `.env` | Hide results below this confidence score |
 
+**Speed presets**
+
+| Option | Description |
+| ------ | ----------- |
+| `--quick` | ~10s — skips theHarvester and SpiderFoot |
+| `--full` | ~5min — uses theHarvester with all available sources (API-key sources included) |
+
 **Source toggles**
 
 | Option | Description |
@@ -112,32 +153,45 @@ coldreach find [OPTIONS]
 | `--no-search` | Skip SearXNG / DDG search |
 | `--no-harvester` | Skip theHarvester |
 | `--no-spiderfoot` | Skip SpiderFoot |
+| `--firecrawl` | Enable Firecrawl JS scraping (requires `pip install firecrawl-py` + self-hosted server) |
+| `--crawl4ai` | Enable crawl4ai Playwright scraping (requires `pip install crawl4ai && crawl4ai-setup`) |
 
 **Verification**
 
 | Option | Description |
 | ------ | ----------- |
 | `--no-reacher` | Skip Reacher SMTP verification on discovered emails |
-| `--holehe` | Run Holehe platform check on found addresses (slow) |
+| `--holehe` | Run Holehe platform check on found addresses (slow, ~30s/email) |
 
-**Cache**
+**Output & cache**
 
 | Option | Description |
 | ------ | ----------- |
+| `--output, -o FILE` | Export results to `.csv` or `.json` (format inferred from extension) |
 | `--no-cache` | Skip cache read and write entirely |
 | `--refresh` | Ignore any cached result and re-fetch from all sources |
 
 ### Examples
 
 ```bash
-# Quick scan — fast, skips OSINT tools
+# Quick scan — ~10s, skips OSINT tools
 coldreach find --domain acme.com --quick
 
-# Full discovery for a domain
+# Full discovery (default, ~2min)
 coldreach find --domain acme.com
 
-# Target a specific person
+# All sources including API-key ones (~5min)
+coldreach find --domain acme.com --full
+
+# Resolve domain automatically from company name
+coldreach find --company "Acme Corp"
+
+# Target a specific person (generates name-pattern emails)
 coldreach find --domain acme.com --name "Jane Smith"
+
+# Export results to CSV or JSON
+coldreach find --domain acme.com --output leads.csv
+coldreach find --domain acme.com --output leads.json
 
 # Force re-discovery (bypass cache)
 coldreach find --domain acme.com --refresh
@@ -145,8 +199,9 @@ coldreach find --domain acme.com --refresh
 # JSON output — pipe-friendly
 coldreach find --domain acme.com --json | jq '.emails[] | select(.confidence > 60)'
 
-# Show everything including low-confidence guesses
-coldreach find --domain acme.com --all
+# Enable JS-heavy site scraping (optional)
+coldreach find --domain acme.com --firecrawl
+coldreach find --domain acme.com --crawl4ai
 
 # Skip slow OSINT, keep SMTP verification
 coldreach find --domain acme.com --no-harvester --no-spiderfoot

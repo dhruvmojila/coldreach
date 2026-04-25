@@ -158,7 +158,8 @@ def status(ctx: click.Context) -> None:
     with Live(Align.center(checking), refresh_per_second=12, transient=True):
         report = asyncio.run(diagnostics.run())
 
-    # ── Services table ────────────────────────────────────────────────────────
+    # ── Core services table ───────────────────────────────────────────────────
+    core = [s for s in report.services if not s.separate_stack]
     svc_table = Table(
         show_header=True,
         header_style="bold dim",
@@ -173,7 +174,7 @@ def status(ctx: click.Context) -> None:
     svc_table.add_column("Port", style="dim", min_width=6)
     svc_table.add_column("Role", style="dim")
 
-    for svc in report.services:
+    for svc in core:
         port = svc.url.split(":")[-1].split("/")[0]
         if svc.online:
             status_cell = Text("● ONLINE", style="bold green")
@@ -183,16 +184,16 @@ def status(ctx: click.Context) -> None:
             latency_cell = Text(f"({svc.detail})", style="dim red")
         svc_table.add_row(svc.name, status_cell, latency_cell, port, svc.role)
 
-    online_count = report.services_online
-    total_svc = len(report.services)
-    svc_color = "green" if online_count == total_svc else ("yellow" if online_count > 0 else "red")
+    online_count = sum(1 for s in core if s.online)
+    total_core = len(core)
+    svc_color = "green" if online_count == total_core else ("yellow" if online_count > 0 else "red")
 
     console.print(
         Panel(
             svc_table,
             title=(
                 f"[bold]Docker Services[/bold]  "
-                f"[{svc_color}]{online_count}/{total_svc} online[/{svc_color}]"
+                f"[{svc_color}]{online_count}/{total_core} online[/{svc_color}]"
             ),
             title_align="left",
             border_style="dim",
@@ -220,7 +221,7 @@ def status(ctx: click.Context) -> None:
             status_cell = Text("● installed", style="bold green")
             ver_cell = Text(pkg.version or "—", style="dim")
         else:
-            status_cell = Text("○ missing", style="bold dim")
+            status_cell = Text("○ not installed", style="dim")
             ver_cell = Text("—", style="dim")
         pkg_table.add_row(pkg.name, status_cell, ver_cell, pkg.install_hint)
 
@@ -230,40 +231,57 @@ def status(ctx: click.Context) -> None:
     console.print(
         Panel(
             pkg_table,
-            title=f"[bold]Optional Packages[/bold]  [dim]{pkg_count}/{total_pkg} installed[/dim]",
+            title=(
+                f"[bold]Optional Packages[/bold]  "
+                f"[dim]{pkg_count}/{total_pkg} installed — "
+                f"unlock additional discovery sources[/dim]"
+            ),
             title_align="left",
             border_style="dim",
             padding=(0, 1),
         )
     )
+
+    # Separate-stack services note
+    extras = [s for s in report.services if s.separate_stack]
+    if extras:
+        extra_parts = []
+        for s in extras:
+            dot = "[green]●[/green]" if s.online else "[dim]○[/dim]"
+            extra_parts.append(f"{dot} [dim]{s.name}[/dim]")
+        console.print()
+        console.print(f"  [dim]Optional add-ons (separate setup):[/dim]  {'  '.join(extra_parts)}")
+        console.print("  [dim]└─ See https://github.com/mendableai/firecrawl for Firecrawl[/dim]")
+
     console.print()
 
     # ── Summary + hints ───────────────────────────────────────────────────────
-    offline = [s for s in report.services if not s.online]
-    if not offline:
+    core_svc_map = {
+        "SearXNG": "searxng",
+        "Reacher": "reacher",
+        "SpiderFoot": "spiderfoot",
+        "theHarvester": "theharvester",
+    }
+    offline_core = [s for s in core if not s.online]
+    if not offline_core:
         console.print(
             "  [bold green]✓[/bold green]  All services online — ready for full discovery.\n"
         )
+        console.print("    [dim]coldreach find --domain stripe.com --quick[/dim]\n")
     else:
         console.print(
-            f"  [yellow]{len(offline)} service(s) offline.[/yellow]  Start the full stack with:\n"
+            f"  [yellow]{len(offline_core)} service(s) offline.[/yellow]  Start everything with:\n"
         )
         console.print("    [bold]docker compose up -d[/bold]\n")
-        console.print("  Or start only what you need:\n")
-        svc_map = {
-            "SearXNG": "searxng",
-            "Reacher": "reacher",
-            "SpiderFoot": "spiderfoot",
-            "theHarvester": "theharvester",
-            "Firecrawl": "(see docs — requires separate stack)",
-        }
-        for svc in offline:
-            cmd = svc_map.get(svc.name, svc.name.lower())
-            if "docs" in cmd:
-                console.print(f"    [dim]{svc.name}: {cmd}[/dim]")
-            else:
-                console.print(f"    [bold]docker compose up -d {cmd}[/bold]")
+        console.print("  Or restart just the offline ones:\n")
+        for svc in offline_core:
+            cmd = core_svc_map.get(svc.name, svc.name.lower())
+            console.print(f"    [bold]docker compose up -d {cmd}[/bold]")
         console.print()
+        console.print(
+            "  [dim]Tip: run [bold]make setup[/bold]"
+            " to build and start everything in one step.[/dim]\n"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -507,16 +525,17 @@ def find(
     if not output_json:
         from coldreach import diagnostics
 
-        # ── Service status bar ────────────────────────────────────────────────
+        # ── Service status bar (core services only) ───────────────────────────
+        # quick_service_check only pings core services (not separate-stack ones
+        # like Firecrawl which is never in the default compose stack).
         svc_status = asyncio.run(diagnostics.quick_service_check(timeout=3.0))
 
-        # Map source names to the Docker service that powers them
+        # Source name → Docker service name (core services only)
         _SOURCE_SERVICE: dict[str, str] = {
             "search": "SearXNG",
             "harvester": "theHarvester",
             "spiderfoot": "SpiderFoot",
             "reacher": "Reacher",
-            "firecrawl": "Firecrawl",
         }
 
         status_parts: list[str] = []
@@ -535,20 +554,20 @@ def find(
             )
         )
 
-        # Warn if a requested service is offline
+        # Warn only about core services the user requested that are offline
+        _source_enabled: dict[str, bool] = {
+            "search": not no_search,
+            "harvester": not no_harvester,
+            "spiderfoot": not no_spiderfoot,
+            "reacher": not no_reacher,
+        }
         warnings: list[str] = []
         for src, svc in _SOURCE_SERVICE.items():
-            enabled = {
-                "search": not no_search,
-                "harvester": not no_harvester,
-                "spiderfoot": not no_spiderfoot,
-                "reacher": not no_reacher,
-                "firecrawl": use_firecrawl,
-            }.get(src, False)
-            if enabled and not svc_status.get(svc, False):
+            if _source_enabled.get(src, False) and not svc_status.get(svc, False):
+                compose_name = svc.lower().replace("theharvester", "theharvester")
                 warnings.append(
                     f"  [yellow]⚠[/yellow]  [bold]{svc}[/bold] is offline"
-                    f" — run [bold]docker compose up -d {svc.lower()}[/bold]"
+                    f" — run [bold]docker compose up -d {compose_name}[/bold]"
                 )
         for w in warnings:
             console.print(w)

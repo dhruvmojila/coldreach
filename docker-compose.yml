@@ -1,27 +1,27 @@
 ###############################################################################
 # ColdReach — Docker Compose service stack
 #
-# Quick start (core services only):
-#   docker compose up postgres redis searxng reacher -d
+# First-time setup:
+#   ./scripts/setup.sh          ← does everything automatically
 #
-# Full stack (all OSINT + verification services):
-#   docker compose up -d
+# Manual start (after setup):
+#   docker compose up -d        ← starts all services
+#   docker compose up --wait    ← starts and waits until all healthy
+#   coldreach status            ← verify everything is up
 #
-# Build images for local services (first time, or after code changes):
-#   docker compose build spiderfoot theharvester
+# Core services only (faster):
+#   docker compose up -d searxng reacher
 #
 # Services (non-default ports to avoid clashing with local dev services):
 #   postgres      :5433  — persistent storage       (avoids local :5432)
 #   redis         :6380  — result cache (TTL 7 days) (avoids local :6379)
 #   searxng       :8088  — metasearch engine         (avoids local :8080)
-#   reacher       :8083  — SMTP email verification (Rust microservice)
-#   spiderfoot    :5001  — deep OSINT REST API (builds from ./spiderfoot/)
-#   theharvester  :5050  — multi-source email/host harvester REST API
-#                          (builds from ./theHarvester/, avoids local :5000)
+#   reacher       :8083  — SMTP email verification   (Rust microservice)
+#   spiderfoot    :5001  — deep OSINT REST API        (builds from ./spiderfoot/)
+#   theharvester  :5050  — email/host harvester       (builds from ./theHarvester/)
 #
-# Note: Firecrawl requires their full self-hosted stack (API + workers +
-# Playwright). httpx handles most crawling needs. To add Firecrawl, see:
-# https://github.com/mendableai/firecrawl/blob/main/docker-compose.yaml
+# Firecrawl is NOT included here — it requires its own multi-service stack.
+# If you want JS-heavy scraping see: https://github.com/mendableai/firecrawl
 ###############################################################################
 
 services:
@@ -68,7 +68,7 @@ services:
 
   # ── SearXNG ────────────────────────────────────────────────────────────────
   # Privacy-first metasearch engine — queries 40+ search engines.
-  # ColdReach falls back automatically to DDG Lite → Brave when results are empty.
+  # ColdReach falls back to DDG Lite → Brave when SearXNG is unavailable.
   searxng:
     image: searxng/searxng:latest
     container_name: coldreach-searxng
@@ -86,12 +86,21 @@ services:
       - CHOWN
       - SETGID
       - SETUID
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:8080/ 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # ── Reacher ────────────────────────────────────────────────────────────────
   # Rust SMTP verifier. Handles catch-all, Hotmail/Yahoo quirks, TLS.
   # API: POST http://localhost:8083/v0/check_email {"to_email": "user@domain.com"}
+  #
+  # Note: GET / returns no HTTP response (by design — this is normal).
+  # The health check uses a TCP probe since Reacher has no HTTP health endpoint.
   reacher:
-    image: reacherhq/backend:latest
+    image: reacherhq/backend:0.11.6
     container_name: coldreach-reacher
     restart: unless-stopped
     ports:
@@ -99,16 +108,22 @@ services:
     environment:
       RCH_HTTP_HOST: "0.0.0.0"
       RCH_HTTP_PORT: "8083"
-      # RCH_HELLO_NAME: "coldreach.local"   # optional: custom HELO domain
+      # Uncomment to set the HELO domain for SMTP handshakes:
+      # RCH_HELLO_NAME: "mail.yourdomain.com"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8083' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # ── SpiderFoot ─────────────────────────────────────────────────────────────
   # Deep OSINT engine built from ./spiderfoot/ (local clone of v4.0).
   # Covers: WHOIS, DNS, subdomains, social profiles, breach data, 200+ modules.
-  # API: http://localhost:5001/api/
   # Web UI: http://localhost:5001/
-  # Docs: https://www.spiderfoot.net/documentation/
+  # API:    http://localhost:5001/api/
   #
-  # First run: docker compose build spiderfoot
+  # First run: docker compose build spiderfoot  (done by scripts/setup.sh)
   spiderfoot:
     build:
       context: ./spiderfoot
@@ -119,20 +134,23 @@ services:
       - "5001:5001"
     volumes:
       - coldreach_spiderfoot_data:/var/lib/spiderfoot
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:5001/ 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # ── theHarvester ───────────────────────────────────────────────────────────
-  # Multi-source email/host/subdomain harvester REST API.
-  # Built from ./theHarvester/ (local clone).
-  # API: GET http://localhost:5050/query?domain=acme.com&source=bing,crtsh&limit=500
-  # Swagger docs: http://localhost:5050/docs
-  # Source list: http://localhost:5050/sources
-  #
-  # First run: docker compose build theharvester
+  # Multi-source email/host/subdomain harvester.
+  # API:    GET http://localhost:5050/query?domain=acme.com&source=bing,crtsh&limit=500
+  # Docs:   http://localhost:5050/docs
   #
   # Free sources (no API key): bing, duckduckgo, crtsh, hackertarget,
   #   rapiddns, certspotter, dnsdumpster, urlscan, threatminer, otx
-  # API key sources: brave, github, hunter, virustotal, shodan, etc.
-  #   → set keys in ./theHarvester/theHarvester/data/api-keys.yaml
+  # API-key sources: set keys in ./theHarvester/theHarvester/data/api-keys.yaml
+  #
+  # First run: docker compose build theharvester  (done by scripts/setup.sh)
   theharvester:
     build:
       context: ./theHarvester
@@ -142,11 +160,16 @@ services:
     ports:
       - "5050:80"
     volumes:
-      # Mount your api-keys.yaml so you can edit it without rebuilding
       - ./theHarvester/theHarvester/data/api-keys.yaml:/root/.theHarvester/api-keys.yaml:ro
       - ./theHarvester/theHarvester/data/api-keys.yaml:/etc/theHarvester/api-keys.yaml:ro
       - ./theHarvester/theHarvester/data/proxies.yaml:/root/.theHarvester/proxies.yaml:ro
       - ./theHarvester/theHarvester/data/proxies.yaml:/etc/theHarvester/proxies.yaml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost/docs')\" 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 # ── Named volumes ──────────────────────────────────────────────────────────
 volumes:

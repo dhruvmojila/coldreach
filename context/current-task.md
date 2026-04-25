@@ -2,21 +2,21 @@
 
 ## Now
 
-- Owner agent: Cursor
+- Owner agent: Claude Code
 - Branch: `main`
-- Objective: Installed shared session-close skill and automation script for context sync
+- Objective: Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
 
 ## In Progress
 
-- [ ] Use session_close.py at end of every coding session before handoff
+- [ ] Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
 
 ## Done In This Session
 
-- Installed shared session-close skill and automation script for context sync
+- Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
 
 ## Next Action (Single Concrete Step)
 
-- Use session_close.py at end of every coding session before handoff
+- Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- script dry-run executed; files updated and staged
+- uv run pytest tests/ → 363 passed 7 skipped; ruff check + mypy clean; coldreach status shows 4/4 core online; coldreach find --domain stripe.com --quick works

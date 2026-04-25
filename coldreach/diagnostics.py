@@ -24,6 +24,7 @@ class ServiceResult:
     name: str
     url: str
     role: str  # one-liner describing what the service does
+    separate_stack: bool = False  # True = not in the default compose stack
     online: bool = False
     latency_ms: int | None = None
     detail: str = ""
@@ -58,12 +59,15 @@ class DiagnosticsReport:
 
 # ── Service definitions ───────────────────────────────────────────────────────
 
-_SERVICES: list[tuple[str, str, str]] = [
-    ("SearXNG", "http://localhost:8088", "Metasearch engine (40+ sources)"),
-    ("Reacher", "http://localhost:8083", "SMTP email verifier (Rust)"),
-    ("SpiderFoot", "http://localhost:5001", "Deep OSINT engine (200+ modules)"),
-    ("theHarvester", "http://localhost:5050/docs", "Multi-source email harvester"),
-    ("Firecrawl", "http://localhost:3002", "JS-heavy site scraper"),
+_SERVICES: list[tuple[str, str, str, bool]] = [
+    # (name, url, role, separate_stack)
+    ("SearXNG", "http://localhost:8088", "Metasearch engine (40+ sources)", False),
+    ("Reacher", "http://localhost:8083", "SMTP email verifier (Rust)", False),
+    ("SpiderFoot", "http://localhost:5001", "Deep OSINT (200+ modules)", False),
+    ("theHarvester", "http://localhost:5050/docs", "Multi-source email harvester", False),
+    # Firecrawl is NOT part of the default docker-compose stack — it needs its
+    # own multi-service setup. See: https://github.com/mendableai/firecrawl
+    ("Firecrawl", "http://localhost:3002", "JS scraper (optional — separate stack)", True),
 ]
 
 # ── Package definitions ───────────────────────────────────────────────────────
@@ -78,11 +82,13 @@ _PACKAGES: list[tuple[str, str, str]] = [
 # ── Checks ────────────────────────────────────────────────────────────────────
 
 
-async def _ping(name: str, url: str, role: str, timeout: float = 5.0) -> ServiceResult:
+async def _ping(
+    name: str, url: str, role: str, separate_stack: bool = False, timeout: float = 5.0
+) -> ServiceResult:
     """HTTP GET with timing; never raises."""
     import httpx
 
-    result = ServiceResult(name=name, url=url, role=role)
+    result = ServiceResult(name=name, url=url, role=role, separate_stack=separate_stack)
     t0 = time.monotonic()
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -124,18 +130,24 @@ async def run(url_overrides: dict[str, str] | None = None) -> DiagnosticsReport:
         (e.g. ``{"SearXNG": "http://searxng:8080"}`` for Docker networks).
     """
     overrides = url_overrides or {}
-    service_tasks = [_ping(name, overrides.get(name, url), role) for name, url, role in _SERVICES]
+    service_tasks = [
+        _ping(name, overrides.get(name, url), role, separate_stack, timeout=5.0)
+        for name, url, role, separate_stack in _SERVICES
+    ]
     services = list(await asyncio.gather(*service_tasks))
     packages = [_check_package(name, imp, hint) for name, imp, hint in _PACKAGES]
     return DiagnosticsReport(services=services, packages=packages)
 
 
 async def quick_service_check(timeout: float = 3.0) -> dict[str, bool]:
-    """Ping all services and return {name: online}.  Fast path for find command."""
-    overrides: dict[str, str] = {}
+    """Ping core services (not separate-stack) and return {name: online}.
+
+    Fast path for the find command — skips Firecrawl and other opt-in services.
+    """
     service_tasks = [
-        _ping(name, overrides.get(name, url), role, timeout=timeout)
-        for name, url, role in _SERVICES
+        _ping(name, url, role, separate_stack, timeout=timeout)
+        for name, url, role, separate_stack in _SERVICES
+        if not separate_stack
     ]
     results = await asyncio.gather(*service_tasks)
     return {r.name: r.online for r in results}

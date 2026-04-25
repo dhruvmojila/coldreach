@@ -116,9 +116,35 @@ Best for: thorough investigations where accuracy matters more than speed.
 
 ---
 
+## Firecrawl *(opt-in)*
+
+**Source ID:** `website/*`  
+**Requires:** `pip install firecrawl-py` + self-hosted Firecrawl server  
+**Enable with:** `--firecrawl`  
+**Speed:** Slow (varies by site)
+
+Uses the [Firecrawl](https://github.com/mendableai/firecrawl) SDK to scrape JS-rendered pages that plain httpx cannot handle. Before scraping, ColdReach fetches the site's `sitemap.xml` to discover the most relevant contact/about/team pages automatically. Falls back to hardcoded paths (`/contact`, `/about`, `/team`, etc.) if no sitemap exists.
+
+Firecrawl is **not** included in the default `docker-compose.yml` — it requires its own multi-service stack (API server, workers, Playwright). See [github.com/mendableai/firecrawl](https://github.com/mendableai/firecrawl) for setup.
+
+---
+
+## Crawl4AI *(opt-in)*
+
+**Source ID:** `website/*`  
+**Requires:** `pip install crawl4ai && crawl4ai-setup`  
+**Enable with:** `--crawl4ai`  
+**Speed:** Medium–Slow (Playwright browser)
+
+Uses [crawl4ai](https://github.com/unclecode/crawl4ai) to render pages with a headless Playwright browser, extracting markdown from the rendered DOM. Handles JS-heavy SPAs that return blank pages to plain httpx.
+
+ColdReach runs crawl4ai alongside (not instead of) the built-in website crawler. Known anti-bot platforms (LinkedIn, Booking.com, etc.) are skipped automatically. Junk content (bot-block pages, "JavaScript is disabled" pages) is detected and discarded.
+
+---
+
 ## Pattern Generator
 
-**Source ID:** `pattern/generated`  
+**Source ID:** `generated/pattern`  
 **Requires:** `--name "First Last"` to be specified  
 **Speed:** Instant
 
@@ -128,18 +154,37 @@ Patterns are verified through the pipeline like any discovered email; their init
 
 ---
 
+## Role Emails *(always-on)*
+
+**Source ID:** `generated/pattern`  
+**Requires:** Nothing  
+**Speed:** Instant
+
+ColdReach always generates common role-based email candidates for every domain:
+
+```
+info@, contact@, hello@, sales@, marketing@, partnerships@, press@, support@, business@, growth@
+```
+
+These are added with a low initial confidence score (5) and only included if not already found by a real source. They go through the full verification pipeline — with Reacher running, genuine addresses get confirmed as `valid`; non-existent ones resolve as `undeliverable`.
+
+---
+
 ## Source comparison
 
-| Source | Speed | Accuracy | Docker required |
-| ------ | ----- | -------- | --------------- |
-| Website crawler | Fast | High | No |
-| WHOIS | Fast | Low–Medium | No |
-| GitHub | Fast | Medium (tech companies) | No |
-| Reddit | Fast | Low | No |
-| Search engine | Medium | Medium | No (DDG fallback) |
-| theHarvester | Slow | Medium–High | Yes |
-| SpiderFoot | Slow | High | Yes |
-| Pattern generator | Instant | Low–Medium | No (needs `--name`) |
+| Source | Speed | Accuracy | Requires |
+| ------ | ----- | -------- | -------- |
+| Website crawler | Fast | High | Nothing |
+| WHOIS | Fast | Low–Medium | Nothing |
+| GitHub | Fast | Medium (tech) | Nothing |
+| Reddit | Fast | Low | Nothing |
+| Search engine | Medium | Medium | Nothing (DDG fallback) |
+| theHarvester | Slow | Medium–High | `docker compose up theharvester` |
+| SpiderFoot | Slow | High | `docker compose up spiderfoot` |
+| Firecrawl | Slow | High (JS sites) | `pip install firecrawl-py` + server |
+| Crawl4AI | Medium | High (JS SPAs) | `pip install crawl4ai && crawl4ai-setup` |
+| Pattern generator | Instant | Low–Medium | `--name "First Last"` |
+| Role emails | Instant | Varies | Nothing (always generated) |
 
 !!! tip "Use `--quick` for most lookups"
     `--quick` skips theHarvester and SpiderFoot, giving you results in under 15 seconds.

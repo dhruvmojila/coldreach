@@ -32,3 +32,9 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 ### [2026-04-25 09:42 EDT] Session close decisions
 
 - Use scripts/session_close.py as mandatory end-of-session workflow for both agents
+
+### [2026-04-25 10:13 EDT] Session close decisions
+
+- Firecrawl is a separate-stack optional add-on — not in default docker-compose; status shows it separately from core services
+- Reacher health check uses TCP probe (bash /dev/tcp) not HTTP GET — the service has no HTTP root endpoint by design
+- scripts/setup.sh is now the canonical first-time setup path — handles prereqs, clone, build, wait-for-healthy, verify

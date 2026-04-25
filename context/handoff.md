@@ -60,3 +60,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Use session_close.py at end of every coding session before handoff
 
+### [2026-04-25 10:13 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - uv run pytest tests/ → 363 passed 7 skipped; ruff check + mypy clean; coldreach status shows 4/4 core online; coldreach find --domain stripe.com --quick works
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
+
