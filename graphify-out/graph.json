@@ -11194,8 +11194,8 @@
       "source_file": "chrome-extension/src/content/index.ts",
       "source_location": "L21",
       "weight": 1.0,
-      "_src": "index_detect",
-      "_tgt": "workable_detectworkable",
+      "_src": "workable_detectworkable",
+      "_tgt": "index_detect",
       "source": "workable_detectworkable",
       "target": "index_detect"
     },
