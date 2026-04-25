@@ -79,3 +79,41 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
 
+### [2026-04-25 12:27 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 3A complete: coldreach serve — FastAPI API server with POST /api/find, POST /api/find/stream (SSE), POST /api/verify, GET /api/status, GET/DELETE /api/cache, GET /api/version; PLAN.md updated with phases 3A-6
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - ruff+mypy clean; 363 tests pass; all 7 API routes registered; coldreach serve appears in CLI help
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 3B: Chrome extension — Manifest V3 React popup + Greenhouse/Lever/Indeed content scripts calling localhost:8765
+
+### [2026-04-25 15:33 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - ruff+mypy clean; 437 tests pass (74 new API tests); coldreach serve shows in CLI help; docs/api-server.md covers all 7 endpoints
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
+

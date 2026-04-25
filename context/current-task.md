@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
+- Objective: Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
 
 ## In Progress
 
-- [ ] Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
+- [ ] Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
 
 ## Done In This Session
 
-- Phase 2 complete: status command + service bar, Docker health checks, Makefile, setup.sh rewrite, Firecrawl separation, crawl4ai/Firecrawl/role-email source integrations, Reacher detection fix, docs updated
+- Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
 
 ## Next Action (Single Concrete Step)
 
-- Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
+- Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- uv run pytest tests/ → 363 passed 7 skipped; ruff check + mypy clean; coldreach status shows 4/4 core online; coldreach find --domain stripe.com --quick works
+- ruff+mypy clean; 437 tests pass (74 new API tests); coldreach serve shows in CLI help; docs/api-server.md covers all 7 endpoints

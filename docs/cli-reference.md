@@ -1,6 +1,6 @@
 # CLI Reference
 
-ColdReach exposes four top-level commands: `status`, `verify`, `find`, and `cache`.
+ColdReach exposes five top-level commands: `status`, `serve`, `verify`, `find`, and `cache`.
 
 ```
 coldreach [OPTIONS] COMMAND [ARGS]...
@@ -44,6 +44,36 @@ Displays a gradient ASCII banner, then pings all services concurrently and repor
 
 !!! tip
     Run `coldreach status` after `docker compose up -d` to confirm all services are healthy before a find run.
+
+---
+
+## `coldreach serve`
+
+Start the local API server for the Chrome extension and scripting tools.
+
+```bash
+coldreach serve [OPTIONS]
+```
+
+### Options
+
+| Option | Default | Description |
+| ------ | ------- | ----------- |
+| `--host TEXT` | `127.0.0.1` | Host to bind. Keep as `127.0.0.1` — do not expose to the network. |
+| `--port INT` | `8765` | Port to listen on. |
+| `--reload` | off | Auto-reload on code changes (development only). |
+
+### Examples
+
+```bash
+coldreach serve                        # localhost:8765
+coldreach serve --port 9000
+coldreach serve --reload               # dev mode
+```
+
+Once running, Swagger UI is available at **http://localhost:8765/docs**.
+
+See [API Server](api-server.md) for full endpoint documentation.
 
 ---
 

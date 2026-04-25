@@ -38,3 +38,7 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 - Firecrawl is a separate-stack optional add-on — not in default docker-compose; status shows it separately from core services
 - Reacher health check uses TCP probe (bash /dev/tcp) not HTTP GET — the service has no HTTP root endpoint by design
 - scripts/setup.sh is now the canonical first-time setup path — handles prereqs, clone, build, wait-for-healthy, verify
+
+### [2026-04-25 12:27 EDT] Session close decisions
+
+- API defaults to quick=true for extension requests (10s target); SSE stream endpoint separate from blocking JSON endpoint

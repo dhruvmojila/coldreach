@@ -805,5 +805,103 @@ Get this working. Everything else is features.
 
 ---
 
+---
+
+## ACTUAL PROGRESS & UPDATED PHASE PLAN (2026-04-25)
+
+### What's Actually Built
+
+| Phase | Planned | Status |
+|-------|---------|--------|
+| Phase 1 — Core CLI engine | End-to-end `coldreach find` | ✅ Done — on PyPI v0.1.0 |
+| Phase 2 sources | Enhanced sources + Firecrawl/Crawl4AI | ✅ Done |
+| Phase 2 TUI | Textual interactive TUI | ❌ Skipped — CLI only (Rich) |
+| Phase 3 | Chrome extension | 🔜 Next |
+
+**What's working today:**
+- `coldreach find` — all 8 sources, parallel, async, cached
+- `coldreach verify` — 5-step pipeline (syntax → DNS → Reacher → Holehe)
+- `coldreach status` — live service health dashboard with gradient banner
+- `coldreach find --company "Stripe"` — Clearbit + DDG domain resolver
+- `coldreach find --output leads.csv` — CSV/JSON export
+- `coldreach find --firecrawl / --crawl4ai` — opt-in JS scrapers
+- Role email generation (info@, sales@, etc.) — always-on, low confidence
+- `docker compose up --wait` — health checks on all services, blocks until ready
+- `make setup` — one-command first-time setup
+- Published: PyPI + MkDocs site
+
+### Updated Phase Plan
+
+#### Phase 3A — Local API Server `coldreach serve` *(current)*
+**Goal:** HTTP API that the Chrome extension (Phase 3B) will call. Also enables scripting,
+n8n/Zapier automation, and any external tool to use ColdReach programmatically.
+
+```
+coldreach serve          # starts FastAPI on localhost:8765
+```
+
+**Endpoints:**
+- `POST /api/find` — discover emails (returns DomainResult JSON)
+- `POST /api/find/stream` — same but Server-Sent Events (live source progress)
+- `POST /api/verify` — verify single email (returns PipelineResult JSON)
+- `GET  /api/status` — service health (reuses diagnostics.py)
+- `GET  /api/cache` — list cached domains
+- `DELETE /api/cache/{domain}` — clear domain from cache
+
+**Key design:**
+- CORS enabled for `chrome-extension://` origin (required for extension)
+- `quick=true` default for extension requests (10s vs 5min)
+- SSE streaming for live source progress (emit as each source completes)
+- No auth — localhost only, Chrome extension talks to it directly
+
+#### Phase 3B — Chrome Extension *(after 3A)*
+**Goal:** One-click email finding from any job posting — the viral differentiator.
+
+- Manifest V3 + React popup
+- Auto-detects company on: Greenhouse, Lever, Indeed, LinkedIn Jobs (domain only, no scrape)
+- Calls `localhost:8765` → shows emails in popup → copy to clipboard in one click
+- Groq `--draft` button: find email + write the cold email in one action
+
+**Chrome Web Store → Show HN → GitHub stars**
+
+#### Phase 4 — Textual TUI *(after extension ships)*
+**Goal:** Full interactive terminal UI — impressive for demos, loved by power users.
+
+```
+coldreach          # launches Textual TUI (no args)
+coldreach --cli    # headless CLI mode (current behavior)
+```
+
+Screens: Find (live streaming results) · Verify · Status (reuses diagnostics.py) · Cache browser
+
+#### Phase 5 — Groq LLM Personalization *(3-4 days, highest ROI)*
+**Goal:** Find email AND draft the outreach in one command.
+
+```bash
+coldreach find --domain stripe.com --name "Patrick Collison" --draft
+# → patrick@stripe.com [87/100] ● valid
+# → Subject: Quick question about Stripe's developer tools
+# → Hi Patrick, I noticed Stripe recently expanded into...
+```
+
+Crawl4AI already fetches company page content. Pass it to Groq free tier (14,400 tok/min).
+
+#### Phase 6 — BYOK & Community
+- Hunter.io / Apollo.io BYOK (accuracy boost for users who want it)
+- Common Crawl offline index → HuggingFace Dataset
+- Plugin API for community-contributed job board parsers
+- Discord community
+
+### 5k Stars Strategy
+
+1. **Ship Chrome extension** → viral sharing ("found hiring manager email in 10s")
+2. **Show HN post** with demo GIF → front page story: "Free Hunter.io, runs locally, zero API keys"
+3. **Textual TUI gif** → GitHub profile screenshots, retweetable
+4. **Groq `--draft`** → "find + write the cold email" is a complete workflow
+
+---
+
 _Last updated: 2026-04-11_
 _Status: Planning — Phase 1 not started_
+
+_Updated: 2026-04-25 — Phase 1 + Phase 2 (sources) complete. Implementing Phase 3A._

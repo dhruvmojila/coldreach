@@ -82,6 +82,7 @@ nav:
   - Configuration: configuration.md
   - How It Works: how-it-works.md
   - Discovery Sources: sources.md
+  - API Server: api-server.md
   - API Reference:
     - api/index.md
     - Data Models: api/models.md

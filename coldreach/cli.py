@@ -285,6 +285,91 @@ def status(ctx: click.Context) -> None:
 
 
 # ---------------------------------------------------------------------------
+# serve command
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    show_default=True,
+    help="Host to bind. Keep as 127.0.0.1 — do not expose to the network.",
+)
+@click.option(
+    "--port",
+    default=8765,
+    show_default=True,
+    type=int,
+    help="Port to listen on.",
+)
+@click.option(
+    "--reload",
+    is_flag=True,
+    default=False,
+    help="Auto-reload on code changes (development only).",
+)
+@click.pass_context
+def serve(ctx: click.Context, host: str, port: int, reload: bool) -> None:
+    """Start the local API server for the Chrome extension and scripting.
+
+    \b
+    Endpoints:
+      POST /api/find          — discover emails (returns DomainResult JSON)
+      POST /api/find/stream   — same, but Server-Sent Events (live progress)
+      POST /api/verify        — verify a single email
+      GET  /api/status        — service health
+      GET  /api/cache         — list cached domains
+      DELETE /api/cache/{d}  — clear one domain from cache
+      GET  /docs              — interactive Swagger UI
+
+    \b
+    Examples:
+      coldreach serve
+      coldreach serve --port 9000
+      coldreach serve --reload    # dev mode
+
+    \b
+    Then call from any tool:
+      curl -s -X POST http://localhost:8765/api/find \\
+           -H "Content-Type: application/json" \\
+           -d '{"domain":"stripe.com","quick":true}' | jq '.emails[:3]'
+    """
+    try:
+        import uvicorn
+    except ImportError:  # pragma: no cover
+        err_console.print(
+            "[red]Error:[/red] uvicorn is not installed. Run: [bold]pip install coldreach[/bold]"
+        )
+        raise SystemExit(1) from None
+
+    console.print(_banner())
+    console.print()
+    console.print(
+        Panel(
+            f"  [bold green]●[/bold green]  API server starting on "
+            f"[bold]http://{host}:{port}[/bold]\n\n"
+            f"  [dim]Swagger UI →[/dim]  http://{host}:{port}/docs\n"
+            f"  [dim]Find emails →[/dim] POST http://{host}:{port}/api/find\n"
+            f"  [dim]Live stream →[/dim] POST http://{host}:{port}/api/find/stream\n\n"
+            f"  Press [bold]Ctrl-C[/bold] to stop.",
+            title="[bold]ColdReach API Server[/bold]",
+            border_style="#5b8cff",
+            padding=(0, 2),
+        )
+    )
+    console.print()
+
+    uvicorn.run(
+        "coldreach.api:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="warning",  # suppress uvicorn access logs; our app logs are enough
+    )
+
+
+# ---------------------------------------------------------------------------
 # verify command
 # ---------------------------------------------------------------------------
 

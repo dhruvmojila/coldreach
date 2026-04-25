@@ -670,3 +670,25 @@
 ### Next
 - Start Phase 3 planning — Chrome extension or FastAPI server for local web UI
 
+
+## [2026-04-25 12:27 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 3A complete: coldreach serve — FastAPI API server with POST /api/find, POST /api/find/stream (SSE), POST /api/verify, GET /api/status, GET/DELETE /api/cache, GET /api/version; PLAN.md updated with phases 3A-6
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 3B: Chrome extension — Manifest V3 React popup + Greenhouse/Lever/Indeed content scripts calling localhost:8765
+
+
+## [2026-04-25 15:33 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
+
