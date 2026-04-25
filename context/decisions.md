@@ -42,3 +42,8 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 ### [2026-04-25 12:27 EDT] Session close decisions
 
 - API defaults to quick=true for extension requests (10s target); SSE stream endpoint separate from blocking JSON endpoint
+
+### [2026-04-25 15:54 EDT] Session close decisions
+
+- Two separate Vite configs for content (IIFE) and service-worker (ESM) — Rollup cannot mix inlineDynamicImports with multiple inputs
+- Icons are SVG for development; production needs PNG conversion before Chrome Web Store submission

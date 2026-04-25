@@ -1,0 +1,30 @@
+{
+  "name": "coldreach-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:popup && npm run build:content && npm run build:sw",
+    "build:popup": "vite build --config vite.popup.config.ts",
+    "build:content": "vite build --config vite.scripts.config.ts",
+    "build:sw": "vite build --config vite.sw.config.ts",
+    "dev": "vite build --config vite.popup.config.ts --watch",
+    "zip": "cd dist && zip -r ../coldreach-extension.zip . && echo 'Built: coldreach-extension.zip'"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-static-copy": "^2.1.0"
+  }
+}

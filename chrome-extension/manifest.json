@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "ColdReach — Email Finder",
+  "version": "0.1.0",
+  "description": "Find contact emails for any job posting in seconds. Powered by your local ColdReach instance.",
+
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://localhost:8765/*"],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ColdReach — Find Emails",
+    "default_icon": {
+      "16": "icons/icon16.svg",
+      "48": "icons/icon48.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  },
+
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://boards.greenhouse.io/*",
+        "https://*.greenhouse.io/jobs/*",
+        "https://jobs.lever.co/*",
+        "https://www.indeed.com/*",
+        "https://indeed.com/*",
+        "https://www.linkedin.com/jobs/*",
+        "https://jobs.workable.com/*",
+        "https://apply.workable.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

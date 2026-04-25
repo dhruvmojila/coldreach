@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="23" fill="#1e293b"/>
+  <text
+    x="50%" y="54%"
+    dominant-baseline="middle"
+    text-anchor="middle"
+    font-size="77"
+    font-family="system-ui, sans-serif"
+    fill="#5b8cff"
+  >⚡</text>
+</svg>

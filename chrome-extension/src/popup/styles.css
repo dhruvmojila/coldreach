@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix popup sizing — Chrome default is 100x100 */
+html,
+body,
+#root {
+  width: 400px;
+  min-height: 120px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 2px;
+}

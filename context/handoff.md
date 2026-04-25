@@ -117,3 +117,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
 
+### [2026-04-25 15:54 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 3B complete: Chrome extension with Manifest V3, React popup (SSE streaming), content scripts for Greenhouse/Lever/Indeed/LinkedIn/Workable, background service worker, docs/chrome-extension.md, npm run build produces clean dist/
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - npm run build produces 10-file dist/ (popup.html, content.js, service-worker.js, manifest.json, icons, assets); 437 Python tests pass; ruff+mypy clean
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
+

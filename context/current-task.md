@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
+- Objective: Phase 3B complete: Chrome extension with Manifest V3, React popup (SSE streaming), content scripts for Greenhouse/Lever/Indeed/LinkedIn/Workable, background service worker, docs/chrome-extension.md, npm run build produces clean dist/
 
 ## In Progress
 
-- [ ] Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
+- [ ] Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
 
 ## Done In This Session
 
-- Phase 3A hardened: 74 API unit tests (100% pass), docs/api-server.md added, cli-reference.md updated with serve command, mkdocs nav updated
+- Phase 3B complete: Chrome extension with Manifest V3, React popup (SSE streaming), content scripts for Greenhouse/Lever/Indeed/LinkedIn/Workable, background service worker, docs/chrome-extension.md, npm run build produces clean dist/
 
 ## Next Action (Single Concrete Step)
 
-- Phase 3B: Chrome extension — Manifest V3 React popup calling localhost:8765, content scripts for Greenhouse + Lever + Indeed
+- Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- ruff+mypy clean; 437 tests pass (74 new API tests); coldreach serve shows in CLI help; docs/api-server.md covers all 7 endpoints
+- npm run build produces 10-file dist/ (popup.html, content.js, service-worker.js, manifest.json, icons, assets); 437 Python tests pass; ruff+mypy clean
