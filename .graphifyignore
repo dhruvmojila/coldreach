@@ -1,0 +1,29 @@
+# Graphify ignore — same syntax as .gitignore
+# Generated / compiled
+__pycache__/
+*.py[cod]
+*.pyo
+dist/
+build/
+site/
+*.egg-info/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Test / cache artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Third-party vendored trees (large, not your code)
+spiderfoot/
+theHarvester/
+node_modules/
+
+# Graphify own output
+graphify-out/
