@@ -1352,9 +1352,9 @@
       "file_type": "rationale",
       "source_file": "coldreach/dashboard.py",
       "source_location": "L210",
-      "id": "dashboard_rationale_210",
       "community": 3,
-      "norm_label": "return flat list of all {email, domain, status, confidence, source}."
+      "norm_label": "return flat list of all {email, domain, status, confidence, source}.",
+      "id": "dashboard_rationale_210"
     },
     {
       "label": "config.py",
