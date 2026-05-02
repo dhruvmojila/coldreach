@@ -678,7 +678,10 @@ elif page == "Contacts":
                     idx = i + j  # unique across the full filtered list
                     btn_col1, btn_col2 = col.columns(2)
                     if btn_col1.button(
-                        "✏️ Draft", key=f"draft_{idx}_{addr[:20]}", use_container_width=True, type="secondary"
+                        "✏️ Draft",
+                        key=f"draft_{idx}_{addr[:20]}",
+                        use_container_width=True,
+                        type="secondary",
                     ):
                         st.session_state.compose_email = addr
                         st.session_state.compose_domain = domain
