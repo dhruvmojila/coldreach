@@ -307,3 +307,41 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
 
+### [2026-05-02 11:44 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 3B+ source audit + fixes: SpiderFoot now fetches all 4 email event types (EMAILADDR + COMPROMISED + GENERIC + DELIVERABLE) so sfp_citadel breach data is captured; IntelligentSearch crawls actual SearXNG result URLs for emails (not just snippets); web_crawler expanded to 15 max_pages + careers/press/media/support paths
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 443 tests pass; SpiderFoot _fetch_results queries 4 event types; IntelligentSearch two-pass: snippets + URL crawl; web_crawler covers 24 paths at 15 pages max
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Test full standard scan on snapdeal.com with all fixes — target 10+ genuine emails. Then audit remaining sources: GitHub (snapdeal has repos?), Reddit (query format), theHarvester (verify /query endpoint actually works with corrected params)
+
+### [2026-05-02 12:22 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 3B+ complete: source audit + all fixes. SearchEngine no longer uses '@domain' literal (returns 0). SearchEngine now crawls result URLs. GitHub tries 7 slug variants. SpiderFoot queries all 4 email event types. Combined: 9 genuine emails + 9 patterns for snapdeal.com. 443 tests pass.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 443 tests pass; snapdeal.com pipeline: 5 genuine (search_engine found pressoffice+companysecretary via URL crawl, harvester found help+info) + 4 SpiderFoot (PGP) + 9 patterns = 18 total; SearXNG now returns 4 emails via improved crawl strategy
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 5: Groq draft feature — coldreach find --domain X --name Y --draft → finds email + writes personalized cold email. Also needs a dashboard/UI for managing email templates and outreach campaigns.
+

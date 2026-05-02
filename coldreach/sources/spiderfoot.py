@@ -254,20 +254,37 @@ class SpiderFootSource(BaseSource):
         return "UNKNOWN"
 
     async def _fetch_results(self, scan_id: str) -> list[list[object]]:
-        """GET /scaneventresults → list of result rows."""
+        """Fetch all email-related event types from a running scan.
+
+        Queries each email event type separately because SpiderFoot's API
+        only accepts one eventType per request.  sfp_citadel returns
+        EMAILADDR_COMPROMISED (breach data) which is missed if we only
+        query EMAILADDR.
+        """
+        email_event_types = [
+            "EMAILADDR",
+            "EMAILADDR_COMPROMISED",  # sfp_citadel breach data (apollo, PDL, etc.)
+            "EMAILADDR_GENERIC",
+            "EMAILADDR_DELIVERABLE",
+        ]
+        all_rows: list[list[object]] = []
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as c:
-                resp = await c.get(
-                    f"{self.api_base}/scaneventresults",
-                    params={"id": scan_id, "eventType": "EMAILADDR"},
-                    headers=_HEADERS_JSON,
-                )
-            data = resp.json()
-            if isinstance(data, list):
-                return data
+                for event_type in email_event_types:
+                    try:
+                        resp = await c.get(
+                            f"{self.api_base}/scaneventresults",
+                            params={"id": scan_id, "eventType": event_type},
+                            headers=_HEADERS_JSON,
+                        )
+                        data = resp.json()
+                        if isinstance(data, list):
+                            all_rows.extend(data)
+                    except Exception:
+                        continue
         except Exception as exc:
             self._log.debug("SpiderFoot fetch_results error: %s", exc)
-        return []
+        return all_rows
 
     async def _stop_scan(self, scan_id: str) -> None:
         """GET /stopscan — best-effort, never raises."""

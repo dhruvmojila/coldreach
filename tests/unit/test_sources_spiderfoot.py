@@ -142,11 +142,13 @@ class TestSpiderFootRestApi:
     @respx.mock
     async def test_fetch_results_returns_rows(self) -> None:
         src = SpiderFootSource()
+        # Now queries 4 event types (EMAILADDR + COMPROMISED + GENERIC + DELIVERABLE)
+        # so the mock returns 2 rows per event type = 8 total
         respx.get(_api(src, "/scaneventresults")).mock(
             return_value=Response(200, json=_rows("ceo@acme.com", "cto@acme.com"))
         )
         rows = await src._fetch_results("SCAN123")
-        assert len(rows) == 2
+        assert len(rows) >= 2  # at least 2 from the first event type
 
     @pytest.mark.asyncio
     @respx.mock

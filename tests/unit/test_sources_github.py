@@ -149,12 +149,10 @@ class TestGitHubSourceFetch:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=False)
-            # Both org and user endpoints return 404
+            # We try up to 7 slug variants x 2 endpoints = up to 14 requests.
+            # Return 404 for all of them.
             mock_client.get = AsyncMock(
-                side_effect=[
-                    _mock_json_response({}, status_code=404),
-                    _mock_json_response({}, status_code=404),
-                ]
+                return_value=_mock_json_response({}, status_code=404)
             )
             mock_cls.return_value = mock_client
 

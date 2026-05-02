@@ -54,15 +54,18 @@ Company domain: {domain}
 Company context: {context}
 
 Generate 6 search queries to find email addresses for this company.
-Mix these angles:
-1. Direct email format: "@{domain}"
-2. Company + role: "CEO OR HR OR partnerships {domain}"
-3. Reddit-style: company name + industry + contact
-4. Press/media: company name + interview OR announcement + email
-5. Job/career: company + jobs OR careers + email
-6. Industry community: company name + relevant forum/community + contact
+IMPORTANT: Do NOT use "@domain" as a query — search engines do not index @ symbols.
+Use human-readable queries that would appear on contact pages, press releases, LinkedIn posts.
 
-Return exactly 6 queries, one per line."""
+Mix these angles:
+1. Company name + "contact" OR "email" (finds contact pages indexed by search engines)
+2. Company name + role: "CEO" OR "HR" OR "partnerships" + "email" OR "contact"
+3. Industry/community: company name + relevant industry term + "contact" OR "email"
+4. Press/media: company name + "press release" OR "interview" + "email"
+5. Job/career: company name + "recruiter" OR "talent" + "email"
+6. Location-specific: company + city/country + "contact" OR "email"
+
+Return exactly 6 queries, one per line. No "@" symbol in queries."""
 
 _REDDIT_PROMPT = """\
 Company domain: {domain}
@@ -111,10 +114,9 @@ class IntelligentSearchSource(BaseSource):
         timeout: float = 20.0,
     ) -> None:
         super().__init__(timeout=timeout)
-        # Load Groq key from pydantic-settings config (reads .env) if not provided
-        if groq_api_key:
-            self.groq_api_key = groq_api_key
-        else:
+        # Load Groq key: explicit param > pydantic-settings (.env) > env var
+        self.groq_api_key: str | None = groq_api_key
+        if not self.groq_api_key:
             try:
                 from coldreach.config import get_settings
 
@@ -247,14 +249,14 @@ class IntelligentSearchSource(BaseSource):
             except Exception as exc:
                 self._log.debug("Groq query generation failed: %s", exc)
 
-        # Heuristic fallback — better than a single generic query
+        # Heuristic fallback — avoids "@domain" literal (SearXNG returns 0 for it)
         company = domain.split(".")[0].capitalize()
         base = [
-            f'"@{domain}"',
-            f'"{company}" email OR contact',
-            f'"{domain}" email contact',
-            f'"{company}" CEO OR founder OR HR email',
-            f"site:{domain} contact OR email",
+            f'"{domain}" email OR contact',  # company + keywords
+            f'"{company}" contact email press',  # name variant + press
+            f'"{company}" CEO OR founder email',  # leadership
+            f"site:{domain} contact OR email",  # indexed domain pages
+            f'"{company}" investor relations email',  # IR contacts
         ]
         if person_name:
             base.append(f'"{person_name}" "{domain}"')
@@ -320,8 +322,14 @@ class IntelligentSearchSource(BaseSource):
         query: str,
         domain: str,
     ) -> list[tuple[str, str]]:
-        """Run one SearXNG query and extract domain emails from results."""
+        """Run one SearXNG query, extract emails from snippets AND crawl top URLs.
+
+        Two-pass approach:
+        1. Extract emails from SearXNG's meta-snippet content (fast)
+        2. Crawl the top 3 result URLs directly (finds emails not in snippets)
+        """
         results: list[tuple[str, str]] = []
+        crawl_urls: list[str] = []
         try:
             resp = await client.get(
                 f"{self.searxng_url}/search",
@@ -333,10 +341,40 @@ class IntelligentSearchSource(BaseSource):
                 return results
             data: dict[str, Any] = resp.json()
             for r in data.get("results", []):
-                for field in ("content", "title", "url"):
+                # Pass 1: snippets
+                for field in ("content", "title"):
                     text = r.get(field, "") or ""
                     for email in _extract_domain_emails(str(text), domain):
-                        results.append((email, f"searxng: {query[:50]}"))
+                        results.append((email, f"searxng-snippet: {query[:40]}"))
+                # Collect URLs for pass 2 (only pages ON the target domain)
+                url = r.get("url", "") or ""
+                if domain in url and url not in crawl_urls:
+                    crawl_urls.append(url)
+
+            # Pass 2: crawl domain pages AND external pages (press, interviews)
+            # External pages (TechCrunch, Economic Times, etc.) may mention
+            # company emails that aren't on the company's own website.
+            all_urls = data.get("results", [])
+            external_urls = [
+                r.get("url", "")
+                for r in all_urls
+                if r.get("url") and domain not in r.get("url", "")
+            ][:2]
+
+            for url in crawl_urls[:3] + external_urls:
+                try:
+                    page = await client.get(
+                        url,
+                        timeout=8.0,
+                        headers={"User-Agent": "Mozilla/5.0 (compatible; ColdReach/0.1)"},
+                    )
+                    if page.status_code == 200:
+                        page_text = _strip_html(page.text)
+                        for email in _extract_domain_emails(page_text, domain):
+                            results.append((email, f"crawled: {url[:60]}"))
+                except Exception:
+                    continue
+
         except Exception as exc:
             self._log.debug("SearXNG query %r failed: %s", query, exc)
         return results

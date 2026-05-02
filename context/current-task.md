@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: IntelligentSearchSource: Groq+SearXNG+Reddit multi-stage pipeline. Scrapes company site → Groq generates 6 domain-specific queries + 4 subreddits → runs all concurrently through SearXNG + Reddit. Groq key loaded from pydantic-settings. Context uses SearXNG meta-descriptions (works for JS SPAs). Falls back to heuristic queries without Groq.
+- Objective: Phase 3B+ complete: source audit + all fixes. SearchEngine no longer uses '@domain' literal (returns 0). SearchEngine now crawls result URLs. GitHub tries 7 slug variants. SpiderFoot queries all 4 email event types. Combined: 9 genuine emails + 9 patterns for snapdeal.com. 443 tests pass.
 
 ## In Progress
 
-- [ ] Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
+- [ ] Phase 5: Groq draft feature — coldreach find --domain X --name Y --draft → finds email + writes personalized cold email. Also needs a dashboard/UI for managing email templates and outreach campaigns.
 
 ## Done In This Session
 
-- IntelligentSearchSource: Groq+SearXNG+Reddit multi-stage pipeline. Scrapes company site → Groq generates 6 domain-specific queries + 4 subreddits → runs all concurrently through SearXNG + Reddit. Groq key loaded from pydantic-settings. Context uses SearXNG meta-descriptions (works for JS SPAs). Falls back to heuristic queries without Groq.
+- Phase 3B+ complete: source audit + all fixes. SearchEngine no longer uses '@domain' literal (returns 0). SearchEngine now crawls result URLs. GitHub tries 7 slug variants. SpiderFoot queries all 4 email event types. Combined: 9 genuine emails + 9 patterns for snapdeal.com. 443 tests pass.
 
 ## Next Action (Single Concrete Step)
 
-- Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
+- Phase 5: Groq draft feature — coldreach find --domain X --name Y --draft → finds email + writes personalized cold email. Also needs a dashboard/UI for managing email templates and outreach campaigns.
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 443 tests pass; Groq key loads from .env via get_settings(); Groq generates travel-industry queries for fareleaders.com; intelligent_search source is in _SLOW_SOURCE_NAMES so it runs after fast sources
+- 443 tests pass; snapdeal.com pipeline: 5 genuine (search_engine found pressoffice+companysecretary via URL crawl, harvester found help+info) + 4 SpiderFoot (PGP) + 9 patterns = 18 total; SearXNG now returns 4 emails via improved crawl strategy

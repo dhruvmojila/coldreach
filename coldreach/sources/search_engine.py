@@ -72,16 +72,18 @@ def _extract_domain_emails(text: str, domain: str) -> list[str]:
 def _build_queries(domain: str, person_name: str | None) -> list[str]:
     """Build targeted email-discovery queries for SearXNG.
 
-    Uses domain-specific patterns that search engines understand well.
-    Avoids generic queries that return off-topic results.
+    Avoids literal "@domain" queries — SearXNG search engines don't index
+    the @ symbol and return 0 results.  Uses human-readable variants instead.
     """
+    company = domain.split(".")[0]  # "snapdeal" from "snapdeal.com"
     queries = [
-        f'"@{domain}"',  # exact email domain match
-        f'"{domain}" email OR contact',  # company + email/contact keyword
-        f"site:{domain}",  # crawl-index results for the domain
+        f'"{domain}" email OR contact',  # domain + keywords → finds contact pages
+        f'"{company}" contact email press',  # company name → PR/press contacts
+        f"site:{domain} contact OR email OR press",  # indexed pages on domain
+        f'"{company}" "email us" OR "contact us"',  # finds explicit email CTAs
     ]
     if person_name:
-        queries.append(f'"{person_name}" "@{domain}"')
+        queries.append(f'"{person_name}" "{domain}"')
     return queries
 
 
@@ -96,7 +98,13 @@ async def _query_searxng(
     query: str,
     domain: str,
 ) -> list[str]:
-    """Query a SearXNG instance for emails. Returns list of found emails."""
+    """Query SearXNG and extract emails from snippets + crawl domain result URLs.
+
+    Two-pass strategy:
+    1. Fast: extract emails from result snippets/titles
+    2. Deep: crawl result URLs that are on the target domain
+       (contact pages, about pages, press pages)
+    """
     try:
         resp = await client.get(
             f"{base_url.rstrip('/')}/search",
@@ -106,10 +114,31 @@ async def _query_searxng(
             return []
         data: dict[str, Any] = resp.json()
         emails: list[str] = []
+        crawl_urls: list[str] = []
+
         for result in data.get("results", []):
-            for field in ("content", "title", "url"):
+            # Pass 1: snippets
+            for field in ("content", "title"):
                 text = result.get(field, "") or ""
                 emails.extend(_extract_domain_emails(str(text), domain))
+            # Collect domain URLs for crawling
+            url = result.get("url", "") or ""
+            if domain in url:
+                crawl_urls.append(url)
+
+        # Pass 2: crawl target-domain pages found by SearXNG
+        for url in crawl_urls[:3]:
+            try:
+                page = await client.get(
+                    url,
+                    timeout=8.0,
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; ColdReach/0.1)"},
+                )
+                if page.status_code == 200:
+                    emails.extend(_extract_domain_emails(page.text, domain))
+            except Exception:
+                continue
+
         return emails
     except (httpx.RequestError, Exception):
         return []

@@ -86,7 +86,22 @@ class GitHubSource(BaseSource):
         *,
         person_name: str | None = None,
     ) -> list[SourceResult]:
-        slug = _domain_to_slug(domain)
+        base_slug = _domain_to_slug(domain)
+        # Try multiple capitalisation/format variants — many companies use
+        # "Snapdeal" (title-case) or "snap-deal" on GitHub instead of "snapdeal"
+        slug_variants = list(
+            dict.fromkeys(
+                [
+                    base_slug,
+                    base_slug.capitalize(),
+                    base_slug.title(),
+                    base_slug.upper(),
+                    base_slug.replace("-", ""),
+                    f"{base_slug}-com",
+                    f"{base_slug}hq",
+                ]
+            )
+        )
         results: list[SourceResult] = []
         seen_emails: set[str] = set()
 
@@ -95,9 +110,16 @@ class GitHubSource(BaseSource):
             timeout=self.timeout,
             follow_redirects=True,
         ) as client:
-            repos = await self._get_repos(client, slug)
+            repos: list[dict[str, Any]] = []
+            for slug in slug_variants:
+                repos = await self._get_repos(client, slug)
+                if repos:
+                    self._log.debug("GitHub: found repos under slug %r for %s", slug, domain)
+                    break
             if not repos:
-                self._log.debug("No GitHub repos found for slug %r (domain: %s)", slug, domain)
+                self._log.debug(
+                    "No GitHub repos for %s (tried %d slugs)", domain, len(slug_variants)
+                )
                 return []
 
             for repo in repos[:_MAX_REPOS]:

@@ -85,6 +85,9 @@ _CONTACT_PATHS = [
     "/contact-us",
     "/contact_us",
     "/contacts",
+    "/reach-us",
+    "/reach-out",
+    "/get-in-touch",
     "/about",
     "/about-us",
     "/about_us",
@@ -96,6 +99,14 @@ _CONTACT_PATHS = [
     "/leadership",
     "/management",
     "/company",
+    "/careers",  # job pages often list recruiter emails
+    "/press",  # PR contact emails
+    "/media",
+    "/investors",
+    "/partner",
+    "/partners",
+    "/support",
+    "/help",
 ]
 
 _SOURCE_MAP: dict[str, EmailSource] = {
@@ -228,7 +239,7 @@ class WebCrawlerSource(BaseSource):
     def __init__(
         self,
         timeout: float = 10.0,
-        max_pages: int = 8,
+        max_pages: int = 15,  # increased: more paths now covered
         follow_homepage_links: bool = True,
     ) -> None:
         super().__init__(timeout=timeout)

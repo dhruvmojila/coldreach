@@ -38,9 +38,13 @@ class TestExtractDomainEmails:
 
 
 class TestBuildQueries:
-    def test_always_includes_at_query(self) -> None:
+    def test_always_includes_domain_query(self) -> None:
         queries = _build_queries("example.com", None)
-        assert any("@example.com" in q for q in queries)
+        # Queries must reference the domain — but NOT as literal "@domain"
+        # (search engines don't index @ and return 0 results for that query)
+        assert any("example.com" in q for q in queries)
+        # Verify we removed the broken "@domain" literal query
+        assert not any(q.strip() == '"@example.com"' for q in queries)
 
     def test_includes_person_query_when_given(self) -> None:
         queries = _build_queries("example.com", "John Smith")

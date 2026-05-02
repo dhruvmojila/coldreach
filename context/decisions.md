@@ -95,3 +95,14 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 
 - Company context from SearXNG meta-descriptions (not homepage scrape) — works for JS SPAs like fareleaders.com that return JavaScript code when scraped directly
 - intelligent_search classified as slow source — runs after web_crawler/github/whois return fast results; Groq API is async via asyncio.to_thread to avoid blocking
+
+### [2026-05-02 11:44 EDT] Session close decisions
+
+- SpiderFoot _fetch_results was only querying EMAILADDR — sfp_citadel returns EMAILADDR_COMPROMISED (breach data like ajay.raut@flipkart.com [apollo.io]). Now queries all 4 types per scan.
+- IntelligentSearch SearXNG pass-1 extracted from snippets (meta-descriptions), pass-2 crawls top 4 domain-URLs from results. Emails live in page bodies, not search snippets.
+
+### [2026-05-02 12:22 EDT] Session close decisions
+
+- SearXNG '@domain' query returns 0 results — search engines don't index @ symbols. Fixed to human-readable queries: 'domain email OR contact', 'company contact email press', 'site:domain contact OR email'.
+- SearchEngine and IntelligentSearch now do two-pass: (1) extract emails from SearXNG snippets, (2) crawl domain URLs returned by SearXNG. pressoffice@snapdeal.com found by crawling a SearXNG-indexed page.
+- GitHub source tries 7 slug variants (snapdeal, Snapdeal, SNAPDEAL, snapdeal-com, snapdealhq, etc.) since companies like Snapdeal use title-case GitHub orgs.
