@@ -345,3 +345,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 5: Groq draft feature — coldreach find --domain X --name Y --draft → finds email + writes personalized cold email. Also needs a dashboard/UI for managing email templates and outreach campaigns.
 
+### [2026-05-02 12:32 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix CI ruff format error; add all GitHub community standard files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, 3 issue templates, PR template); update docs/sources.md with IntelligentSearch; add docs/contributing.md
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 443 tests pass; ruff+mypy clean; CI should be fully green now; all GitHub community standard checklist items covered
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 5: Groq --draft feature + outreach dashboard. User wants: find email + write personalized cold email + UI to manage templates and campaigns.
+

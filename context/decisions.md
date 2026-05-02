@@ -106,3 +106,7 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 - SearXNG '@domain' query returns 0 results — search engines don't index @ symbols. Fixed to human-readable queries: 'domain email OR contact', 'company contact email press', 'site:domain contact OR email'.
 - SearchEngine and IntelligentSearch now do two-pass: (1) extract emails from SearXNG snippets, (2) crawl domain URLs returned by SearXNG. pressoffice@snapdeal.com found by crawling a SearXNG-indexed page.
 - GitHub source tries 7 slug variants (snapdeal, Snapdeal, SNAPDEAL, snapdeal-com, snapdealhq, etc.) since companies like Snapdeal use title-case GitHub orgs.
+
+### [2026-05-02 12:32 EDT] Session close decisions
+
+- GitHub community standards met: Description (set on repo), README (exists), Code of conduct, Contributing guide, License (MIT), Security policy, 3 issue templates (bug/feature/new-source), PR template

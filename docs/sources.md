@@ -170,6 +170,27 @@ These are added with a low initial confidence score (5) and only included if not
 
 ---
 
+## Intelligent Search *(Groq-enhanced)*
+
+**Source ID:** `search/searxng`  
+**Requires:** `COLDREACH_GROQ_API_KEY` in `.env` for best results; falls back to smart heuristics  
+**Speed:** Slow (30–60s — Groq + multi-query + URL crawling)
+
+Multi-stage pipeline that outperforms simple keyword searches:
+
+1. **Company context** — scrapes the company homepage + SearXNG meta-descriptions (works for JS SPAs)
+2. **Query generation** — Groq LLM generates 6 targeted queries tailored to the company's industry, location, and type (e.g. "Snapdeal investor relations contact email India")
+3. **Parallel search** — runs all queries through SearXNG concurrently
+4. **URL crawl** — crawls both on-domain pages AND external press/media articles from results (press releases and interview articles often contain direct email addresses)
+5. **Reddit search** — Groq identifies 4 relevant subreddits, searches for company email mentions
+
+!!! note "Groq free tier"
+    Groq's free tier (14,400 tokens/minute on llama-3.1-8b-instant) is more than enough.
+    Get a key at [console.groq.com](https://console.groq.com/).
+    Without a Groq key, the source still runs with smart heuristic queries.
+
+---
+
 ## Source comparison
 
 | Source | Speed | Accuracy | Requires |
@@ -179,6 +200,7 @@ These are added with a low initial confidence score (5) and only included if not
 | GitHub | Fast | Medium (tech) | Nothing |
 | Reddit | Fast | Low | Nothing |
 | Search engine | Medium | Medium | Nothing (DDG fallback) |
+| **Intelligent search** | Slow | **Medium–High** | Nothing (Groq key for best results) |
 | theHarvester | Slow | Medium–High | `docker compose up theharvester` |
 | SpiderFoot | Slow | High | `docker compose up spiderfoot` |
 | Firecrawl | Slow | High (JS sites) | `pip install firecrawl-py` + server |
@@ -187,5 +209,5 @@ These are added with a low initial confidence score (5) and only included if not
 | Role emails | Instant | Varies | Nothing (always generated) |
 
 !!! tip "Use `--quick` for most lookups"
-    `--quick` skips theHarvester and SpiderFoot, giving you results in under 15 seconds.
-    Run without `--quick` only when you need maximum coverage.
+    `--quick` skips theHarvester, SpiderFoot, and Intelligent Search (~10s).
+    Standard mode runs all sources — best for thorough discovery.

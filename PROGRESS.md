@@ -824,3 +824,14 @@
 ### Next
 - Phase 5: Groq draft feature — coldreach find --domain X --name Y --draft → finds email + writes personalized cold email. Also needs a dashboard/UI for managing email templates and outreach campaigns.
 
+
+## [2026-05-02 12:32 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix CI ruff format error; add all GitHub community standard files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, 3 issue templates, PR template); update docs/sources.md with IntelligentSearch; add docs/contributing.md
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 5: Groq --draft feature + outreach dashboard. User wants: find email + write personalized cold email + UI to manage templates and campaigns.
+
