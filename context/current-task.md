@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
+- Objective: Update chrome-extension.md with Draft Button workflow (✏️ button, DraftPanel steps, Groq API key note). All docs now current.
 
 ## In Progress
 
-- [ ] Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
+- [ ] Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens)
 
 ## Done In This Session
 
-- Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
+- Update chrome-extension.md with Draft Button workflow (✏️ button, DraftPanel steps, Groq API key note). All docs now current.
 
 ## Next Action (Single Concrete Step)
 
-- Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
+- Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens)
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 482 tests pass; ruff+mypy clean; dspy.context() is thread-safe; draft generation works from extension popup
+- 482 tests pass; chrome-extension.md now covers Draft Button; outreach.md, cli-reference.md, api-server.md all updated in previous sessions

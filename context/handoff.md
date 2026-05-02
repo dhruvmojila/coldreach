@@ -459,3 +459,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
 
+### [2026-05-02 16:18 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Update chrome-extension.md with Draft Button workflow (✏️ button, DraftPanel steps, Groq API key note). All docs now current.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; chrome-extension.md now covers Draft Button; outreach.md, cli-reference.md, api-server.md all updated in previous sessions
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens)
+

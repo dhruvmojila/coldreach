@@ -47,6 +47,25 @@ when ColdReach has detected a job posting on the current tab.
 7. Click ⎘ to copy a single email, or **Copy all** / **CSV ↓** for bulk export.
 8. If few results appear, the popup suggests upgrading to Full Scan automatically.
 
+### Drafting a cold email from the extension
+
+After emails appear, every row has a **✏️** button:
+
+1. Click ✏️ next to any email — a compose panel slides in below it.
+2. Fill in:
+   - **Your name** (remembered across sessions)
+   - **What you want** — one sentence, e.g. *"explore a B2B partnership on embedded payments"*
+   - **Type** — Auto / Partner / Job / Sales
+3. Click **✨ Generate draft** — Groq reads the company's website and writes a personalised subject + body (1–3 seconds).
+4. Click **📋 Copy full email** — copies `Subject: ... Body: ... Best, [Your Name]` to clipboard.
+5. Paste directly into Gmail, Outlook, or any email client.
+
+!!! note "Requires Groq API key"
+    Add `COLDREACH_GROQ_API_KEY=gsk_xxx` to `.env` and restart `coldreach serve`.
+    Free key at [console.groq.com](https://console.groq.com) (14,400 tokens/min free tier).
+
+Click ✏️ again (or ✕) to close the panel without generating.
+
 ## Right-click context menu
 
 Right-click anywhere on a page or on selected text:
