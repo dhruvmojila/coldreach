@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Complete dashboard redesign: professional dark theme with custom CSS tokens, left sidebar navigation (Home/Find/Contacts/Compose/Sent), live SSE scan with source pills + email cards appearing in real time, card grid for contacts with inline Draft/Mark buttons, focused Compose with left/right split, Sent tracker with reply rate
+- Objective: Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
 
 ## In Progress
 
-- [ ] Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
+- [ ] Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
 
 ## Done In This Session
 
-- Complete dashboard redesign: professional dark theme with custom CSS tokens, left sidebar navigation (Home/Find/Contacts/Compose/Sent), live SSE scan with source pills + email cards appearing in real time, card grid for contacts with inline Draft/Mark buttons, focused Compose with left/right split, Sent tracker with reply rate
+- Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
 
 ## Next Action (Single Concrete Step)
 
-- Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
+- Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 482 tests pass; ruff+mypy clean; design artifacts saved in .design/coldreach-dashboard/
+- 482 tests pass; ruff+mypy clean; dspy.context() is thread-safe; draft generation works from extension popup

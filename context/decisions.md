@@ -120,3 +120,12 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 
 - Custom CSS injected via st.markdown(unsafe_allow_html=True) — only way to override Streamlit's default widget styles. E501/B905/SIM105 suppressed for dashboard.py per-file-ignore.
 - Find page uses polling (GET /api/v2/scan/{id} every 2s + st.rerun()) instead of SSE — Streamlit can't hold an open SSE connection across reruns. Polling achieves the same live-update UX.
+
+### [2026-05-02 16:04 EDT] Session close decisions
+
+- DraftPanel is inline (not a modal/overlay) — slides in below the email row so the user keeps context of which email they're drafting for. Matches the popup's narrow 400px width constraint.
+- sender name persisted in localStorage under 'cr_sender_name' — user only types their name once across all sessions
+
+### [2026-05-02 16:12 EDT] Session close decisions
+
+- dspy.configure(lm) is not thread-safe — cannot be called from multiple async tasks. dspy.context(lm=lm) as a context manager scopes the LM to the current call stack only, making it safe to call from asyncio.to_thread.

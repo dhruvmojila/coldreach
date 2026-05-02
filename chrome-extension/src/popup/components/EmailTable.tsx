@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DraftPanel } from "./DraftPanel";
 
 interface LiveEmail {
   email: string;
@@ -33,8 +34,8 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="text-gray-600 hover:text-gray-200 transition-colors text-sm"
-      title="Copy"
+      className="text-gray-600 hover:text-gray-200 transition-colors text-sm leading-none"
+      title="Copy email"
     >
       {copied ? "✓" : "⎘"}
     </button>
@@ -44,6 +45,7 @@ function CopyButton({ text }: { text: string }) {
 export function EmailTable({ emails, domain, scanning, onExportCSV, onRescan }: Props) {
   const [copiedAll, setCopiedAll] = useState(false);
   const [filter, setFilter] = useState<"all" | "valid">("all");
+  const [draftOpen, setDraftOpen] = useState<string | null>(null); // email address with open panel
 
   const valid = emails.filter((e) => e.status === "valid");
   const shown = filter === "valid" ? valid : emails;
@@ -56,7 +58,7 @@ export function EmailTable({ emails, domain, scanning, onExportCSV, onRescan }: 
 
   return (
     <div className="space-y-2">
-      {/* Header */}
+      {/* Header row */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-gray-400">
           <span className="text-white font-semibold">{emails.length}</span> found
@@ -66,21 +68,31 @@ export function EmailTable({ emails, domain, scanning, onExportCSV, onRescan }: 
           {scanning && <span className="text-yellow-400 ml-1 animate-pulse">· scanning…</span>}
         </span>
         <div className="flex items-center gap-2">
-          <button onClick={handleCopyAll} className="text-brand hover:text-blue-300 transition-colors">
+          <button
+            onClick={handleCopyAll}
+            className="text-brand hover:text-blue-300 transition-colors"
+          >
             {copiedAll ? "✓ Copied" : "Copy all"}
           </button>
-          <button onClick={onExportCSV} className="text-gray-400 hover:text-gray-200 transition-colors">
+          <button
+            onClick={onExportCSV}
+            className="text-gray-400 hover:text-gray-200 transition-colors"
+          >
             CSV ↓
           </button>
           {!scanning && (
-            <button onClick={onRescan} className="text-gray-600 hover:text-gray-300 transition-colors" title="New search">
+            <button
+              onClick={onRescan}
+              className="text-gray-600 hover:text-gray-300 transition-colors"
+              title="New search"
+            >
               ↺
             </button>
           )}
         </div>
       </div>
 
-      {/* Filter */}
+      {/* Filter pills */}
       {emails.length > 3 && (
         <div className="flex gap-1">
           {(["all", "valid"] as const).map((f) => (
@@ -97,38 +109,78 @@ export function EmailTable({ emails, domain, scanning, onExportCSV, onRescan }: 
       )}
 
       {/* Email rows */}
-      <div className="space-y-1 max-h-72 overflow-y-auto">
+      <div className="space-y-0.5 max-h-72 overflow-y-auto">
         {shown.map((email) => {
           const meta = STATUS_META[email.status] ?? STATUS_META["unknown"];
+          const isOpen = draftOpen === email.email;
+
           return (
-            <div
-              key={email.email}
-              className="px-2 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors space-y-1"
-            >
-              <div className="flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono text-white text-xs truncate">{email.email}</div>
-                </div>
-                <CopyButton text={email.email} />
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className={`px-1.5 py-0.5 rounded text-xs font-mono ${meta.style}`}
-                  title={meta.tip}
-                >
-                  {meta.icon} {email.status}
-                </span>
-                <div className="flex items-center gap-1">
-                  <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${email.confidence >= 70 ? "bg-green-500" : email.confidence >= 40 ? "bg-yellow-500" : "bg-gray-600"}`}
-                      style={{ width: `${email.confidence}%` }}
-                    />
+            <div key={email.email}>
+              {/* Email row */}
+              <div
+                className={`px-2 py-2 rounded-lg transition-colors space-y-1
+                  ${isOpen ? "bg-gray-800 rounded-b-none" : "bg-gray-900 hover:bg-gray-800"}`}
+              >
+                <div className="flex items-center gap-2">
+                  {/* Email address */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-white text-xs truncate">{email.email}</div>
                   </div>
-                  <span className="text-xs text-gray-500">{email.confidence}</span>
+
+                  {/* Actions: draft button + copy */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setDraftOpen(isOpen ? null : email.email)}
+                      title={isOpen ? "Close draft" : "Draft cold email with Groq"}
+                      className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors
+                        ${isOpen
+                          ? "bg-brand/20 text-brand"
+                          : "bg-gray-800 text-gray-400 hover:bg-brand/20 hover:text-brand"
+                        }`}
+                    >
+                      ✏️
+                    </button>
+                    <CopyButton text={email.email} />
+                  </div>
                 </div>
-                <span className="text-xs text-gray-600 truncate max-w-[120px]">{email.source}</span>
+
+                {/* Status + confidence */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-xs font-mono ${meta.style}`}
+                    title={meta.tip}
+                  >
+                    {meta.icon} {email.status}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          email.confidence >= 70
+                            ? "bg-green-500"
+                            : email.confidence >= 40
+                              ? "bg-yellow-500"
+                              : "bg-gray-600"
+                        }`}
+                        style={{ width: `${email.confidence}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-500">{email.confidence}</span>
+                  </div>
+                  <span className="text-xs text-gray-600 truncate max-w-[100px]">
+                    {email.source}
+                  </span>
+                </div>
               </div>
+
+              {/* Draft panel — slides in below the row */}
+              {isOpen && (
+                <DraftPanel
+                  email={email.email}
+                  domain={domain}
+                  onClose={() => setDraftOpen(null)}
+                />
+              )}
             </div>
           );
         })}

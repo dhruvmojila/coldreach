@@ -49,10 +49,20 @@ class EmailDraft:
         return f"Subject: {self.subject}\n\n{self.body}{sig}"
 
 
-def _get_drafter(api_key: str, model: str = "groq/llama-3.1-8b-instant") -> object:
-    """Lazily configure DSPy and return a ColdEmail predictor.
+def _run_dspy_in_thread(
+    api_key: str,
+    model: str,
+    company_context: str,
+    recipient_email: str,
+    sender_name: str,
+    sender_intent: str,
+    template_guidance: str,
+) -> tuple[str, str]:
+    """Run DSPy prediction entirely within one thread using dspy.context().
 
-    Configuration is per-call so different API keys / models can coexist.
+    ``dspy.configure()`` sets global state and must not be called from
+    multiple async tasks.  ``dspy.context()`` is the thread-safe alternative —
+    it scopes the LM to the current call stack only.
     """
     import dspy  # lazy — DSPy is in [full] extras, not core deps
 
@@ -79,8 +89,19 @@ def _get_drafter(api_key: str, model: str = "groq/llama-3.1-8b-instant") -> obje
         )
 
     lm = dspy.LM(model, api_key=api_key, max_tokens=300)
-    dspy.configure(lm=lm)
-    return dspy.Predict(ColdEmailSignature)
+    drafter = dspy.Predict(ColdEmailSignature)
+
+    # dspy.context() scopes the LM to this call only — thread-safe unlike configure()
+    with dspy.context(lm=lm):
+        result = drafter(
+            company_context=company_context,
+            recipient_email=recipient_email,
+            sender_name=sender_name,
+            sender_intent=sender_intent,
+            template_guidance=template_guidance,
+        )
+
+    return str(result.subject).strip(), str(result.body).strip()
 
 
 async def draft_email(
@@ -131,18 +152,17 @@ async def draft_email(
     template = get_template(detected_type)
 
     try:
-        drafter = _get_drafter(resolved_key, model)
-        # DSPy predictors are synchronous — run in thread to avoid blocking event loop
-        result = await asyncio.to_thread(
-            drafter,
-            company_context=context.to_prompt_context(),
-            recipient_email=email,
-            sender_name=sender_name,
-            sender_intent=sender_intent,
-            template_guidance=template.to_prompt_guidance(),
+        # Run entirely in one thread — dspy.context() scopes the LM safely
+        subject, body = await asyncio.to_thread(
+            _run_dspy_in_thread,
+            resolved_key,
+            model,
+            context.to_prompt_context(),
+            email,
+            sender_name,
+            sender_intent,
+            template.to_prompt_guidance(),
         )
-        subject = str(result.subject).strip()
-        body = str(result.body).strip()
 
         # Sanity-check outputs — DSPy occasionally returns empty fields
         if not subject:

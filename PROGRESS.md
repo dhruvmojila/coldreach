@@ -868,3 +868,25 @@
 ### Next
 - Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
 
+
+## [2026-05-02 16:04 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Chrome Extension Draft Button complete: streamDraft() in api.ts (SSE to /api/v2/draft), DraftPanel component (form→generating→done state machine, streams context_ready then draft_complete), ✏️ button on every email row in EmailTable opens inline DraftPanel below the row, Copy full email button, regenerate button, sender name persisted in localStorage
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens), reuses diagnostics.py and existing async sources
+
+
+## [2026-05-02 16:12 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
+

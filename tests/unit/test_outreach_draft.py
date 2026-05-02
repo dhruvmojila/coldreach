@@ -100,21 +100,21 @@ class TestDraftEmail:
                 api_key=None,
             )
 
+    # All DSPy tests now patch _run_dspy_in_thread which returns (subject, body)
+    # This avoids the dspy.configure() thread-safety issue in tests.
+
     @pytest.mark.asyncio
     async def test_returns_email_draft(self) -> None:
-        mock_result = _mock_dspy_result(
-            subject="Quick question about Stripe's API",
-            body="Hi Patrick, I came across Stripe's embedded finance work and wanted to connect.",
-        )
-
         with (
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
-            patch("coldreach.outreach.draft._get_drafter") as mock_drafter_fn,
+            patch(
+                "coldreach.outreach.draft._run_dspy_in_thread",
+                return_value=(
+                    "Quick question about Stripe's API",
+                    "Hi Patrick, I came across Stripe's embedded finance work.",
+                ),
+            ),
         ):
-            mock_predictor = MagicMock()
-            mock_predictor.return_value = mock_result
-            mock_drafter_fn.return_value = mock_predictor
-
             draft = await draft_email(
                 email="patrick@stripe.com",
                 context=_make_context(),
@@ -125,21 +125,17 @@ class TestDraftEmail:
         assert isinstance(draft, EmailDraft)
         assert draft.to == "patrick@stripe.com"
         assert draft.subject == "Quick question about Stripe's API"
-        assert "Patrick" in draft.body or "Hi" in draft.body
         assert draft.email_type == EmailType.PARTNERSHIP
 
     @pytest.mark.asyncio
     async def test_auto_detects_email_type(self) -> None:
-        mock_result = _mock_dspy_result("Interview request", "Hi, I'm interested in the role.")
-
         with (
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
-            patch("coldreach.outreach.draft._get_drafter") as mock_drafter_fn,
+            patch(
+                "coldreach.outreach.draft._run_dspy_in_thread",
+                return_value=("Interview request", "Hi, I'm interested in the role."),
+            ),
         ):
-            mock_predictor = MagicMock()
-            mock_predictor.return_value = mock_result
-            mock_drafter_fn.return_value = mock_predictor
-
             draft = await draft_email(
                 email="hr@stripe.com",
                 context=_make_context(),
@@ -152,16 +148,13 @@ class TestDraftEmail:
 
     @pytest.mark.asyncio
     async def test_uses_explicit_email_type(self) -> None:
-        mock_result = _mock_dspy_result("Sales pitch", "We solve payments.")
-
         with (
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
-            patch("coldreach.outreach.draft._get_drafter") as mock_drafter_fn,
+            patch(
+                "coldreach.outreach.draft._run_dspy_in_thread",
+                return_value=("Sales pitch", "We solve payments."),
+            ),
         ):
-            mock_predictor = MagicMock()
-            mock_predictor.return_value = mock_result
-            mock_drafter_fn.return_value = mock_predictor
-
             draft = await draft_email(
                 email="sales@stripe.com",
                 context=_make_context(),
@@ -174,16 +167,13 @@ class TestDraftEmail:
 
     @pytest.mark.asyncio
     async def test_falls_back_subject_when_empty(self) -> None:
-        mock_result = _mock_dspy_result(subject="", body="Hi there!")
-
         with (
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
-            patch("coldreach.outreach.draft._get_drafter") as mock_drafter_fn,
+            patch(
+                "coldreach.outreach.draft._run_dspy_in_thread",
+                return_value=("", "Hi there!"),
+            ),
         ):
-            mock_predictor = MagicMock()
-            mock_predictor.return_value = mock_result
-            mock_drafter_fn.return_value = mock_predictor
-
             draft = await draft_email(
                 email="ceo@stripe.com",
                 context=_make_context(),
@@ -191,28 +181,24 @@ class TestDraftEmail:
                 sender_intent="say hello",
             )
 
-        # Subject should fall back gracefully rather than being empty
-        assert draft.subject  # non-empty
+        assert draft.subject  # non-empty fallback
 
     @pytest.mark.asyncio
     async def test_raises_when_body_empty(self) -> None:
-        mock_result = _mock_dspy_result(subject="Subject", body="")
-
         with (
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
-            patch("coldreach.outreach.draft._get_drafter") as mock_drafter_fn,
+            patch(
+                "coldreach.outreach.draft._run_dspy_in_thread",
+                return_value=("Subject", ""),
+            ),
+            pytest.raises(ValueError, match="empty body"),
         ):
-            mock_predictor = MagicMock()
-            mock_predictor.return_value = mock_result
-            mock_drafter_fn.return_value = mock_predictor
-
-            with pytest.raises(ValueError, match="empty body"):
-                await draft_email(
-                    email="ceo@stripe.com",
-                    context=_make_context(),
-                    sender_name="Alice",
-                    sender_intent="say hello",
-                )
+            await draft_email(
+                email="ceo@stripe.com",
+                context=_make_context(),
+                sender_name="Alice",
+                sender_intent="say hello",
+            )
 
 
 # ---------------------------------------------------------------------------

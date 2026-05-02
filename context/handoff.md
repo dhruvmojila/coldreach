@@ -421,3 +421,41 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
 
+### [2026-05-02 16:04 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Chrome Extension Draft Button complete: streamDraft() in api.ts (SSE to /api/v2/draft), DraftPanel component (form→generating→done state machine, streams context_ready then draft_complete), ✏️ button on every email row in EmailTable opens inline DraftPanel below the row, Copy full email button, regenerate button, sender name persisted in localStorage
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - Extension builds clean (3x ✓ built); 482 Python tests pass; DraftPanel component handles all states (form/generating/done/error); ✏️ button toggles inline panel; copy button writes Subject+Body+Signature to clipboard
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens), reuses diagnostics.py and existing async sources
+
+### [2026-05-02 16:12 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix DSPy thread-safety crash: replaced dspy.configure() + asyncio.to_thread with single _run_dspy_in_thread() that uses dspy.context(lm=lm) inside the thread — context() scopes the LM to one call, configure() sets global state that breaks across async tasks. Tests updated to patch _run_dspy_in_thread returning (subject,body) tuple.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; ruff+mypy clean; dspy.context() is thread-safe; draft generation works from extension popup
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 4: Textual TUI — coldreach with no args launches interactive terminal app
+
