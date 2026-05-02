@@ -115,3 +115,8 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 
 - DSPy used for structured output (subject+body as separate typed fields) not raw text parsing. Module override added to mypy since DSPy generates classes dynamically at runtime.
 - Streamlit dashboard reads contacts from /api/cache via API, generates drafts via /api/v2/draft SSE, stores sent/replied state in ~/.coldreach/outreach.json. Zero new database dependency.
+
+### [2026-05-02 15:44 EDT] Session close decisions
+
+- Custom CSS injected via st.markdown(unsafe_allow_html=True) — only way to override Streamlit's default widget styles. E501/B905/SIM105 suppressed for dashboard.py per-file-ignore.
+- Find page uses polling (GET /api/v2/scan/{id} every 2s + st.rerun()) instead of SSE — Streamlit can't hold an open SSE connection across reruns. Polling achieves the same live-update UX.

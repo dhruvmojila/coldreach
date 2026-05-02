@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Update docs for Phase 5: cli-reference.md (dashboard command, --draft flags), api-server.md (/api/v2/draft endpoint), new docs/outreach.md (full workflow guide A/B/C), mkdocs.yml nav updated. Memory updated to make docs updates mandatory.
+- Objective: Complete dashboard redesign: professional dark theme with custom CSS tokens, left sidebar navigation (Home/Find/Contacts/Compose/Sent), live SSE scan with source pills + email cards appearing in real time, card grid for contacts with inline Draft/Mark buttons, focused Compose with left/right split, Sent tracker with reply rate
 
 ## In Progress
 
-- [ ] Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
+- [ ] Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
 
 ## Done In This Session
 
-- Update docs for Phase 5: cli-reference.md (dashboard command, --draft flags), api-server.md (/api/v2/draft endpoint), new docs/outreach.md (full workflow guide A/B/C), mkdocs.yml nav updated. Memory updated to make docs updates mandatory.
+- Complete dashboard redesign: professional dark theme with custom CSS tokens, left sidebar navigation (Home/Find/Contacts/Compose/Sent), live SSE scan with source pills + email cards appearing in real time, card grid for contacts with inline Draft/Mark buttons, focused Compose with left/right split, Sent tracker with reply rate
 
 ## Next Action (Single Concrete Step)
 
-- Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
+- Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 482 tests pass; docs/outreach.md created; cli-reference.md has dashboard + --draft; api-server.md has /api/v2/draft SSE docs; mkdocs nav updated
+- 482 tests pass; ruff+mypy clean; design artifacts saved in .design/coldreach-dashboard/

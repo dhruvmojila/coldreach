@@ -402,3 +402,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
 
+### [2026-05-02 15:44 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Complete dashboard redesign: professional dark theme with custom CSS tokens, left sidebar navigation (Home/Find/Contacts/Compose/Sent), live SSE scan with source pills + email cards appearing in real time, card grid for contacts with inline Draft/Mark buttons, focused Compose with left/right split, Sent tracker with reply rate
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; ruff+mypy clean; design artifacts saved in .design/coldreach-dashboard/
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Test dashboard live: coldreach dashboard → scan fareleaders.com → verify emails appear card-by-card → click Draft → verify Groq generates subject+body
+
