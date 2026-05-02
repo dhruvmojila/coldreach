@@ -3818,27 +3818,27 @@
       "file_type": "rationale",
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L61",
-      "id": "draft_rationale_61",
       "community": 5,
-      "norm_label": "run dspy prediction entirely within one thread using dspy.context().      ``dspy"
+      "norm_label": "run dspy prediction entirely within one thread using dspy.context().      ``dspy",
+      "id": "draft_rationale_61"
     },
     {
       "label": "Generate a personalized cold email draft using Groq + DSPy.      Parameters",
       "file_type": "rationale",
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L117",
-      "id": "draft_rationale_117",
       "community": 5,
-      "norm_label": "generate a personalized cold email draft using groq + dspy.      parameters"
+      "norm_label": "generate a personalized cold email draft using groq + dspy.      parameters",
+      "id": "draft_rationale_117"
     },
     {
       "label": "Return the first non-empty Groq API key found.",
       "file_type": "rationale",
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L188",
-      "id": "draft_rationale_188",
       "community": 5,
-      "norm_label": "return the first non-empty groq api key found."
+      "norm_label": "return the first non-empty groq api key found.",
+      "id": "draft_rationale_188"
     },
     {
       "label": "__init__.py",
@@ -48831,11 +48831,11 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "draft_rationale_61",
-      "_tgt": "context_companycontext",
+      "_src": "context_companycontext",
+      "_tgt": "draft_rationale_61",
+      "confidence_score": 0.5,
       "source": "context_companycontext",
-      "target": "draft_rationale_61",
-      "confidence_score": 0.5
+      "target": "draft_rationale_61"
     },
     {
       "relation": "uses",
@@ -48843,11 +48843,11 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "draft_rationale_117",
-      "_tgt": "context_companycontext",
+      "_src": "context_companycontext",
+      "_tgt": "draft_rationale_117",
+      "confidence_score": 0.5,
       "source": "context_companycontext",
-      "target": "draft_rationale_117",
-      "confidence_score": 0.5
+      "target": "draft_rationale_117"
     },
     {
       "relation": "uses",
@@ -48855,11 +48855,11 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "draft_rationale_188",
-      "_tgt": "context_companycontext",
+      "_src": "context_companycontext",
+      "_tgt": "draft_rationale_188",
+      "confidence_score": 0.5,
       "source": "context_companycontext",
-      "target": "draft_rationale_188",
-      "confidence_score": 0.5
+      "target": "draft_rationale_188"
     },
     {
       "relation": "uses",
@@ -49745,9 +49745,9 @@
       "weight": 0.8,
       "_src": "draft_rationale_61",
       "_tgt": "templates_emailtype",
+      "confidence_score": 0.5,
       "source": "draft_rationale_61",
-      "target": "templates_emailtype",
-      "confidence_score": 0.5
+      "target": "templates_emailtype"
     },
     {
       "relation": "uses",
@@ -49757,9 +49757,9 @@
       "weight": 0.8,
       "_src": "draft_rationale_117",
       "_tgt": "templates_emailtype",
+      "confidence_score": 0.5,
       "source": "draft_rationale_117",
-      "target": "templates_emailtype",
-      "confidence_score": 0.5
+      "target": "templates_emailtype"
     },
     {
       "relation": "uses",
@@ -49769,9 +49769,9 @@
       "weight": 0.8,
       "_src": "draft_rationale_188",
       "_tgt": "templates_emailtype",
+      "confidence_score": 0.5,
       "source": "draft_rationale_188",
-      "target": "templates_emailtype",
-      "confidence_score": 0.5
+      "target": "templates_emailtype"
     },
     {
       "relation": "contains",
@@ -49875,8 +49875,8 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "draft_rationale_53",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_rationale_53",
       "confidence_score": 0.5,
       "source": "templates_emailtype",
       "target": "draft_rationale_53"
@@ -49887,8 +49887,8 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "draft_rationale_96",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_rationale_96",
       "confidence_score": 0.5,
       "source": "templates_emailtype",
       "target": "draft_rationale_96"
@@ -49899,8 +49899,8 @@
       "source_file": "coldreach/outreach/draft.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "draft_rationale_168",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_rationale_168",
       "confidence_score": 0.5,
       "source": "templates_emailtype",
       "target": "draft_rationale_168"
