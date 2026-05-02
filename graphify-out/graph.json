@@ -4007,18 +4007,18 @@
       "file_type": "rationale",
       "source_file": "coldreach/sources/github.py",
       "source_location": "L156",
-      "id": "github_rationale_156",
       "community": 1,
-      "norm_label": "fetch public repos for org *slug*, fall back to user if not found."
+      "norm_label": "fetch public repos for org *slug*, fall back to user if not found.",
+      "id": "github_rationale_156"
     },
     {
       "label": "Fetch recent commits for *owner/repo*.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/github.py",
       "source_location": "L177",
-      "id": "github_rationale_177",
       "community": 1,
-      "norm_label": "fetch recent commits for *owner/repo*."
+      "norm_label": "fetch recent commits for *owner/repo*.",
+      "id": "github_rationale_177"
     },
     {
       "label": "reddit.py",
@@ -4817,45 +4817,45 @@
       "file_type": "rationale",
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L101",
-      "id": "search_engine_rationale_101",
       "community": 1,
-      "norm_label": "query searxng and extract emails from snippets + crawl domain result urls."
+      "norm_label": "query searxng and extract emails from snippets + crawl domain result urls.",
+      "id": "search_engine_rationale_101"
     },
     {
       "label": "Scrape DuckDuckGo Lite HTML for emails. Returns list of found emails.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L157",
-      "id": "search_engine_rationale_157",
       "community": 1,
-      "norm_label": "scrape duckduckgo lite html for emails. returns list of found emails."
+      "norm_label": "scrape duckduckgo lite html for emails. returns list of found emails.",
+      "id": "search_engine_rationale_157"
     },
     {
       "label": "Query Brave Search API for emails.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L182",
-      "id": "search_engine_rationale_182",
       "community": 1,
-      "norm_label": "query brave search api for emails."
+      "norm_label": "query brave search api for emails.",
+      "id": "search_engine_rationale_182"
     },
     {
       "label": "Search for domain email addresses via SearXNG \u2192 DDG Lite \u2192 Brave fallback chain.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L212",
-      "id": "search_engine_rationale_212",
       "community": 1,
-      "norm_label": "search for domain email addresses via searxng \u2192 ddg lite \u2192 brave fallback chain."
+      "norm_label": "search for domain email addresses via searxng \u2192 ddg lite \u2192 brave fallback chain.",
+      "id": "search_engine_rationale_212"
     },
     {
       "label": "Try each backend in order, return first non-empty result.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L276",
-      "id": "search_engine_rationale_276",
       "community": 1,
-      "norm_label": "try each backend in order, return first non-empty result."
+      "norm_label": "try each backend in order, return first non-empty result.",
+      "id": "search_engine_rationale_276"
     },
     {
       "label": "crawl4ai_source.py",
@@ -5078,90 +5078,90 @@
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L80",
-      "id": "intelligent_search_rationale_80",
       "community": 1,
-      "norm_label": "extract emails belonging to *domain* from *text*."
+      "norm_label": "extract emails belonging to *domain* from *text*.",
+      "id": "intelligent_search_rationale_80"
     },
     {
       "label": "Multi-stage email discovery: SearXNG \u2192 Firecrawl \u2192 Groq \u2192 targeted queries.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L95",
-      "id": "intelligent_search_rationale_95",
       "community": 1,
-      "norm_label": "multi-stage email discovery: searxng \u2192 firecrawl \u2192 groq \u2192 targeted queries."
+      "norm_label": "multi-stage email discovery: searxng \u2192 firecrawl \u2192 groq \u2192 targeted queries.",
+      "id": "intelligent_search_rationale_95"
     },
     {
       "label": "Get company context from SearXNG snippets (reliable even for SPAs).          Sea",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L193",
-      "id": "intelligent_search_rationale_193",
       "community": 1,
-      "norm_label": "get company context from searxng snippets (reliable even for spas).          sea"
+      "norm_label": "get company context from searxng snippets (reliable even for spas).          sea",
+      "id": "intelligent_search_rationale_193"
     },
     {
       "label": "Return targeted search queries, using Groq if available.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L241",
-      "id": "intelligent_search_rationale_241",
       "community": 1,
-      "norm_label": "return targeted search queries, using groq if available."
+      "norm_label": "return targeted search queries, using groq if available.",
+      "id": "intelligent_search_rationale_241"
     },
     {
       "label": "Return relevant subreddits using Groq, or sensible defaults.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L266",
-      "id": "intelligent_search_rationale_266",
       "community": 1,
-      "norm_label": "return relevant subreddits using groq, or sensible defaults."
+      "norm_label": "return relevant subreddits using groq, or sensible defaults.",
+      "id": "intelligent_search_rationale_266"
     },
     {
       "label": "Blocking Groq call \u2014 run in thread via asyncio.to_thread.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L278",
-      "id": "intelligent_search_rationale_278",
       "community": 1,
-      "norm_label": "blocking groq call \u2014 run in thread via asyncio.to_thread."
+      "norm_label": "blocking groq call \u2014 run in thread via asyncio.to_thread.",
+      "id": "intelligent_search_rationale_278"
     },
     {
       "label": "Blocking Groq call for subreddit names.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L298",
-      "id": "intelligent_search_rationale_298",
       "community": 1,
-      "norm_label": "blocking groq call for subreddit names."
+      "norm_label": "blocking groq call for subreddit names.",
+      "id": "intelligent_search_rationale_298"
     },
     {
       "label": "Run one SearXNG query, extract emails from snippets AND crawl top URLs.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L325",
-      "id": "intelligent_search_rationale_325",
       "community": 1,
-      "norm_label": "run one searxng query, extract emails from snippets and crawl top urls."
+      "norm_label": "run one searxng query, extract emails from snippets and crawl top urls.",
+      "id": "intelligent_search_rationale_325"
     },
     {
       "label": "Search Reddit for a subreddit or query term, extract emails.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L388",
-      "id": "intelligent_search_rationale_388",
       "community": 1,
-      "norm_label": "search reddit for a subreddit or query term, extract emails."
+      "norm_label": "search reddit for a subreddit or query term, extract emails.",
+      "id": "intelligent_search_rationale_388"
     },
     {
       "label": "Remove HTML tags and collapse whitespace.",
       "file_type": "rationale",
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L416",
-      "id": "intelligent_search_rationale_416",
       "community": 1,
-      "norm_label": "remove html tags and collapse whitespace."
+      "norm_label": "remove html tags and collapse whitespace.",
+      "id": "intelligent_search_rationale_416"
     },
     {
       "label": "conftest.py",
@@ -35118,11 +35118,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L25",
       "weight": 0.8,
-      "_src": "github_rationale_156",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "github_rationale_156",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "github_rationale_156",
-      "confidence_score": 0.5
+      "target": "github_rationale_156"
     },
     {
       "relation": "uses",
@@ -35130,11 +35130,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L25",
       "weight": 0.8,
-      "_src": "github_rationale_177",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "github_rationale_177",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "github_rationale_177",
-      "confidence_score": 0.5
+      "target": "github_rationale_177"
     },
     {
       "relation": "uses",
@@ -35610,11 +35610,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L30",
       "weight": 0.8,
-      "_src": "search_engine_rationale_101",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "search_engine_rationale_101",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "search_engine_rationale_101",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_101"
     },
     {
       "relation": "uses",
@@ -35622,11 +35622,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L30",
       "weight": 0.8,
-      "_src": "search_engine_rationale_157",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "search_engine_rationale_157",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "search_engine_rationale_157",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_157"
     },
     {
       "relation": "uses",
@@ -35634,11 +35634,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L30",
       "weight": 0.8,
-      "_src": "search_engine_rationale_182",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "search_engine_rationale_182",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "search_engine_rationale_182",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_182"
     },
     {
       "relation": "uses",
@@ -35646,11 +35646,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L30",
       "weight": 0.8,
-      "_src": "search_engine_rationale_212",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "search_engine_rationale_212",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "search_engine_rationale_212",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_212"
     },
     {
       "relation": "uses",
@@ -35658,11 +35658,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L30",
       "weight": 0.8,
-      "_src": "search_engine_rationale_276",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "search_engine_rationale_276",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "search_engine_rationale_276",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_276"
     },
     {
       "relation": "uses",
@@ -35742,11 +35742,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_80",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_80",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_80",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_80"
     },
     {
       "relation": "uses",
@@ -35754,11 +35754,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_95",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_95",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_95",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_95"
     },
     {
       "relation": "uses",
@@ -35766,11 +35766,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_193",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_193",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_193",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_193"
     },
     {
       "relation": "uses",
@@ -35778,11 +35778,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_241",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_241",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_241",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_241"
     },
     {
       "relation": "uses",
@@ -35790,11 +35790,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_266",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_266",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_266",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_266"
     },
     {
       "relation": "uses",
@@ -35802,11 +35802,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_278",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_278",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_278",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_278"
     },
     {
       "relation": "uses",
@@ -35814,11 +35814,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_298",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_298",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_298",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_298"
     },
     {
       "relation": "uses",
@@ -35826,11 +35826,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_325",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_325",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_325",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_325"
     },
     {
       "relation": "uses",
@@ -35838,11 +35838,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_388",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_388",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_388",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_388"
     },
     {
       "relation": "uses",
@@ -35850,11 +35850,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L32",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_416",
-      "_tgt": "models_emailsource",
+      "_src": "models_emailsource",
+      "_tgt": "intelligent_search_rationale_416",
+      "confidence_score": 0.5,
       "source": "models_emailsource",
-      "target": "intelligent_search_rationale_416",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_416"
     },
     {
       "relation": "uses",
@@ -45738,11 +45738,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L26",
       "weight": 0.8,
-      "_src": "github_rationale_156",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "github_rationale_156",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "github_rationale_156",
-      "confidence_score": 0.5
+      "target": "github_rationale_156"
     },
     {
       "relation": "uses",
@@ -45750,11 +45750,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L26",
       "weight": 0.8,
-      "_src": "github_rationale_177",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "github_rationale_177",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "github_rationale_177",
-      "confidence_score": 0.5
+      "target": "github_rationale_177"
     },
     {
       "relation": "uses",
@@ -46230,11 +46230,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_101",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "search_engine_rationale_101",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "search_engine_rationale_101",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_101"
     },
     {
       "relation": "uses",
@@ -46242,11 +46242,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_157",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "search_engine_rationale_157",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "search_engine_rationale_157",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_157"
     },
     {
       "relation": "uses",
@@ -46254,11 +46254,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_182",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "search_engine_rationale_182",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "search_engine_rationale_182",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_182"
     },
     {
       "relation": "uses",
@@ -46266,11 +46266,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_212",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "search_engine_rationale_212",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "search_engine_rationale_212",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_212"
     },
     {
       "relation": "uses",
@@ -46278,11 +46278,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_276",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "search_engine_rationale_276",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "search_engine_rationale_276",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_276"
     },
     {
       "relation": "uses",
@@ -46362,11 +46362,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_80",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_80",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_80",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_80"
     },
     {
       "relation": "uses",
@@ -46374,11 +46374,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_95",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_95",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_95",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_95"
     },
     {
       "relation": "uses",
@@ -46386,11 +46386,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_193",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_193",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_193",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_193"
     },
     {
       "relation": "uses",
@@ -46398,11 +46398,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_241",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_241",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_241",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_241"
     },
     {
       "relation": "uses",
@@ -46410,11 +46410,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_266",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_266",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_266",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_266"
     },
     {
       "relation": "uses",
@@ -46422,11 +46422,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_278",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_278",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_278",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_278"
     },
     {
       "relation": "uses",
@@ -46434,11 +46434,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_298",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_298",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_298",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_298"
     },
     {
       "relation": "uses",
@@ -46446,11 +46446,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_325",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_325",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_325",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_325"
     },
     {
       "relation": "uses",
@@ -46458,11 +46458,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_388",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_388",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_388",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_388"
     },
     {
       "relation": "uses",
@@ -46470,11 +46470,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_416",
-      "_tgt": "base_sourceresult",
+      "_src": "base_sourceresult",
+      "_tgt": "intelligent_search_rationale_416",
+      "confidence_score": 0.5,
       "source": "base_sourceresult",
-      "target": "intelligent_search_rationale_416",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_416"
     },
     {
       "relation": "uses",
@@ -48990,11 +48990,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L26",
       "weight": 0.8,
-      "_src": "github_rationale_156",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "github_rationale_156",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "github_rationale_156",
-      "confidence_score": 0.5
+      "target": "github_rationale_156"
     },
     {
       "relation": "uses",
@@ -49002,11 +49002,11 @@
       "source_file": "coldreach/sources/github.py",
       "source_location": "L26",
       "weight": 0.8,
-      "_src": "github_rationale_177",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "github_rationale_177",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "github_rationale_177",
-      "confidence_score": 0.5
+      "target": "github_rationale_177"
     },
     {
       "relation": "uses",
@@ -49482,11 +49482,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_101",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "search_engine_rationale_101",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "search_engine_rationale_101",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_101"
     },
     {
       "relation": "uses",
@@ -49494,11 +49494,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_157",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "search_engine_rationale_157",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "search_engine_rationale_157",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_157"
     },
     {
       "relation": "uses",
@@ -49506,11 +49506,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_182",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "search_engine_rationale_182",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "search_engine_rationale_182",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_182"
     },
     {
       "relation": "uses",
@@ -49518,11 +49518,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_212",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "search_engine_rationale_212",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "search_engine_rationale_212",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_212"
     },
     {
       "relation": "uses",
@@ -49530,11 +49530,11 @@
       "source_file": "coldreach/sources/search_engine.py",
       "source_location": "L31",
       "weight": 0.8,
-      "_src": "search_engine_rationale_276",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "search_engine_rationale_276",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "search_engine_rationale_276",
-      "confidence_score": 0.5
+      "target": "search_engine_rationale_276"
     },
     {
       "relation": "uses",
@@ -49614,11 +49614,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_80",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_80",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_80",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_80"
     },
     {
       "relation": "uses",
@@ -49626,11 +49626,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_95",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_95",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_95",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_95"
     },
     {
       "relation": "uses",
@@ -49638,11 +49638,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_193",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_193",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_193",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_193"
     },
     {
       "relation": "uses",
@@ -49650,11 +49650,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_241",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_241",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_241",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_241"
     },
     {
       "relation": "uses",
@@ -49662,11 +49662,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_266",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_266",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_266",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_266"
     },
     {
       "relation": "uses",
@@ -49674,11 +49674,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_278",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_278",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_278",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_278"
     },
     {
       "relation": "uses",
@@ -49686,11 +49686,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_298",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_298",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_298",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_298"
     },
     {
       "relation": "uses",
@@ -49698,11 +49698,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_325",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_325",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_325",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_325"
     },
     {
       "relation": "uses",
@@ -49710,11 +49710,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_388",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_388",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_388",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_388"
     },
     {
       "relation": "uses",
@@ -49722,11 +49722,11 @@
       "source_file": "coldreach/sources/intelligent_search.py",
       "source_location": "L33",
       "weight": 0.8,
-      "_src": "intelligent_search_rationale_416",
-      "_tgt": "base_basesource",
+      "_src": "base_basesource",
+      "_tgt": "intelligent_search_rationale_416",
+      "confidence_score": 0.5,
       "source": "base_basesource",
-      "target": "intelligent_search_rationale_416",
-      "confidence_score": 0.5
+      "target": "intelligent_search_rationale_416"
     },
     {
       "relation": "uses",
@@ -62659,8 +62659,8 @@
       "source_file": "tests/unit/test_sources_search_engine.py",
       "source_location": "L42",
       "weight": 1.0,
-      "_src": "test_sources_search_engine_testbuildqueries_test_always_includes_domain_query",
-      "_tgt": "search_engine_build_queries",
+      "_src": "search_engine_build_queries",
+      "_tgt": "test_sources_search_engine_testbuildqueries_test_always_includes_domain_query",
       "source": "search_engine_build_queries",
       "target": "test_sources_search_engine_testbuildqueries_test_always_includes_domain_query"
     },
