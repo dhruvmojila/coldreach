@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Find contact emails for any job posting in seconds. Powered by your local ColdReach instance.",
 
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "contextMenus"],
   "host_permissions": ["http://localhost:8765/*"],
 
   "action": {

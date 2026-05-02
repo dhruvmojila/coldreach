@@ -70,12 +70,18 @@ def _extract_domain_emails(text: str, domain: str) -> list[str]:
 
 
 def _build_queries(domain: str, person_name: str | None) -> list[str]:
+    """Build targeted email-discovery queries for SearXNG.
+
+    Uses domain-specific patterns that search engines understand well.
+    Avoids generic queries that return off-topic results.
+    """
     queries = [
-        f'"@{domain}"',
-        f"site:{domain} email contact",
+        f'"@{domain}"',  # exact email domain match
+        f'"{domain}" email OR contact',  # company + email/contact keyword
+        f"site:{domain}",  # crawl-index results for the domain
     ]
     if person_name:
-        queries.append(f'"{person_name}" "{domain}" email')
+        queries.append(f'"{person_name}" "@{domain}"')
     return queries
 
 

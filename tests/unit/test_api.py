@@ -225,14 +225,14 @@ class TestFindEndpoint:
         assert mock_find.call_args[1]["person_name"] == "Jane Smith"
 
     @pytest.mark.asyncio
-    async def test_quick_is_true_by_default(self, client: AsyncClient) -> None:
+    async def test_standard_mode_enables_harvester_by_default(self, client: AsyncClient) -> None:
         mock_result = _make_domain_result()
         with patch("coldreach.api.find_emails", new_callable=AsyncMock) as mock_find:
             mock_find.return_value = mock_result
+            # Default quick=False → harvester and spiderfoot enabled
             await client.post("/api/find", json={"domain": "acme.com"})
         cfg = mock_find.call_args[1]["config"]
-        # quick=True → harvester and spiderfoot disabled
-        assert cfg.use_harvester is False
+        assert cfg.use_harvester is True
 
     @pytest.mark.asyncio
     async def test_response_is_json(self, client: AsyncClient) -> None:
@@ -241,6 +241,29 @@ class TestFindEndpoint:
             mock_find.return_value = mock_result
             resp = await client.post("/api/find", json={"domain": "acme.com"})
         assert resp.headers["content-type"].startswith("application/json")
+
+    @pytest.mark.asyncio
+    async def test_full_scan_enables_all_sources(self, client: AsyncClient) -> None:
+        mock_result = _make_domain_result()
+        with patch("coldreach.api.find_emails", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_result
+            await client.post("/api/find", json={"domain": "acme.com", "full_scan": True})
+        cfg = mock_find.call_args[1]["config"]
+        assert cfg.use_harvester is True
+        assert cfg.use_spiderfoot is True
+        assert cfg.use_firecrawl is True
+
+    @pytest.mark.asyncio
+    async def test_full_scan_overrides_quick(self, client: AsyncClient) -> None:
+        mock_result = _make_domain_result()
+        with patch("coldreach.api.find_emails", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_result
+            await client.post(
+                "/api/find", json={"domain": "acme.com", "full_scan": True, "quick": True}
+            )
+        cfg = mock_find.call_args[1]["config"]
+        # full_scan wins over quick
+        assert cfg.use_harvester is True
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +281,40 @@ class TestFindStreamEndpoint:
             with patch("coldreach.api._build_sources", return_value=[]):
                 resp = await client.post("/api/find/stream", json={"domain": "acme.com"})
         assert "text/event-stream" in resp.headers["content-type"]
+
+    @pytest.mark.asyncio
+    async def test_stream_emits_start_event_first(self, client: AsyncClient) -> None:
+        mock_result = _make_domain_result()
+        with patch("coldreach.api.find_emails", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_result
+            with patch("coldreach.api._build_sources", return_value=[]):
+                resp = await client.post("/api/find/stream", json={"domain": "acme.com"})
+        assert "event: start" in resp.text
+        # start event must come before complete
+        start_pos = resp.text.find("event: start")
+        complete_pos = resp.text.find("event: complete")
+        assert start_pos < complete_pos
+
+    @pytest.mark.asyncio
+    async def test_stream_start_event_contains_total_sources(self, client: AsyncClient) -> None:
+        mock_result = _make_domain_result()
+        with patch("coldreach.api.find_emails", new_callable=AsyncMock) as mock_find:
+            mock_find.return_value = mock_result
+            with patch("coldreach.api._build_sources", return_value=[]):
+                resp = await client.post("/api/find/stream", json={"domain": "acme.com"})
+        start_frame = next(
+            (
+                ln
+                for ln in resp.text.splitlines()
+                if ln.startswith("data:") and "total_sources" in ln
+            ),
+            None,
+        )
+        assert start_frame is not None
+        payload = json.loads(start_frame[len("data:") :].strip())
+        assert "total_sources" in payload
+        assert "source_names" in payload
+        assert "mode" in payload
 
     @pytest.mark.asyncio
     async def test_stream_ends_with_complete_event(self, client: AsyncClient) -> None:
@@ -654,7 +711,9 @@ class TestFinderConfig:
 
     def test_defaults_are_sensible(self) -> None:
         req = FindRequest(domain="acme.com")
-        assert req.quick is True
+        # quick=False by default — use all core sources for best results
+        assert req.quick is False
+        assert req.full_scan is False
         assert req.min_confidence == 0
         assert req.use_firecrawl is False
         assert req.use_crawl4ai is False

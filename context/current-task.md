@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Phase 3B complete: Chrome extension with Manifest V3, React popup (SSE streaming), content scripts for Greenhouse/Lever/Indeed/LinkedIn/Workable, background service worker, docs/chrome-extension.md, npm run build produces clean dist/
+- Objective: IntelligentSearchSource: Groq+SearXNG+Reddit multi-stage pipeline. Scrapes company site → Groq generates 6 domain-specific queries + 4 subreddits → runs all concurrently through SearXNG + Reddit. Groq key loaded from pydantic-settings. Context uses SearXNG meta-descriptions (works for JS SPAs). Falls back to heuristic queries without Groq.
 
 ## In Progress
 
-- [ ] Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
+- [ ] Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
 
 ## Done In This Session
 
-- Phase 3B complete: Chrome extension with Manifest V3, React popup (SSE streaming), content scripts for Greenhouse/Lever/Indeed/LinkedIn/Workable, background service worker, docs/chrome-extension.md, npm run build produces clean dist/
+- IntelligentSearchSource: Groq+SearXNG+Reddit multi-stage pipeline. Scrapes company site → Groq generates 6 domain-specific queries + 4 subreddits → runs all concurrently through SearXNG + Reddit. Groq key loaded from pydantic-settings. Context uses SearXNG meta-descriptions (works for JS SPAs). Falls back to heuristic queries without Groq.
 
 ## Next Action (Single Concrete Step)
 
-- Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
+- Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- npm run build produces 10-file dist/ (popup.html, content.js, service-worker.js, manifest.json, icons, assets); 437 Python tests pass; ruff+mypy clean
+- 443 tests pass; Groq key loads from .env via get_settings(); Groq generates travel-industry queries for fareleaders.com; intelligent_search source is in _SLOW_SOURCE_NAMES so it runs after fast sources

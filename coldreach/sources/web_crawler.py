@@ -30,16 +30,17 @@ logger = logging.getLogger(__name__)
 # Regex patterns
 # ---------------------------------------------------------------------------
 
-# Standard email regex — deliberately conservative to minimise false positives.
-# Excludes image filenames (e.g. "icon@2x.png") and version strings.
+# Broad email regex — catches emails inside quotes, JSON, data attributes.
+# The conservative lookahead (?!['"/]) was blocking valid emails found in JSON
+# payloads (e.g. "email":"support@company.com").  Domain filtering downstream
+# handles false positives.
 _EMAIL_RE = re.compile(
-    r"(?<![='\"/])(?<!\w)"  # not preceded by = ' " / or word char
-    r"([a-zA-Z0-9._%+\-]{1,64}"
+    r"(?<!\w)"  # not preceded by a word character (avoids "user123email@...")
+    r"([a-zA-Z0-9][a-zA-Z0-9._%+\-]{0,63}"
     r"@"
     r"[a-zA-Z0-9.\-]{1,253}"
     r"\.[a-zA-Z]{2,})"
-    r"(?!\.(png|jpg|jpeg|gif|svg|webp|ico|css|js|woff|ttf))"  # not image/asset ext
-    r"(?!['\"/])",
+    r"(?!\.[a-zA-Z])",  # not followed by another TLD (avoids "x@foo.com.br" → only captures full)
     re.IGNORECASE,
 )
 

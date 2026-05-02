@@ -703,3 +703,102 @@
 ### Next
 - Phase 4: Textual TUI — coldreach (no args) launches interactive terminal app reusing diagnostics.py and existing async sources
 
+
+## [2026-04-25 16:14 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Extension UX overhaul: full_scan mode, 0-100% progress bar with start SSE event, right-click context menu, improved Greenhouse DOM detection, richer email table with filter+rescan, API quick=False default, 9 new tests (441 total)
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app
+
+
+## [2026-04-26 17:59 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix SpiderFoot and theHarvester hanging forever: replace -u passive with targeted -m email modules + container timeout binary; remove slow commoncrawl/waybackarchive/thc/threatcrowd from theHarvester; add partial-JSON recovery to SpiderFoot parser
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Test full scan against a real domain to verify SpiderFoot finishes in <5 min and theHarvester in <3 min, then proceed to Phase 4 Textual TUI
+
+
+## [2026-04-26 18:14 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix theHarvester (docker exec → HTTP REST API at localhost:5050/query) and SpiderFoot (GNU timeout flags → busybox syntax; -u passive -x instead of -m explicit modules); 444 tests pass
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Test live: run coldreach find --domain stripe.com with standard mode and verify theharvester + spiderfoot source pills show results
+
+
+## [2026-04-26 18:38 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix theHarvester (bing invalid source + source must be list params not comma-joined) and SpiderFoot (-x strict mode excluded email modules; fixed to -m explicit list without -x; fixed JSON parser for Email Address vs EMAILADDR type string)
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach find --domain stripe.com with standard mode and verify SpiderFoot source pill shows found emails from sfp_pgp module
+
+
+## [2026-04-26 20:21 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix SearXNG (wikidata KeyError → disable engine), SpiderFoot (4 fast modules only: sfp_pgp+emailformat+whois+email, 180s limit), background scanning architecture (fast sources immediate, slow sources background task updates cache), theHarvester list-style params already fixed
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run standard scan on a real company domain and verify all fast sources fire in <60s, SpiderFoot completes in <3min as background task
+
+
+## [2026-05-02 09:40 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Job-based pub/sub streaming: SpiderFoot REST API, /api/v2/scan job system with long-lived SSE, extension live email-by-email updates, SearXNG wikidata fix, 443 tests pass
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Test full scan on a real domain via extension: verify SpiderFoot emails stream live into popup as PGP keyserver results come in
+
+
+## [2026-05-02 10:18 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix extension popup-closes-kills-SSE bug: background SW now runs scan via polling, popup reads from chrome.storage.session; SpiderFoot gets EMAILADDR_COMPROMISED from sfp_citadel; v2 job stores emails for polling; 443 tests pass
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Reload extension in Chrome, test snapdeal.com with Standard mode — should see SpiderFoot PGP emails and web crawler emails appearing live in popup even after closing/reopening
+
+
+## [2026-05-02 10:49 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix 3 root bugs: (1) web crawler regex rejected emails inside JSON quotes — broadened _EMAIL_RE; (2) role emails never generated in v2 — added generate_role_emails() after fast sources; (3) SearXNG queries returned adult content — improved to '@domain', 'domain email OR contact', 'site:domain'
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach serve, reload extension, test fareleaders.com — should now show support@fareleaders.com + 9 role pattern emails
+
+
+## [2026-05-02 11:06 EDT] — Session close (Claude Code)
+
+### What Was Done
+- IntelligentSearchSource: Groq+SearXNG+Reddit multi-stage pipeline. Scrapes company site → Groq generates 6 domain-specific queries + 4 subreddits → runs all concurrently through SearXNG + Reddit. Groq key loaded from pydantic-settings. Context uses SearXNG meta-descriptions (works for JS SPAs). Falls back to heuristic queries without Groq.
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Test full scan with intelligent_search on snapdeal.com and fareleaders.com — verify Groq-generated queries find emails that generic searches miss
+

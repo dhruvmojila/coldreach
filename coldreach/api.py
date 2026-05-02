@@ -34,7 +34,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import secrets
 from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -46,7 +48,7 @@ from coldreach import __version__
 from coldreach.core.finder import FinderConfig, find_emails
 from coldreach.core.models import DomainResult
 from coldreach.resolve.company import resolve_domain
-from coldreach.sources.base import SourceResult
+from coldreach.sources.base import BaseSource, SourceResult
 from coldreach.storage.cache import CacheStore
 from coldreach.verify.pipeline import PipelineResult, run_basic_pipeline
 
@@ -82,6 +84,33 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------------------
+# Job system — in-process pub/sub for long-running scans
+# ---------------------------------------------------------------------------
+# Each scan is a "job": sources push events into a queue, SSE drains it.
+# The SSE connection stays open until the job completes or is cancelled,
+# delivering emails one-at-a-time as every source finds them.
+
+
+@dataclass
+class ScanJob:
+    """In-flight scan job with a live event queue."""
+
+    job_id: str
+    domain: str
+    queue: asyncio.Queue[dict[str, Any] | None] = field(default_factory=asyncio.Queue)
+    tasks: list[asyncio.Task[Any]] = field(default_factory=list)
+    cancelled: bool = False
+    # Accumulated emails — allows polling even without long-lived SSE
+    emails: list[dict[str, Any]] = field(default_factory=list)
+    sources_done: list[str] = field(default_factory=list)
+    done: bool = False
+
+
+# Active jobs keyed by job_id.  Completed jobs are cleaned up after streaming.
+_jobs: dict[str, ScanJob] = {}
+
+
+# ---------------------------------------------------------------------------
 # Request / Response models
 # ---------------------------------------------------------------------------
 
@@ -93,10 +122,17 @@ class FindRequest(BaseModel):
     company: str | None = Field(None, description="Company name — resolves to a domain first.")
     name: str | None = Field(None, description="Person full name for pattern generation.")
     quick: bool = Field(
-        True,
+        False,
         description=(
-            "Skip slow OSINT tools (theHarvester + SpiderFoot). "
-            "Recommended for extension use — results in ~10s."
+            "Skip slow OSINT tools (theHarvester + SpiderFoot). ~10s. "
+            "Default False — use all sources for best results."
+        ),
+    )
+    full_scan: bool = Field(
+        False,
+        description=(
+            "Enable ALL sources including Firecrawl, Crawl4AI, theHarvester, "
+            "SpiderFoot. Overrides quick=True. Takes 2-5 minutes."
         ),
     )
     min_confidence: int = Field(0, ge=0, le=100, description="Hide emails below this score.")
@@ -118,8 +154,25 @@ class VerifyRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _finder_config(req: FindRequest) -> FinderConfig:
-    """Build FinderConfig from an API request."""
+def _finder_config(req: FindRequest, background_slow: bool = False) -> FinderConfig:
+    """Build FinderConfig from an API request.
+
+    full_scan=True overrides quick and enables all heavyweight sources.
+    quick=True skips theHarvester, SpiderFoot, Firecrawl, Crawl4AI.
+    Default (both False) runs all core sources; slow ones run in background
+    when background_slow=True so fast results arrive in ~30s.
+    """
+    if req.full_scan:
+        return FinderConfig(
+            use_harvester=True,
+            use_spiderfoot=True,
+            use_firecrawl=True,
+            use_crawl4ai=req.use_crawl4ai,
+            use_cache=not req.no_cache,
+            refresh_cache=req.refresh,
+            min_confidence=req.min_confidence,
+            background_slow_sources=background_slow,
+        )
     return FinderConfig(
         use_harvester=not req.quick,
         use_spiderfoot=not req.quick,
@@ -128,6 +181,7 @@ def _finder_config(req: FindRequest) -> FinderConfig:
         use_cache=not req.no_cache,
         refresh_cache=req.refresh,
         min_confidence=req.min_confidence,
+        background_slow_sources=background_slow,
     )
 
 
@@ -200,15 +254,27 @@ async def _stream_find(req: FindRequest) -> AsyncIterator[str]:
         yield _sse_event("error", {"detail": exc.detail})
         return
 
-    cfg = _finder_config(req)
+    # SSE stream uses background_slow=True: fast sources emit events immediately
+    # (~30s), then SpiderFoot/Harvester continue in background updating the cache.
+    cfg = _finder_config(req, background_slow=True)
+    sources = _build_sources(cfg)
 
-    # We run find_emails() in a thread so the SSE connection stays open.
-    # Progress events are emitted by hooking into the source execution loop
-    # via a shared queue written to by a custom source wrapper.
+    # Emit start event immediately so the client knows total_sources for
+    # the 0-100% progress bar before any source has run.
+    yield _sse_event(
+        "start",
+        {
+            "domain": domain,
+            "total_sources": len(sources),
+            "source_names": [s.name for s in sources],
+            "mode": "full_scan" if req.full_scan else ("quick" if req.quick else "standard"),
+        },
+    )
+
     queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
 
     async def _run() -> DomainResult:
-        result = await _find_with_progress(domain, req.name, cfg, queue)
+        result = await _find_with_progress(domain, req.name, cfg, queue, sources)
         await queue.put(None)  # sentinel: done
         return result
 
@@ -230,30 +296,35 @@ async def _find_with_progress(
     person_name: str | None,
     cfg: FinderConfig,
     queue: asyncio.Queue[dict[str, Any] | None],
+    sources: list[Any],  # pre-built by caller so start event can report count
 ) -> DomainResult:
     """Run find_emails and push progress events into *queue* as sources finish."""
-    from coldreach.sources.base import BaseSource
-
-    # Build source list inline (mirrors finder.py logic) so we can wrap each source.
-    sources = _build_sources(cfg)
 
     sem = asyncio.Semaphore(cfg.max_concurrent_sources)
     all_raw: list[SourceResult] = []
     emails_seen: set[str] = set()
+    sources_done = 0
+    total = len(sources)
 
     async def _run_one(src: BaseSource) -> None:
+        nonlocal sources_done
         async with sem:
             results, summary = await src.run(domain, person_name=person_name)
             all_raw.extend(results)
             new_emails = [r.email for r in results if r.email not in emails_seen]
             emails_seen.update(new_emails)
+            sources_done += 1
             await queue.put(
                 {
                     "source": src.name,
                     "found": len(results),
                     "new": len(new_emails),
                     "total_so_far": len(emails_seen),
+                    "sources_done": sources_done,
+                    "sources_total": total,
+                    "percent": round(sources_done / total * 100) if total else 100,
                     "errors": summary.errors,
+                    "skipped": summary.skipped,
                 }
             )
 
@@ -267,7 +338,6 @@ async def _find_with_progress(
 
 def _build_sources(cfg: FinderConfig) -> list[Any]:  # BaseSource subclasses
     """Build the source list from a FinderConfig (mirrors finder.py)."""
-    from coldreach.sources.base import BaseSource
     from coldreach.sources.crawl4ai_source import Crawl4AISource
     from coldreach.sources.firecrawl import FirecrawlSource
     from coldreach.sources.github import GitHubSource
@@ -295,12 +365,20 @@ def _build_sources(cfg: FinderConfig) -> list[Any]:  # BaseSource subclasses
                 timeout=cfg.request_timeout,
             )
         )
+    if cfg.use_intelligent_search:
+        from coldreach.sources.intelligent_search import IntelligentSearchSource
+
+        sources.append(
+            IntelligentSearchSource(
+                searxng_url=cfg.searxng_url or "http://localhost:8088",
+                timeout=cfg.request_timeout,
+            )
+        )
     if cfg.use_harvester:
         sources.append(
             HarvesterSource(
-                container=cfg.harvester_container,
                 sources=cfg.harvester_sources,
-                max_wait=cfg.harvester_max_wait,
+                timeout=cfg.harvester_max_wait,
             )
         )
     if cfg.use_spiderfoot:
@@ -405,6 +483,293 @@ async def cache_clear(domain: str) -> dict[str, Any]:
     store = CacheStore(db_path="~/.coldreach/cache.db")
     store.clear(domain=domain)
     return {"success": True, "domain": domain}
+
+
+# ---------------------------------------------------------------------------
+# Routes — v2 job-based scanning (pub/sub, long-lived SSE)
+# ---------------------------------------------------------------------------
+# The v2 API solves the core problem: SSE stays open until ALL sources are
+# done, delivering emails one-at-a-time as each source finds them.
+# SpiderFoot results stream via REST API polling — no blocking docker exec.
+# ---------------------------------------------------------------------------
+
+
+class ScanRequest(BaseModel):
+    """Parameters for a v2 streaming scan job."""
+
+    domain: str | None = Field(None, description="Target domain.")
+    company: str | None = Field(None, description="Company name — resolved to domain.")
+    name: str | None = Field(None, description="Person full name for pattern narrowing.")
+    quick: bool = Field(False, description="Skip slow sources.")
+    full_scan: bool = Field(False, description="Enable all sources including SpiderFoot.")
+    min_confidence: int = Field(0, ge=0, le=100)
+    use_firecrawl: bool = Field(False)
+    no_cache: bool = Field(False)
+    refresh: bool = Field(False)
+
+
+@app.post("/api/v2/scan")
+async def v2_start_scan(req: ScanRequest) -> dict[str, str]:
+    """Start a scan job.  Returns job_id immediately.
+
+    Stream results via ``GET /api/v2/scan/{job_id}/stream``.
+    Cancel via ``DELETE /api/v2/scan/{job_id}``.
+    """
+    # Resolve domain
+    if req.domain:
+        domain = req.domain.strip().lower().removeprefix("www.")
+    elif req.company:
+        resolved = await resolve_domain(req.company)
+        if not resolved:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Could not resolve domain for '{req.company}'.",
+            )
+        domain = resolved
+    else:
+        raise HTTPException(status_code=422, detail="Provide 'domain' or 'company'.")
+
+    job_id = secrets.token_urlsafe(10)
+    job = ScanJob(job_id=job_id, domain=domain)
+    _jobs[job_id] = job
+
+    # Start the scan in the background — results flow into job.queue
+    task = asyncio.create_task(_run_v2_scan(job, req))
+    task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
+    job.tasks.append(task)
+
+    return {"job_id": job_id, "domain": domain, "status": "running"}
+
+
+@app.get("/api/v2/scan/{job_id}/stream")
+async def v2_stream(job_id: str) -> StreamingResponse:
+    """Stream scan results as Server-Sent Events.
+
+    Stays open until the job completes or is cancelled.
+
+    Event types
+    -----------
+    ``start``       — ``{ domain, job_id }``
+    ``email_found`` — ``{ email, source, confidence, status }`` (one per email)
+    ``source_done`` — ``{ source, found, total_so_far }``
+    ``complete``    — ``{ total, job_id }``
+    ``error``       — ``{ detail }``
+    """
+    if job_id not in _jobs:
+        return StreamingResponse(
+            _sse_iter([_sse_event("error", {"detail": f"Job {job_id} not found"})]),
+            media_type="text/event-stream",
+        )
+
+    return StreamingResponse(
+        _drain_job_queue(_jobs[job_id]),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.delete("/api/v2/scan/{job_id}")
+async def v2_cancel(job_id: str) -> dict[str, str]:
+    """Cancel a running scan job."""
+    job = _jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job.cancelled = True
+    for t in job.tasks:
+        t.cancel()
+    await job.queue.put(None)  # signal SSE to close
+    return {"job_id": job_id, "status": "cancelled"}
+
+
+@app.get("/api/v2/scan/{job_id}")
+async def v2_status(job_id: str) -> dict[str, Any]:
+    """Poll current status + accumulated emails (no SSE needed).
+
+    The extension background SW polls this every 3s to get results
+    even if the popup was closed and reopened.
+    """
+    job = _jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    running_tasks = [t for t in job.tasks if not t.done()]
+    status = "cancelled" if job.cancelled else "complete" if job.done else "running"
+    return {
+        "job_id": job_id,
+        "domain": job.domain,
+        "status": status,
+        "emails": job.emails,  # All emails found so far
+        "sources_done": job.sources_done,
+        "total": len(job.emails),
+        "running_sources": len(running_tasks),
+    }
+
+
+# ── Job internals ─────────────────────────────────────────────────────────────
+
+
+async def _drain_job_queue(job: ScanJob) -> AsyncIterator[str]:
+    """Drain job queue and yield SSE frames until job completes."""
+    yield _sse_event("start", {"domain": job.domain, "job_id": job.job_id})
+    while True:
+        try:
+            item = await asyncio.wait_for(job.queue.get(), timeout=30.0)
+        except TimeoutError:
+            # Keep-alive ping to prevent proxy timeouts
+            yield ": keepalive\n\n"
+            continue
+        if item is None:
+            break
+        yield _sse_event(item["_event"], {k: v for k, v in item.items() if k != "_event"})
+    yield _sse_event("complete", {"job_id": job.job_id})
+    _jobs.pop(job.job_id, None)
+
+
+async def _sse_iter(frames: list[str]) -> AsyncIterator[str]:
+    for f in frames:
+        yield f
+
+
+async def _run_v2_scan(job: ScanJob, req: ScanRequest) -> None:
+    """Run all sources, pushing results into job.queue as they arrive."""
+    from coldreach.core.finder import _SLOW_SOURCE_NAMES
+    from coldreach.sources.spiderfoot import SpiderFootSource
+
+    cfg = _finder_config_v2(req)
+    all_sources = _build_sources(cfg)
+
+    # Separate fast vs slow so they don't block each other
+    fast_srcs = [s for s in all_sources if s.name not in _SLOW_SOURCE_NAMES]
+    slow_srcs = [s for s in all_sources if s.name in _SLOW_SOURCE_NAMES]
+
+    domain = job.domain
+    emails_seen: set[str] = set()
+    sources_done = 0
+    total_sources = len(all_sources)
+
+    async def _run_source(src: BaseSource) -> None:
+        nonlocal sources_done
+        if job.cancelled:
+            return
+        try:
+            # SpiderFoot gets special streaming treatment
+            if isinstance(src, SpiderFootSource):
+                found = 0
+                async for result in src.fetch_stream(domain):
+                    if job.cancelled:
+                        break
+                    email = result.email.lower()
+                    if email not in emails_seen:
+                        emails_seen.add(email)
+                        found += 1
+                        ev = {
+                            "_event": "email_found",
+                            "email": result.email,
+                            "source": result.source.value,
+                            "confidence": result.confidence_hint + 30,
+                            "status": "unknown",
+                        }
+                        job.emails.append({k: v for k, v in ev.items() if k != "_event"})
+                        await job.queue.put(ev)
+            else:
+                results, _ = await src.run(domain)
+                found = 0
+                for result in results:
+                    if job.cancelled:
+                        break
+                    email = result.email.lower()
+                    if email not in emails_seen:
+                        emails_seen.add(email)
+                        found += 1
+                        ev = {
+                            "_event": "email_found",
+                            "email": result.email,
+                            "source": result.source.value,
+                            "confidence": result.confidence_hint + 30,
+                            "status": "unknown",
+                        }
+                        job.emails.append({k: v for k, v in ev.items() if k != "_event"})
+                        await job.queue.put(ev)
+
+            job.sources_done.append(src.name)
+            sources_done_local = sources_done + 1
+            await job.queue.put(
+                {
+                    "_event": "source_done",
+                    "source": src.name,
+                    "found": found,
+                    "total_so_far": len(emails_seen),
+                    "sources_done": sources_done_local,
+                    "sources_total": total_sources,
+                    "percent": round(sources_done_local / total_sources * 100),
+                }
+            )
+
+        except Exception as exc:
+            logger.warning("[job %s] source %s error: %s", job.job_id, src.name, exc)
+        finally:
+            sources_done += 1
+
+    # ── Run fast sources concurrently ────────────────────────────────────────
+    await asyncio.gather(*[_run_source(s) for s in fast_srcs])
+
+    # ── Always generate role emails (guaranteed results even if all sources empty)
+    # These are pattern candidates: info@, support@, contact@, sales@, etc.
+    # They go through Reacher verification when the user verifies them.
+    if not job.cancelled:
+        from coldreach.generate.patterns import generate_role_emails
+
+        for rp in generate_role_emails(domain):
+            if rp.email not in emails_seen:
+                emails_seen.add(rp.email)
+                ev = {
+                    "_event": "email_found",
+                    "email": rp.email,
+                    "source": "generated/pattern",
+                    "confidence": 35,
+                    "status": "unknown",
+                }
+                job.emails.append({k: v for k, v in ev.items() if k != "_event"})
+                await job.queue.put(ev)
+
+        logger.info(
+            "[job %s] role emails added; total so far: %d",
+            job.job_id,
+            len(emails_seen),
+        )
+
+    # ── Run slow sources (SpiderFoot, theHarvester) ────────────────────────
+    if not job.cancelled:
+        await asyncio.gather(*[_run_source(s) for s in slow_srcs])
+
+    # ── Signal SSE to close and mark job complete ─────────────────────────
+    job.done = True
+    await job.queue.put(None)
+    logger.info(
+        "[job %s] complete — %d emails from %d sources",
+        job.job_id,
+        len(job.emails),
+        len(job.sources_done),
+    )
+
+
+def _finder_config_v2(req: ScanRequest) -> FinderConfig:
+    if req.full_scan:
+        return FinderConfig(
+            use_harvester=True,
+            use_spiderfoot=True,
+            use_firecrawl=req.use_firecrawl,
+            use_cache=not req.no_cache,
+            refresh_cache=req.refresh,
+            min_confidence=req.min_confidence,
+        )
+    return FinderConfig(
+        use_harvester=not req.quick,
+        use_spiderfoot=not req.quick,
+        use_firecrawl=req.use_firecrawl,
+        use_cache=not req.no_cache,
+        refresh_cache=req.refresh,
+        min_confidence=req.min_confidence,
+    )
 
 
 # ---------------------------------------------------------------------------

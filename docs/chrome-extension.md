@@ -35,12 +35,26 @@ when ColdReach has detected a job posting on the current tab.
    ```bash
    coldreach serve
    ```
-2. Navigate to any supported job posting.
-3. Click the ColdReach toolbar icon.
+2. Navigate to any supported job posting (or any company page).
+3. Click the ColdReach toolbar icon — **or right-click → "Find emails for this company"**.
 4. If a job was detected, the company pre-fills automatically.
    Click **Use "Company Name" →** to confirm the domain, or type one manually.
-5. Click **Find Emails** — results stream in as each source completes.
-6. Click ⎘ to copy a single email, or **Copy all** / **CSV ↓** for bulk export.
+5. Choose a **scan depth**:
+   - **Quick** (~10s) — web crawler, GitHub, WHOIS, SearXNG
+   - **Standard** (~2 min) — all of the above + theHarvester, SpiderFoot
+   - **Full Scan** (2–5 min) — everything including Firecrawl, Crawl4AI
+6. Click **Find Emails** — a 0–100% progress bar shows each source as it finishes.
+7. Click ⎘ to copy a single email, or **Copy all** / **CSV ↓** for bulk export.
+8. If few results appear, the popup suggests upgrading to Full Scan automatically.
+
+## Right-click context menu
+
+Right-click anywhere on a page or on selected text:
+
+- **Selected text** → opens popup with the selected text pre-filled as the search query
+- **Page right-click** → extracts the current domain and pre-fills it
+
+This works on *any* website — not just job boards.
 
 ## Supported job boards
 

@@ -25,7 +25,6 @@
 ###############################################################################
 
 services:
-
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
@@ -87,7 +86,11 @@ services:
       - SETGID
       - SETUID
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:8080/ 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO /dev/null http://localhost:8080/ 2>&1 || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -100,7 +103,7 @@ services:
   # Note: GET / returns no HTTP response (by design — this is normal).
   # The health check uses a TCP probe since Reacher has no HTTP health endpoint.
   reacher:
-    image: reacherhq/backend:0.11.6
+    image: reacherhq/backend:latest
     container_name: coldreach-reacher
     restart: unless-stopped
     ports:
@@ -111,7 +114,11 @@ services:
       # Uncomment to set the HELO domain for SMTP handshakes:
       # RCH_HELLO_NAME: "mail.yourdomain.com"
     healthcheck:
-      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8083' 2>/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c '</dev/tcp/localhost/8083' 2>/dev/null || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -135,7 +142,11 @@ services:
     volumes:
       - coldreach_spiderfoot_data:/var/lib/spiderfoot
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:5001/ 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO /dev/null http://localhost:5001/ 2>&1 || exit 1",
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -165,7 +176,11 @@ services:
       - ./theHarvester/theHarvester/data/proxies.yaml:/root/.theHarvester/proxies.yaml:ro
       - ./theHarvester/theHarvester/data/proxies.yaml:/etc/theHarvester/proxies.yaml:ro
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost/docs')\" 2>/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          'python3 -c "import urllib.request; urllib.request.urlopen(''http://localhost/docs'')" 2>/dev/null || exit 1',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5

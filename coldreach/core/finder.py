@@ -42,6 +42,7 @@ from coldreach.sources.crawl4ai_source import Crawl4AISource
 from coldreach.sources.firecrawl import FirecrawlSource
 from coldreach.sources.github import GitHubSource
 from coldreach.sources.harvester import HarvesterSource
+from coldreach.sources.intelligent_search import IntelligentSearchSource
 from coldreach.sources.reddit import RedditSource
 from coldreach.sources.search_engine import SearchEngineSource
 from coldreach.sources.spiderfoot import SpiderFootSource
@@ -51,6 +52,15 @@ from coldreach.storage.cache import CacheStore
 from coldreach.verify.pipeline import run_basic_pipeline
 
 logger = logging.getLogger(__name__)
+
+# Sources that typically take > 60s — they run as background tasks so the
+# user sees fast-source results immediately and slow-source results appear
+# as they finish (via SSE streaming or cache updates).
+# intelligent_search does Groq API + multi-stage SearXNG — classify as slow
+# so the fast sources (web_crawler, github, whois) return first
+_SLOW_SOURCE_NAMES = frozenset(
+    ["spiderfoot", "theharvester", "crawl4ai", "firecrawl", "intelligent_search"]
+)
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +97,7 @@ class FinderConfig:
     use_github: bool = True
     use_reddit: bool = True
     use_search_engine: bool = True
+    use_intelligent_search: bool = True  # Groq-enhanced multi-stage search
     use_harvester: bool = True
     use_spiderfoot: bool = True
     use_firecrawl: bool = False  # opt-in: requires firecrawl-py + Docker stack
@@ -97,9 +108,10 @@ class FinderConfig:
     firecrawl_url: str = "http://localhost:3002"
     brave_api_key: str | None = None
     spiderfoot_container: str = "coldreach-spiderfoot"
-    spiderfoot_max_wait: float = 600.0  # SpiderFoot passive scan can take 5-10 min
+    spiderfoot_max_wait: float = 180.0  # 3 min — sfp_pgp+emailformat+whois complete in ~90s
     harvester_container: str = "coldreach-theharvester"
-    harvester_max_wait: float = 300.0  # theHarvester across free sources ~2-4 min
+    harvester_max_wait: float = 240.0  # theHarvester REST API timeout
+    background_slow_sources: bool = False  # run SpiderFoot/Harvester as background tasks
     harvester_sources: str | None = None  # None = free sources; "all" = all sources
     reacher_url: str | None = "http://localhost:8083"
     use_reacher: bool = True
@@ -195,12 +207,18 @@ async def find_emails(
                 timeout=cfg.request_timeout,
             )
         )
+    if cfg.use_intelligent_search:
+        sources.append(
+            IntelligentSearchSource(
+                searxng_url=cfg.searxng_url or "http://localhost:8088",
+                timeout=cfg.request_timeout,
+            )
+        )
     if cfg.use_harvester:
         sources.append(
             HarvesterSource(
-                container=cfg.harvester_container,
                 sources=cfg.harvester_sources,
-                max_wait=cfg.harvester_max_wait,
+                timeout=cfg.harvester_max_wait,
             )
         )
     if cfg.use_spiderfoot:
@@ -217,7 +235,16 @@ async def find_emails(
     if cfg.use_crawl4ai:
         sources.append(Crawl4AISource(timeout=cfg.request_timeout))
 
-    logger.info("Running %d source(s) for domain: %s", len(sources), domain)
+    # Split fast and slow sources so fast results are returned immediately
+    fast_sources = [s for s in sources if s.name not in _SLOW_SOURCE_NAMES]
+    slow_sources = [s for s in sources if s.name in _SLOW_SOURCE_NAMES]
+
+    logger.info(
+        "Running %d fast + %d slow source(s) for domain: %s",
+        len(fast_sources),
+        len(slow_sources),
+        domain,
+    )
 
     # ── Run sources concurrently (semaphore-limited) ──────────────────────────
     sem = asyncio.Semaphore(cfg.max_concurrent_sources)
@@ -229,8 +256,29 @@ async def find_emails(
                 logger.warning("[%s] errors: %s", src.name, "; ".join(summary.errors))
             return results
 
-    all_results_nested = await asyncio.gather(*[_run_source(s) for s in sources])
-    all_raw: list[SourceResult] = [r for batch in all_results_nested for r in batch]
+    # Run fast sources — results available in ~30s
+    fast_results_nested = await asyncio.gather(*[_run_source(s) for s in fast_sources])
+    all_raw: list[SourceResult] = [r for batch in fast_results_nested for r in batch]
+
+    # Run slow sources — either inline or as background task
+    if slow_sources:
+        if cfg.background_slow_sources:
+            # Keep a reference to prevent garbage collection (RUF006)
+            _bg_task = asyncio.create_task(
+                _run_slow_sources_background(slow_sources, domain, person_name, cfg, cache)
+            )
+            # Suppress "task was destroyed" warning for fire-and-forget tasks
+            _bg_task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
+            logger.info(
+                "Background scan started for %s: %s",
+                domain,
+                ", ".join(s.name for s in slow_sources),
+            )
+        else:
+            # Inline: wait for slow sources too (blocks but gives complete results)
+            slow_results_nested = await asyncio.gather(*[_run_source(s) for s in slow_sources])
+            for batch in slow_results_nested:
+                all_raw.extend(batch)
 
     logger.info("Sources returned %d raw email candidate(s) for %s", len(all_raw), domain)
 
@@ -342,3 +390,101 @@ async def find_emails(
         "find_emails complete for %s: %d verified email(s)", domain, len(domain_result.emails)
     )
     return domain_result
+
+
+# ---------------------------------------------------------------------------
+# Background slow-source runner
+# ---------------------------------------------------------------------------
+
+
+async def _run_slow_sources_background(
+    slow_sources: list[BaseSource],
+    domain: str,
+    person_name: str | None,
+    cfg: FinderConfig,
+    cache: CacheStore | None,
+) -> None:
+    """Run slow sources in the background and merge results into cache.
+
+    Called as an asyncio.create_task() when background_slow_sources=True.
+    Merges new emails into the existing cached result so a subsequent
+    ``find_emails()`` call (cache hit) returns the complete set.
+    """
+    sem = asyncio.Semaphore(cfg.max_concurrent_sources)
+
+    async def _run_one(src: BaseSource) -> list[SourceResult]:
+        async with sem:
+            results, summary = await src.run(domain, person_name=person_name)
+            if summary.errors:
+                logger.warning("[bg:%s] errors: %s", src.name, "; ".join(summary.errors))
+            logger.info("[bg:%s] found %d email(s) for %s", src.name, len(results), domain)
+            return results
+
+    try:
+        nested = await asyncio.gather(*[_run_one(s) for s in slow_sources])
+        new_raw: list[SourceResult] = [r for batch in nested for r in batch]
+
+        if not new_raw:
+            logger.info("Background sources found no new emails for %s", domain)
+            return
+
+        # Merge into cached result (if any)
+        existing = cache.get(domain) if cache else None
+        if existing is None:
+            existing = DomainResult(domain=domain)
+
+        existing_emails = {rec.email for rec in existing.emails}
+        reacher_url = cfg.reacher_url if cfg.use_reacher else None
+        added = 0
+
+        grouped = _merge_results(new_raw)
+        for email, source_results in grouped.items():
+            if email in existing_emails:
+                continue  # already in result from fast sources
+            pipeline = await run_basic_pipeline(email, reacher_url=reacher_url)
+            source_hint = sum(sr.confidence_hint for sr in source_results)
+            confidence = min(100, pipeline.score + source_hint)
+            reacher_check = pipeline.checks.get("reacher")
+            if not pipeline.passed:
+                status = VerificationStatus.INVALID
+                confidence = 0
+            elif reacher_check and reacher_check.passed:
+                status = VerificationStatus.VALID
+            elif reacher_check and reacher_check.warned:
+                status = VerificationStatus.CATCH_ALL
+            elif reacher_check and reacher_check.failed:
+                status = VerificationStatus.UNDELIVERABLE
+            elif pipeline.mx_records:
+                status = VerificationStatus.UNKNOWN
+            else:
+                status = VerificationStatus.RISKY
+
+            seen_srcs: set[EmailSource] = set()
+            source_records: list[SourceRecord] = []
+            for sr in source_results:
+                if sr.source not in seen_srcs:
+                    seen_srcs.add(sr.source)
+                    source_records.append(
+                        SourceRecord(source=sr.source, url=sr.url or None, context=sr.context)
+                    )
+            existing.add_email(
+                EmailRecord(
+                    email=pipeline.normalized_email,
+                    confidence=confidence,
+                    status=status,
+                    sources=source_records,
+                    mx_records=pipeline.mx_records,
+                )
+            )
+            added += 1
+
+        if cache is not None and added > 0:
+            cache.set(domain, existing)
+            logger.info(
+                "Background scan complete for %s: added %d email(s) from slow sources",
+                domain,
+                added,
+            )
+
+    except Exception as exc:
+        logger.warning("Background source task failed for %s: %s", domain, exc)
