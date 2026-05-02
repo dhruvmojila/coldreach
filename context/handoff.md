@@ -364,3 +364,41 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 5: Groq --draft feature + outreach dashboard. User wants: find email + write personalized cold email + UI to manage templates and campaigns.
 
+### [2026-05-02 14:10 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 5 complete: coldreach/outreach/ module (context.py, draft.py, templates.py), DSPy ColdEmailSignature for structured Groq output, /api/v2/draft SSE endpoint, --draft CLI flag, coldreach dashboard command, Streamlit 3-tab outreach dashboard, 482 tests pass
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; ruff+mypy clean; DSPy Predict signature defined; /api/v2/draft endpoint streams context_ready + draft_complete SSE events; coldreach dashboard launches Streamlit
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Live smoke test: coldreach find --domain stripe.com --name 'Patrick Collison' --draft --sender-name 'Jane' --intent 'explore API partnership'. Then build Chrome extension DraftPanel component.
+
+### [2026-05-02 14:50 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Update docs for Phase 5: cli-reference.md (dashboard command, --draft flags), api-server.md (/api/v2/draft endpoint), new docs/outreach.md (full workflow guide A/B/C), mkdocs.yml nav updated. Memory updated to make docs updates mandatory.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; docs/outreach.md created; cli-reference.md has dashboard + --draft; api-server.md has /api/v2/draft SSE docs; mkdocs nav updated
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
+

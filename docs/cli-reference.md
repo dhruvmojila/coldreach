@@ -1,6 +1,6 @@
 # CLI Reference
 
-ColdReach exposes five top-level commands: `status`, `serve`, `verify`, `find`, and `cache`.
+ColdReach exposes six top-level commands: `status`, `serve`, `dashboard`, `verify`, `find`, and `cache`.
 
 ```
 coldreach [OPTIONS] COMMAND [ARGS]...
@@ -74,6 +74,48 @@ coldreach serve --reload               # dev mode
 Once running, Swagger UI is available at **http://localhost:8765/docs**.
 
 See [API Server](api-server.md) for full endpoint documentation.
+
+---
+
+## `coldreach dashboard`
+
+Launch the ColdReach outreach dashboard — a Streamlit web app for managing discovered
+contacts, generating Groq-powered drafts, and tracking sent/replied status.
+
+```bash
+coldreach dashboard [OPTIONS]
+```
+
+Requires `pip install coldreach[dashboard]` and `coldreach serve` running in another terminal.
+
+### Options
+
+| Option | Default | Description |
+| ------ | ------- | ----------- |
+| `--port INT` | `8501` | Streamlit port. |
+| `--no-browser` | off | Don't open the browser automatically. |
+
+### Examples
+
+```bash
+coldreach dashboard                 # opens localhost:8501
+coldreach dashboard --port 9000
+coldreach dashboard --no-browser    # headless mode
+```
+
+The dashboard has three tabs:
+
+| Tab | What it does |
+|-----|-------------|
+| **Contacts** | Browse all domains from your cache. One-click "Draft" per email. |
+| **Compose** | Fill in your name + one-sentence intent → Groq writes the email. |
+| **Sent** | Mark emails as sent/replied. View saved drafts. Track reply rate. |
+
+!!! tip "Requires Groq API key"
+    Add `COLDREACH_GROQ_API_KEY=gsk_xxx` to your `.env` for draft generation.
+    Get a free key at [console.groq.com](https://console.groq.com/) (14,400 tokens/min free).
+
+See [Outreach Guide](outreach.md) for the full workflow.
 
 ---
 
@@ -201,6 +243,15 @@ coldreach find [OPTIONS]
 | `--no-cache` | Skip cache read and write entirely |
 | `--refresh` | Ignore any cached result and re-fetch from all sources |
 
+**Groq draft** *(requires `COLDREACH_GROQ_API_KEY` in `.env`)*
+
+| Option | Default | Description |
+| ------ | ------- | ----------- |
+| `--draft` | off | Generate a personalized cold email for the top email found |
+| `--sender-name NAME` | — | Your full name (prompted interactively if omitted) |
+| `--intent SENTENCE` | — | What you want in one sentence (prompted if omitted) |
+| `--template TYPE` | `auto` | `job_application` \| `partnership` \| `sales` \| `introduction` \| `auto` |
+
 ### Examples
 
 ```bash
@@ -235,6 +286,15 @@ coldreach find --domain acme.com --crawl4ai
 
 # Skip slow OSINT, keep SMTP verification
 coldreach find --domain acme.com --no-harvester --no-spiderfoot
+
+# Generate a Groq cold email draft for the top email found
+coldreach find --domain stripe.com --name "Patrick Collison" --draft
+
+# Draft with explicit sender details (non-interactive)
+coldreach find --domain stripe.com --draft \
+  --sender-name "Jane Smith" \
+  --intent "explore a partnership on embedded payments" \
+  --template partnership
 ```
 
 ### Output

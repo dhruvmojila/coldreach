@@ -370,6 +370,75 @@ def serve(ctx: click.Context, host: str, port: int, reload: bool) -> None:
 
 
 # ---------------------------------------------------------------------------
+# dashboard command
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option("--port", default=8501, show_default=True, help="Streamlit port.")
+@click.option("--no-browser", is_flag=True, default=False, help="Don't open browser automatically.")
+@click.pass_context
+def dashboard(ctx: click.Context, port: int, no_browser: bool) -> None:
+    """Launch the ColdReach outreach dashboard (Streamlit).
+
+    \b
+    Shows all discovered contacts, lets you generate Groq drafts,
+    and track which emails you've sent or received replies to.
+
+    \b
+    Requires: pip install coldreach[dashboard]
+              coldreach serve  (API must be running for draft generation)
+
+    \b
+    Examples:
+      coldreach dashboard
+      coldreach dashboard --port 9000
+    """
+    try:
+        import streamlit  # noqa: F401
+    except ImportError:
+        err_console.print(
+            "[red]Error:[/red] Streamlit not installed. Run:\n"
+            "  [bold]pip install coldreach[dashboard][/bold]"
+        )
+        raise SystemExit(1) from None
+
+    import subprocess
+    from pathlib import Path
+
+    dashboard_path = Path(__file__).parent / "dashboard.py"
+    if not dashboard_path.exists():
+        err_console.print(f"[red]Error:[/red] Dashboard file not found at {dashboard_path}")
+        raise SystemExit(1)
+
+    console.print(_banner())
+    console.print()
+    console.print(
+        Panel(
+            f"  [bold green]●[/bold green]  Outreach dashboard starting at "
+            f"[bold]http://localhost:{port}[/bold]\n\n"
+            f"  Manage contacts, generate drafts, track outreach.\n"
+            f"  Press [bold]Ctrl-C[/bold] to stop.",
+            title="[bold]ColdReach Dashboard[/bold]",
+            border_style="#5b8cff",
+            padding=(0, 2),
+        )
+    )
+    console.print()
+
+    args = [
+        "streamlit",
+        "run",
+        str(dashboard_path),
+        f"--server.port={port}",
+        f"--server.headless={'true' if no_browser else 'false'}",
+        "--theme.base=dark",
+        "--theme.primaryColor=#5b8cff",
+    ]
+    subprocess.run(args)
+
+
+# ---------------------------------------------------------------------------
 # verify command
 # ---------------------------------------------------------------------------
 
@@ -510,6 +579,33 @@ def verify(ctx: click.Context, email: str, output_json: bool, dns_timeout: float
     metavar="FILE",
     help="Export results to FILE (.csv or .json). Inferred from extension.",
 )
+@click.option(
+    "--draft",
+    "generate_draft",
+    is_flag=True,
+    default=False,
+    help="Generate a Groq draft for the top email. Requires COLDREACH_GROQ_API_KEY in .env.",
+)
+@click.option(
+    "--sender-name",
+    default=None,
+    metavar="NAME",
+    help="Your full name for the draft (prompted interactively if omitted).",
+)
+@click.option(
+    "--intent",
+    "sender_intent",
+    default=None,
+    metavar="SENTENCE",
+    help="What you want in one sentence (prompted if omitted).",
+)
+@click.option(
+    "--template",
+    "email_template",
+    default="auto",
+    type=click.Choice(["auto", "job_application", "partnership", "sales", "introduction"]),
+    help="Email type for the draft (auto-detected from intent if omitted).",
+)
 @click.pass_context
 def find(
     ctx: click.Context,
@@ -535,6 +631,10 @@ def find(
     use_full: bool,
     timeout: float,
     output: str | None,
+    generate_draft: bool,
+    sender_name: str | None,
+    sender_intent: str | None,
+    email_template: str,
 ) -> None:
     """Find email addresses for a domain or company.
 
@@ -707,7 +807,140 @@ def find(
             err_console.print(f"[red]Export failed:[/red] {exc}")
             sys.exit(2)
 
+    # ── Draft generation (--draft flag) ──────────────────────────────────────
+    if generate_draft and result.emails and not output_json:
+        _run_draft(result, target_domain, sender_name, sender_intent, email_template)
+
     sys.exit(0 if result.emails else 1)
+
+
+# ---------------------------------------------------------------------------
+# Draft generation
+# ---------------------------------------------------------------------------
+
+
+def _run_draft(
+    result: DomainResult,
+    domain: str,
+    sender_name: str | None,
+    sender_intent: str | None,
+    email_template: str,
+) -> None:
+    """Interactively generate a cold email draft for the top email in *result*."""
+    import asyncio
+
+    from rich.prompt import Prompt
+
+    # Pick target email — prefer verified, else top confidence
+    best = result.best_email
+    if not best:
+        err_console.print("[yellow]No emails found — cannot generate draft.[/yellow]")
+        return
+
+    console.print(f"\n  [dim]Generating draft for [bold]{best.email}[/bold]…[/dim]\n")
+
+    # Collect sender info interactively if not provided
+    name = sender_name or Prompt.ask("  [bold]Your name[/bold]")
+    intent = sender_intent or Prompt.ask(
+        "  [bold]What do you want from this person?[/bold] [dim](one sentence)[/dim]"
+    )
+
+    try:
+        from coldreach.outreach.context import get_company_context
+        from coldreach.outreach.draft import draft_email
+        from coldreach.outreach.templates import EmailType, auto_detect_type
+
+        # Fetch company context
+        with console.status("[dim]Fetching company context…[/dim]"):
+            context = asyncio.run(get_company_context(domain))
+
+        # Detect email type
+        if email_template == "auto":
+            etype = auto_detect_type(intent)
+        else:
+            try:
+                etype = EmailType(email_template)
+            except ValueError:
+                etype = auto_detect_type(intent)
+
+        # Generate draft
+        with console.status(f"[dim]Drafting with Groq ({etype.value})…[/dim]"):
+            draft = asyncio.run(
+                draft_email(
+                    email=best.email,
+                    context=context,
+                    sender_name=name,
+                    sender_intent=intent,
+                    email_type=etype,
+                )
+            )
+
+        # Display
+        console.print()
+        console.rule("[bold]Draft[/bold]", style="#5b8cff")
+        console.print(f"  [dim]To:[/dim]       {draft.to}")
+        console.print(f"  [dim]Subject:[/dim]  [bold]{draft.subject}[/bold]")
+        console.print()
+        console.print(f"  {draft.body.replace(chr(10), chr(10) + '  ')}")
+        console.print(f"\n  [dim]Best,\n  {name}[/dim]")
+        console.rule(style="#5b8cff")
+        console.print()
+
+        # Action prompt
+        action = (
+            console.input(
+                "  [dim][[bold]c[/bold]]opy  [[bold]s[/bold]]ave  [[bold]q[/bold]]uit → [/dim]"
+            )
+            .strip()
+            .lower()
+        )
+
+        if action == "c":
+            import subprocess
+
+            full_text = f"Subject: {draft.subject}\n\n{draft.body}\n\nBest,\n{name}"
+            try:
+                subprocess.run(
+                    ["xclip", "-selection", "clipboard"], input=full_text.encode(), check=True
+                )
+                console.print("  [green]✓[/green]  Copied to clipboard.")
+            except FileNotFoundError:
+                try:
+                    subprocess.run(["pbcopy"], input=full_text.encode(), check=True)
+                    console.print("  [green]✓[/green]  Copied to clipboard.")
+                except FileNotFoundError:
+                    console.print(f"  [dim]Copy failed — paste manually:\n\n{full_text}[/dim]")
+
+        elif action == "s":
+            import json
+            from pathlib import Path
+
+            save_path = Path("~/.coldreach/drafts.json").expanduser()
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            import contextlib
+
+            drafts: list[dict[str, str]] = []
+            if save_path.exists():
+                with contextlib.suppress(Exception):
+                    drafts = json.loads(save_path.read_text())
+            drafts.append(
+                {
+                    "to": draft.to,
+                    "subject": draft.subject,
+                    "body": draft.body,
+                    "sender": name,
+                    "domain": domain,
+                    "type": draft.email_type.value,
+                }
+            )
+            save_path.write_text(json.dumps(drafts, indent=2))
+            console.print(f"  [green]✓[/green]  Saved to [bold]{save_path}[/bold]")
+
+    except ValueError as exc:
+        err_console.print(f"\n  [red]Draft error:[/red] {exc}")
+        err_console.print("  [dim]Set COLDREACH_GROQ_API_KEY in .env to enable drafts.[/dim]")
+    except Exception as exc:
+        err_console.print(f"\n  [red]Draft failed:[/red] {exc}")
 
 
 # ---------------------------------------------------------------------------

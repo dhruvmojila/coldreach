@@ -87,6 +87,7 @@ full = [
   "holehe>=1.15",
   "groq>=0.12",
   "playwright>=1.48",
+  "dspy-ai>=2.5",
 ]
 
 # Optional Streamlit web dashboard
@@ -192,6 +193,17 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+# Streamlit dashboard uses dynamic types inherent to the Streamlit API
+module = "coldreach.dashboard"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# DSPy generates Signature subclasses dynamically at runtime — mypy can't
+# resolve these types without DSPy's own mypy plugin (which doesn't exist)
+module = "coldreach.outreach.draft"
+ignore_errors = true
 
 # ---------------------------------------------------------------------------
 # Pytest

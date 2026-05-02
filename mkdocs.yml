@@ -84,6 +84,7 @@ nav:
   - Discovery Sources: sources.md
   - API Server: api-server.md
   - Chrome Extension: chrome-extension.md
+  - Outreach & Drafts: outreach.md
   - Contributing: contributing.md
   - API Reference:
     - api/index.md

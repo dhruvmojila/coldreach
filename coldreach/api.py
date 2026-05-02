@@ -486,6 +486,101 @@ async def cache_clear(domain: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Routes — v2 draft (Groq-powered email personalization)
+# ---------------------------------------------------------------------------
+
+
+class DraftRequest(BaseModel):
+    """Parameters for a Groq cold email draft."""
+
+    email: str = Field(..., description="Recipient email address.")
+    domain: str = Field(..., description="Company domain for context scraping.")
+    sender_name: str = Field(..., description="Your full name.")
+    sender_intent: str = Field(..., description="One sentence: what you want from this person.")
+    email_type: str = Field(
+        "auto", description="job_application|partnership|sales|introduction|auto"
+    )
+    groq_api_key: str | None = Field(None, description="Override Groq API key.")
+
+
+@app.post("/api/v2/draft")
+async def v2_draft(req: DraftRequest) -> StreamingResponse:
+    """Generate a personalized cold email draft via Groq.
+
+    Streams the draft as SSE events so the UI can show text appearing
+    word-by-word (similar to ChatGPT's streaming experience).
+
+    Event types
+    -----------
+    ``context_ready``   — company context fetched: ``{ company_name, description }``
+    ``draft_complete``  — full draft ready: ``{ subject, body, email_type, tokens_used }``
+    ``error``           — fatal: ``{ detail }``
+    """
+    return StreamingResponse(
+        _stream_draft(req),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+async def _stream_draft(req: DraftRequest) -> AsyncIterator[str]:
+    """Async generator that yields SSE frames for a draft generation run."""
+    try:
+        from coldreach.outreach.context import get_company_context
+        from coldreach.outreach.draft import draft_email
+        from coldreach.outreach.templates import EmailType, auto_detect_type
+
+        # Step 1: Fetch company context
+        context = await get_company_context(req.domain)
+        yield _sse_event(
+            "context_ready",
+            {
+                "company_name": context.name,
+                "description": context.description[:200],
+                "industry": context.industry,
+            },
+        )
+
+        # Step 2: Resolve email type
+        if req.email_type == "auto":
+            email_type = auto_detect_type(req.sender_intent)
+        else:
+            try:
+                email_type = EmailType(req.email_type)
+            except ValueError:
+                email_type = auto_detect_type(req.sender_intent)
+
+        # Step 3: Generate draft (runs Groq in thread)
+        draft = await draft_email(
+            email=req.email,
+            context=context,
+            sender_name=req.sender_name,
+            sender_intent=req.sender_intent,
+            email_type=email_type,
+            api_key=req.groq_api_key,
+        )
+
+        yield _sse_event(
+            "draft_complete",
+            {
+                "to": draft.to,
+                "subject": draft.subject,
+                "body": draft.body,
+                "email_type": draft.email_type.value,
+                "tokens_used": draft.tokens_used,
+                "model": draft.model,
+            },
+        )
+
+    except ValueError as exc:
+        # Missing API key or bad input
+        yield _sse_event("error", {"detail": str(exc)})
+    except Exception as exc:
+        logger.warning("Draft generation error: %s", exc)
+        yield _sse_event("error", {"detail": f"Draft generation failed: {exc}"})
+
+
+# ---------------------------------------------------------------------------
 # Routes — v2 job-based scanning (pub/sub, long-lived SSE)
 # ---------------------------------------------------------------------------
 # The v2 API solves the core problem: SSE stays open until ALL sources are

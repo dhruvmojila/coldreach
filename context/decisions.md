@@ -110,3 +110,8 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 ### [2026-05-02 12:32 EDT] Session close decisions
 
 - GitHub community standards met: Description (set on repo), README (exists), Code of conduct, Contributing guide, License (MIT), Security policy, 3 issue templates (bug/feature/new-source), PR template
+
+### [2026-05-02 14:10 EDT] Session close decisions
+
+- DSPy used for structured output (subject+body as separate typed fields) not raw text parsing. Module override added to mypy since DSPy generates classes dynamically at runtime.
+- Streamlit dashboard reads contacts from /api/cache via API, generates drafts via /api/v2/draft SSE, stores sent/replied state in ~/.coldreach/outreach.json. Zero new database dependency.

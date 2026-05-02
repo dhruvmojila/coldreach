@@ -270,6 +270,69 @@ curl -X DELETE http://localhost:8765/api/cache/stripe.com
 
 ---
 
+### `POST /api/v2/draft`
+
+Generate a personalized cold email using Groq. Streams SSE events so the
+UI can show text appearing progressively (like ChatGPT).
+
+**Requires:** `COLDREACH_GROQ_API_KEY` in `.env`
+
+**Request body**
+
+```json
+{
+  "email": "patrick@stripe.com",
+  "domain": "stripe.com",
+  "sender_name": "Jane Smith",
+  "sender_intent": "explore a partnership on embedded payments",
+  "email_type": "partnership"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `domain` | `string` | Company domain — scraped for context |
+| `sender_name` | `string` | Your full name |
+| `sender_intent` | `string` | One sentence: what you want from this person |
+| `email_type` | `string` | `job_application` \| `partnership` \| `sales` \| `introduction` \| `auto` |
+| `groq_api_key` | `string?` | Override the key from `.env` |
+
+**SSE event stream**
+
+```
+event: context_ready
+data: {"company_name": "Stripe", "description": "Financial infrastructure...", "industry": "fintech"}
+
+event: draft_complete
+data: {
+  "to": "patrick@stripe.com",
+  "subject": "Quick question about Stripe's embedded payments",
+  "body": "Hi Patrick,\n\nI came across Stripe's recent...",
+  "email_type": "partnership",
+  "model": "groq/llama-3.1-8b-instant"
+}
+
+event: error
+data: {"detail": "Groq API key required..."}
+```
+
+**Quick example**
+
+```bash
+curl -X POST http://localhost:8765/api/v2/draft \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "legal@stripe.com",
+    "domain": "stripe.com",
+    "sender_name": "Jane Smith",
+    "sender_intent": "partnership on embedded finance",
+    "email_type": "partnership"
+  }'
+```
+
+---
+
 ## CORS
 
 The server accepts cross-origin requests from:

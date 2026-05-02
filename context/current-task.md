@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Fix CI ruff format error; add all GitHub community standard files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, 3 issue templates, PR template); update docs/sources.md with IntelligentSearch; add docs/contributing.md
+- Objective: Update docs for Phase 5: cli-reference.md (dashboard command, --draft flags), api-server.md (/api/v2/draft endpoint), new docs/outreach.md (full workflow guide A/B/C), mkdocs.yml nav updated. Memory updated to make docs updates mandatory.
 
 ## In Progress
 
-- [ ] Phase 5: Groq --draft feature + outreach dashboard. User wants: find email + write personalized cold email + UI to manage templates and campaigns.
+- [ ] Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
 
 ## Done In This Session
 
-- Fix CI ruff format error; add all GitHub community standard files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, 3 issue templates, PR template); update docs/sources.md with IntelligentSearch; add docs/contributing.md
+- Update docs for Phase 5: cli-reference.md (dashboard command, --draft flags), api-server.md (/api/v2/draft endpoint), new docs/outreach.md (full workflow guide A/B/C), mkdocs.yml nav updated. Memory updated to make docs updates mandatory.
 
 ## Next Action (Single Concrete Step)
 
-- Phase 5: Groq --draft feature + outreach dashboard. User wants: find email + write personalized cold email + UI to manage templates and campaigns.
+- Build Chrome extension DraftPanel component (✏️ button per email row, streams /api/v2/draft, shows draft word-by-word, copy button)
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 443 tests pass; ruff+mypy clean; CI should be fully green now; all GitHub community standard checklist items covered
+- 482 tests pass; docs/outreach.md created; cli-reference.md has dashboard + --draft; api-server.md has /api/v2/draft SSE docs; mkdocs nav updated
