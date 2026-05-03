@@ -644,3 +644,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 5: wire Groq cold email draft panel — draft_panel.py exists in tui/widgets/, needs Groq API call connected and end-to-end test
 
+### [2026-05-02 20:38 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Resolved all 3 GitHub issues: #1 docs/index.md updated (Phase 1→4 complete, TUI demo, Chrome ext, API server); #2 Cache tab crash fixed (cursor_row returns 0 not -1 on empty DataTable, added row>=table.row_count guard); #3 TUI scan results now saved to cache (builds DomainResult from collected emails, CacheStore.set after completion). Also fixed ruff format failure. Committed 69716fb and pushed to main.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; ruff format --check clean; git pushed to main; all 3 issues auto-closed by commit
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 5: wire Groq cold email draft panel — tui/widgets/draft_panel.py exists, needs Groq API call and end-to-end test in TUI
+
