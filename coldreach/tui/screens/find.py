@@ -364,12 +364,16 @@ class FindScreen(Widget):
                         if email not in seen:
                             seen.add(email)
                             found += 1
-                            self._emails.append({"email": result.email})
+                            conf = result.confidence_hint + 30
+                            self._emails.append(
+                                {
+                                    "email": result.email,
+                                    "confidence": conf,
+                                    "source": result.source.value,
+                                }
+                            )
                             results_table.add_email(
-                                result.email,
-                                result.confidence_hint + 30,
-                                "unknown",
-                                result.source.value,
+                                result.email, conf, "unknown", result.source.value
                             )
                             self._email_count = len(seen)
                 else:
@@ -381,12 +385,16 @@ class FindScreen(Widget):
                         if email not in seen:
                             seen.add(email)
                             found += 1
-                            self._emails.append({"email": result.email})
+                            conf = result.confidence_hint + 30
+                            self._emails.append(
+                                {
+                                    "email": result.email,
+                                    "confidence": conf,
+                                    "source": result.source.value,
+                                }
+                            )
                             results_table.add_email(
-                                result.email,
-                                result.confidence_hint + 30,
-                                "unknown",
-                                result.source.value,
+                                result.email, conf, "unknown", result.source.value
                             )
                             self._email_count = len(seen)
 
@@ -410,7 +418,9 @@ class FindScreen(Widget):
             if rp.email not in seen:
                 seen.add(rp.email)
                 results_table.add_email(rp.email, 35, "pattern", "pattern")
-                self._emails.append({"email": rp.email})
+                self._emails.append(
+                    {"email": rp.email, "confidence": 35, "source": "generated/pattern"}
+                )
         self._email_count = len(seen)
 
         # Fast sources concurrently
@@ -419,6 +429,38 @@ class FindScreen(Widget):
         # Slow sources (unless stopped)
         if not self._stop_event.is_set():
             await asyncio.gather(*[_run_one(s) for s in slow])
+
+        # Save to cache if scan completed fully (not stopped)
+        if not self._stop_event.is_set() and self._emails:
+            try:
+                from coldreach.core.models import (
+                    DomainResult,
+                    EmailRecord,
+                    EmailSource,
+                    SourceRecord,
+                    VerificationStatus,
+                )
+                from coldreach.storage.cache import CacheStore
+
+                records = []
+                for item in self._emails:
+                    try:
+                        src_enum = EmailSource(item.get("source", "manual"))
+                    except ValueError:
+                        src_enum = EmailSource.MANUAL
+                    records.append(
+                        EmailRecord(
+                            email=item["email"],
+                            confidence=item.get("confidence", 35),
+                            status=VerificationStatus.UNKNOWN,
+                            sources=[SourceRecord(source=src_enum)],
+                        )
+                    )
+                CacheStore(db_path="~/.coldreach/cache.db").set(
+                    domain, DomainResult(domain=domain, emails=records)
+                )
+            except Exception as exc:
+                self.app.log.warning(f"Cache save failed: {exc}")
 
         # Done
         self._scanning = False

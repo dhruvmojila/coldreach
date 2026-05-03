@@ -29,30 +29,43 @@
 
 ```bash
 git clone https://github.com/dhruvmojila/coldreach.git && cd coldreach
-./scripts/setup.sh && docker compose up -d
-pip install coldreach
+./scripts/setup.sh
 ```
 
-Then:
+Then launch the TUI:
 
 ```bash
-coldreach verify john@acme.com
-coldreach find --domain acme.com --quick
+coldreach
+```
+
+Or use headless CLI:
+
+```bash
+coldreach --cli find --domain stripe.com --quick
+coldreach --cli verify john@stripe.com
 ```
 
 → See the full [Getting Started](getting-started.md) guide.
 
 ---
 
-## What's in Phase 1
+## What's included
 
 <div class="grid cards" markdown>
+
+-   :material-monitor: **Interactive TUI**
+
+    ---
+
+    Full-screen terminal app — type a domain, watch emails stream in live from 8 sources in parallel. Four tabs: Find, Verify, Status, Cache.
+
+    [TUI Guide →](tui.md)
 
 -   :material-email-check: **Email Verification**
 
     ---
 
-    5-step pipeline: syntax → disposable check → DNS/MX → Reacher SMTP → Holehe platform check
+    5-step pipeline: syntax → disposable check → DNS/MX → Reacher SMTP → Holehe platform check. Score 0–100.
 
     [How It Works →](how-it-works.md)
 
@@ -60,25 +73,33 @@ coldreach find --domain acme.com --quick
 
     ---
 
-    Website crawler, GitHub commits, WHOIS, SearXNG, theHarvester, SpiderFoot — all in parallel
+    Website crawler, GitHub commits, WHOIS, SearXNG, Reddit, theHarvester, SpiderFoot — all in parallel, deduplicated.
 
     [Discovery Sources →](sources.md)
+
+-   :material-puzzle: **Chrome Extension**
+
+    ---
+
+    One-click email discovery on Greenhouse, Lever, Indeed, LinkedIn, and Workable job boards.
+
+    [Chrome Extension →](chrome-extension.md)
+
+-   :material-api: **Local API Server**
+
+    ---
+
+    `coldreach serve` starts a FastAPI server at `localhost:8765` with streaming SSE scan, verify, cache, and status endpoints.
+
+    [API Reference →](api-server.md)
 
 -   :material-cached: **Smart Caching**
 
     ---
 
-    SQLite + optional Redis cache with 7-day TTL. Re-queries skip all sources automatically.
+    SQLite cache with 7-day TTL. Re-queries skip all sources automatically. Browse and manage from the TUI Cache tab.
 
     [Configuration →](configuration.md)
-
--   :material-code-braces: **Full CLI**
-
-    ---
-
-    `coldreach find`, `coldreach verify`, `coldreach cache` — pipe-friendly JSON output
-
-    [CLI Reference →](cli-reference.md)
 
 </div>
 
@@ -86,10 +107,30 @@ coldreach find --domain acme.com --quick
 
 ## Project Status
 
-| Phase       | Status         | Description                                                            |
-| ----------- | -------------- | ---------------------------------------------------------------------- |
-| **Phase 1** | ✅ Complete    | Verification pipeline + multi-source discovery + scoring + cache + CLI |
-| Phase 2     | 🔄 Next        | TUI interface, Chrome extension scaffold, PostgreSQL persistence        |
-| Phase 3     | Planned        | Chrome extension — job board → hiring manager contact                  |
-| Phase 4     | Planned        | Cold email outreach (templates, LLM personalization, Listmonk)         |
-| Phase 5     | Planned        | BYOK integrations (Hunter.io, Apollo.io, Clearbit enrichment)          |
+| Phase       | Status      | Description                                                                    |
+| ----------- | ----------- | ------------------------------------------------------------------------------ |
+| **Phase 1** | ✅ Complete | Verification pipeline + multi-source discovery + scoring + SQLite cache + CLI  |
+| **Phase 2** | ✅ Complete | Docker stack (SearXNG, Reacher, SpiderFoot, theHarvester) + health checks      |
+| **Phase 3** | ✅ Complete | Local FastAPI server (`coldreach serve`) + Chrome extension (5 job boards)     |
+| **Phase 4** | ✅ Complete | Full-screen Textual TUI — Find, Verify, Status, Cache tabs                     |
+| Phase 5     | 🔄 Next     | Groq-powered cold email drafting + outreach dashboard                          |
+
+---
+
+## Quick demo
+
+```
+coldreach                          # → launches TUI (no args)
+
+  ⚡ Find  ✓ Verify  ● Status  ⊟ Cache
+  ──────────────────────────────────────
+  Domain: stripe.com_   [Quick] [Standard] [Full]  [▶ Scan]
+
+  Sources               │  Email                    Conf  Status
+  ✓ web_crawler  +3     │  legal@stripe.com          91   ● likely
+  ✓ github       +24    │  press@stripe.com          87   ● likely
+  ✓ searxng      +2     │  patrick@stripe.com        55   ○ unverified
+  ⟳ spiderfoot…        │  info@stripe.com           35   ○ pattern
+  ────────────────────────────────────────────────
+  ████████░░  6/8 sources  31 emails found
+```
