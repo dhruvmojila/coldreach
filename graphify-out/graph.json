@@ -4871,18 +4871,18 @@
       "file_type": "rationale",
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L159",
-      "id": "find_rationale_159",
       "community": 4,
-      "norm_label": "the main email discovery screen."
+      "norm_label": "the main email discovery screen.",
+      "id": "find_rationale_159"
     },
     {
       "label": "Run the full discovery pipeline, updating UI as each source completes.",
       "file_type": "rationale",
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L325",
-      "id": "find_rationale_325",
       "community": 4,
-      "norm_label": "run the full discovery pipeline, updating ui as each source completes."
+      "norm_label": "run the full discovery pipeline, updating ui as each source completes.",
+      "id": "find_rationale_325"
     },
     {
       "label": "__init__.py",
@@ -37365,11 +37365,11 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L327",
       "weight": 0.8,
-      "_src": "find_rationale_159",
-      "_tgt": "finder_finderconfig",
+      "_src": "finder_finderconfig",
+      "_tgt": "find_rationale_159",
+      "confidence_score": 0.5,
       "source": "finder_finderconfig",
-      "target": "find_rationale_159",
-      "confidence_score": 0.5
+      "target": "find_rationale_159"
     },
     {
       "relation": "uses",
@@ -37377,11 +37377,11 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L327",
       "weight": 0.8,
-      "_src": "find_rationale_325",
-      "_tgt": "finder_finderconfig",
+      "_src": "finder_finderconfig",
+      "_tgt": "find_rationale_325",
+      "confidence_score": 0.5,
       "source": "finder_finderconfig",
-      "target": "find_rationale_325",
-      "confidence_score": 0.5
+      "target": "find_rationale_325"
     },
     {
       "relation": "calls",
@@ -55907,9 +55907,9 @@
       "weight": 0.8,
       "_src": "find_rationale_159",
       "_tgt": "draft_panel_draftpanel",
+      "confidence_score": 0.5,
       "source": "find_rationale_159",
-      "target": "draft_panel_draftpanel",
-      "confidence_score": 0.5
+      "target": "draft_panel_draftpanel"
     },
     {
       "relation": "uses",
@@ -55919,9 +55919,9 @@
       "weight": 0.8,
       "_src": "find_rationale_159",
       "_tgt": "spiderfoot_spiderfootsource",
+      "confidence_score": 0.5,
       "source": "find_rationale_159",
-      "target": "spiderfoot_spiderfootsource",
-      "confidence_score": 0.5
+      "target": "spiderfoot_spiderfootsource"
     },
     {
       "relation": "uses",
@@ -55931,9 +55931,9 @@
       "weight": 0.8,
       "_src": "find_rationale_325",
       "_tgt": "draft_panel_draftpanel",
+      "confidence_score": 0.5,
       "source": "find_rationale_325",
-      "target": "draft_panel_draftpanel",
-      "confidence_score": 0.5
+      "target": "draft_panel_draftpanel"
     },
     {
       "relation": "uses",
@@ -55943,9 +55943,9 @@
       "weight": 0.8,
       "_src": "find_rationale_325",
       "_tgt": "spiderfoot_spiderfootsource",
+      "confidence_score": 0.5,
       "source": "find_rationale_325",
-      "target": "spiderfoot_spiderfootsource",
-      "confidence_score": 0.5
+      "target": "spiderfoot_spiderfootsource"
     },
     {
       "relation": "contains",
@@ -56445,8 +56445,8 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L17",
       "weight": 0.8,
-      "_src": "find_rationale_157",
-      "_tgt": "draft_panel_draftpanel",
+      "_src": "draft_panel_draftpanel",
+      "_tgt": "find_rationale_157",
       "confidence_score": 0.5,
       "source": "draft_panel_draftpanel",
       "target": "find_rationale_157"
@@ -56457,8 +56457,8 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L17",
       "weight": 0.8,
-      "_src": "find_rationale_323",
-      "_tgt": "draft_panel_draftpanel",
+      "_src": "draft_panel_draftpanel",
+      "_tgt": "find_rationale_323",
       "confidence_score": 0.5,
       "source": "draft_panel_draftpanel",
       "target": "find_rationale_323"
@@ -74265,8 +74265,8 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L326",
       "weight": 0.8,
-      "_src": "find_rationale_157",
-      "_tgt": "spiderfoot_spiderfootsource",
+      "_src": "spiderfoot_spiderfootsource",
+      "_tgt": "find_rationale_157",
       "confidence_score": 0.5,
       "source": "spiderfoot_spiderfootsource",
       "target": "find_rationale_157"
@@ -74277,8 +74277,8 @@
       "source_file": "coldreach/tui/screens/find.py",
       "source_location": "L326",
       "weight": 0.8,
-      "_src": "find_rationale_323",
-      "_tgt": "spiderfoot_spiderfootsource",
+      "_src": "spiderfoot_spiderfootsource",
+      "_tgt": "find_rationale_323",
       "confidence_score": 0.5,
       "source": "spiderfoot_spiderfootsource",
       "target": "find_rationale_323"
