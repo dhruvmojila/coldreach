@@ -1,6 +1,8 @@
 # CLI Reference
 
-ColdReach exposes six top-level commands: `status`, `serve`, `dashboard`, `verify`, `find`, and `cache`.
+Run `coldreach` with **no arguments** to launch the interactive TUI. All commands also work in headless mode.
+
+ColdReach exposes seven top-level commands: `status`, `serve`, `dashboard`, `verify`, `find`, `cache` — plus the default TUI launch.
 
 ```
 coldreach [OPTIONS] COMMAND [ARGS]...
@@ -10,6 +12,48 @@ Options:
   -V, --version   Show version and exit.
   -h, --help      Show help message and exit.
 ```
+
+---
+
+## Default — Interactive TUI
+
+```bash
+coldreach           # launches the full-screen interactive terminal UI
+coldreach --cli     # force headless CLI mode (skips TUI)
+```
+
+Running `coldreach` with no arguments opens the Textual TUI — a full-screen interactive
+terminal app with four tabs:
+
+| Tab | Key | What it does |
+|-----|-----|-------------|
+| **Find** | `f` | Type a domain → live scan → emails stream in row-by-row |
+| **Verify** | `v` | Single-email pipeline check with animated steps |
+| **Status** | `s` | Service health cards (SearXNG, Reacher, SpiderFoot, theHarvester) |
+| **Cache** | `c` | Browse / delete cached domains |
+
+**Global shortcuts:**
+
+| Key | Action |
+|-----|--------|
+| `f` / `v` / `s` / `c` | Switch tabs |
+| `q` | Quit |
+| `?` | Keyboard shortcuts help overlay |
+
+**Find tab shortcuts** (when focused on results):
+
+| Key | Action |
+|-----|--------|
+| `Enter` | Start scan |
+| `↑↓` | Navigate results |
+| `y` | Copy selected email to clipboard |
+| `d` | Open Groq draft panel for selected email |
+| `e` | Export results to CSV |
+| `r` | Re-scan current domain |
+
+The TUI calls Python APIs directly — no `coldreach serve` required.
+
+See [tui.md](tui.md) for the full TUI guide.
 
 ---
 

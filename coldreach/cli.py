@@ -62,22 +62,27 @@ def _configure_logging(verbose: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100})
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 100},
+    invoke_without_command=True,
+)
 @click.version_option(__version__, "-V", "--version", prog_name="coldreach")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Enable debug logging.")
+@click.option("--cli", is_flag=True, default=False, help="Force headless CLI mode (skip TUI).")
 @click.pass_context
-def main(ctx: click.Context, verbose: bool) -> None:
+def main(ctx: click.Context, verbose: bool, cli: bool) -> None:
     """ColdReach — open-source email finder and lead discovery tool.
 
     \b
-    Free alternative to Hunter.io and Apollo.io.
-    All data stays on your machine. Zero paid API keys required.
+    Run with no arguments to launch the interactive TUI.
+    Use --cli to stay in headless mode.
 
     \b
     Quick start:
+      coldreach                          # interactive TUI
+      coldreach find --domain acme.com   # headless CLI
       coldreach verify john@acme.com
-      coldreach find --domain acme.com
-      coldreach find --company "Acme Corp" --name "John Smith"
+      coldreach dashboard                # Streamlit outreach dashboard
 
     \b
     Start backend services (Docker required for full features):
@@ -86,6 +91,18 @@ def main(ctx: click.Context, verbose: bool) -> None:
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
     _configure_logging(verbose)
+
+    # Launch TUI when called with no subcommand (unless --cli is passed)
+    if ctx.invoked_subcommand is None and not cli:
+        try:
+            from coldreach.tui.app import run as tui_run
+
+            tui_run()
+        except ImportError:
+            err_console.print(
+                "[red]Textual not installed.[/red] Run: [bold]pip install coldreach[/bold]"
+            )
+            raise SystemExit(1) from None
 
 
 # ---------------------------------------------------------------------------

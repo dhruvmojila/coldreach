@@ -2,6 +2,39 @@
 
 Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 
+### [2026-05-02 20:00 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - `coldreach/tui/coldreach.tcss` — Tabs height 5, Tab height 3, content-align centered
+  - `coldreach/tui/screens/find.py` — markup labels, mode variant, status mapping, import fix
+  - `coldreach/tui/screens/cache.py` — markup labels, container border removed
+  - `coldreach/tui/screens/verify.py` — markup labels, tighter layout
+  - `coldreach/tui/app.py` — logging redirect to ~/.coldreach/tui.log
+  - `coldreach/verify/reacher.py` — empty exception fallback
+  - `docker-compose.yml` — Reacher port 8083:8080 (was 8083:8083, broken)
+  - `docs/tui.md` — updated status column and mode button docs
+- What was completed:
+  - Full TUI polish pass: tab bar now 5 rows tall, buttons fully visible, all 4 screens correct
+  - Logging redirect prevents whois/httpx errors from corrupting TUI terminal
+  - Mode switching fixed (dynamic variant swap on button click)
+  - Find results status: confidence-based (likely/unverified/pattern) not always "unknown"
+  - Reacher SMTP verification now actually works (port mapping was wrong for 9+ hours)
+- What was attempted but not finished:
+  - None
+- Open risks/blockers:
+  - SpiderFoot container shows (unhealthy) in docker ps — unrelated to this session
+- Verification performed:
+  - 482 tests pass
+  - `curl -X POST http://localhost:8083/v0/check_email` returns real SMTP results
+  - Python client `check_reacher()` returns `warn` (catch-all) for stripe.com ✓
+  - Headless test: Tab height=3, Standard starts with variant=primary, Quick/Full are default
+- Graph refresh:
+  - run `graphify update .` after pulling
+- Exact next step for receiver:
+  - Phase 5: wire Groq draft panel (`tui/widgets/draft_panel.py` exists, needs Groq call + test)
+
 ### [2026-04-25 09:45 UTC-4] From Cursor/Codex to Claude Code
 
 - Branch: `main`
@@ -477,4 +510,137 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
   - graphify_update_ok
 - Exact next step for receiver:
   - Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens)
+
+### [2026-05-02 16:41 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 4 Textual TUI complete: coldreach (no args) launches full-screen terminal app. Find screen with live scan worker streaming emails row-by-row. Verify screen with animated pipeline steps. Status screen with service health cards. Cache browser. Inline Groq draft panel. Help modal. Design tokens in coldreach.tcss. CLI entry wired with invoke_without_command=True.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; ruff+mypy clean; TUI app creates successfully; CSS file exists; coldreach entry point calls tui_run() when no subcommand; coldreach --cli still works headless
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Run coldreach to smoke-test TUI: tab switching, scan stripe.com, verify an email, check status, cache browser
+
+### [2026-05-02 16:46 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Update docs for Phase 4 TUI: new docs/tui.md (full TUI guide — Find/Verify/Status/Cache screens, all shortcuts, Groq draft panel, headless --cli mode), cli-reference.md updated with TUI as default entry + shortcuts table, mkdocs.yml nav updated with 'Interactive TUI' page
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; docs/tui.md created with full guide; cli-reference.md has TUI section at top; mkdocs nav includes Interactive TUI
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Test TUI live: coldreach → tabs switch, scan stripe.com, verify email, check status, cache browser, ? help overlay
+
+### [2026-05-02 16:54 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix TUI startup errors: all Widget subclasses now accept **kwargs and forward to super().__init__(**kwargs) so Textual can pass id= at compose time; duplicate id='section-label' in StatusScreen renamed to section-label-services and section-label-packages
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - All 4 TUI tabs navigate in headless test; 482 tests pass; SourcePanel/VerifyScreen/ServiceCard/StatusScreen all accept **kwargs
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Run coldreach live to confirm TUI launches — all 4 tabs navigate, Find scan works, ? help overlay shows
+
+### [2026-05-02 16:58 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix TUI AttributeError NoneType.render_strips: SourcePanel._render() shadowed Textual's internal _render() which must return a Visual object. Renamed to _refresh_pills() and added on_mount() call so the panel renders on first display.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - All 4 TUI tabs navigate in headless test with zero errors; 482 tests pass; SourcePanel renders correctly via _refresh_pills()
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Run coldreach live — should open full-screen TUI. Test: type stripe.com in Find tab, press Enter, watch emails stream in
+
+### [2026-05-02 17:08 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix TUI UI issues: (1) domain input now visible with blue border + auto-focused on mount so typing works immediately; (2) active tab highlighted white-on-blue with underline; (3) mode buttons styled distinctly — selected is blue-on-dark, unselected is grey; (4) global Button colors fixed so default/primary/error are all visually distinct; (5) removed emoji from mode buttons to avoid width glitches
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; input.value='stripe.com' confirmed in headless test; all 4 tabs navigate; _set_mode() uses inline CSS not variant= to avoid Textual style conflicts
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Run coldreach — verify: can type domain immediately, tabs show clear active state, mode buttons clearly distinguished, scan works
+
+### [2026-05-02 17:18 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Fix TUI layout/color issues: (1) btn.styles.css has no setter — replaced with add_class/remove_class('.mode-selected'); (2) tab labels were #6b7099 on #1a1d27 (invisible) — changed to #9aa0c0 inactive / #ffffff active with blue underline; (3) footer was #6b7099 on dark — changed to #c9cde8; (4) complete TCSS rewrite for consistency; (5) _set_mode called on mount so Standard starts selected
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; input accepts typing; Standard has mode-selected class; Quick gets it after click; all 4 tabs navigate without error
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - User tests the TUI live — should see visible tabs, typeable input, clear mode button states, readable footer keybindings
+
+### [2026-05-02 20:25 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - TUI Phase 4 polish: fixed invisible Tab labels (height: 5 + Tab height: 3 + content-align), fixed cache/verify buttons empty text (Rich markup [f]/[x] stripping), fixed terminal corruption from 3rd-party logging (redirect to ~/.coldreach/tui.log), fixed mode switching stuck on Standard (dynamic btn.variant swap), fixed Find results always showing 'unknown' status (confidence-based mapping), fixed Reacher always failing (Docker port was 8083:8083 but Reacher 0.11.6 listens on internal 8080 — fixed to 8083:8080, SMTP verification now working)
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 482 tests pass; curl POST to localhost:8083/v0/check_email returns real SMTP results; Python check_reacher() returns warn (catch-all) for stripe.com; headless test confirms Tab height=3, Standard starts variant=primary
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Phase 5: wire Groq cold email draft panel — draft_panel.py exists in tui/widgets/, needs Groq API call connected and end-to-end test
 

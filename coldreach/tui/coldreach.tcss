@@ -1,0 +1,215 @@
+/* ── ColdReach TUI Design Tokens ── */
+
+$background:      #0f1117;
+$surface:         #1a1d27;
+$surface-raised:  #1f2235;
+$border:          #2a2d3e;
+$border-focus:    #5b8cff;
+$accent:          #5b8cff;
+$accent-dim:      #1a2850;
+
+$text:            #e0e4f7;
+$text-muted:      #c9cde8;
+$text-subtle:     #9aa0c0;
+$text-dim:        #6b7099;
+
+$success:         #34d399;
+$warning:         #f59e0b;
+$error:           #f87171;
+
+/* ── App shell ── */
+App {
+    background: $background;
+    color: $text;
+}
+
+Screen {
+    background: $background;
+}
+
+/* ── Header ── */
+Header {
+    background: #13151f;
+    color: $text-muted;
+    dock: top;
+    height: 1;
+    text-style: bold;
+}
+
+/* ── Footer — must be bright enough to read ── */
+Footer {
+    background: #13151f;
+    color: $text-muted;
+    dock: bottom;
+    height: 1;
+}
+
+FooterKey {
+    color: $accent;
+    background: #1a2850;
+}
+
+FooterKey .footer-key--description {
+    color: $text-muted;
+}
+
+/* ── Tab bar ── */
+Tabs {
+    background: #13151f;
+    border-bottom: solid #3a3f5e;
+    height: 5;
+}
+
+/* Inactive tabs — height: 3 fills the bar (Tabs container=4 minus Underline=1) */
+Tabs Tab {
+    color: $text-subtle;
+    padding: 0 5;
+    background: #13151f;
+    height: 3;
+    content-align: center middle;
+}
+
+/* Active tab — accent fill across the full height */
+Tabs Tab.-active {
+    color: #ffffff;
+    background: #1a2850;
+    text-style: bold;
+    height: 3;
+    content-align: center middle;
+}
+
+Tabs Tab:hover {
+    color: $text-muted;
+    background: $surface;
+}
+
+/* Active underline bar color */
+Tabs Underline .underline--bar {
+    color: $accent;
+}
+
+TabbedContent {
+    height: 1fr;
+}
+
+TabbedContent ContentSwitcher {
+    height: 1fr;
+}
+
+TabbedContent TabPane {
+    padding: 0;
+    height: 1fr;
+}
+
+/* ── Input ── */
+Input {
+    background: $surface-raised;
+    border: tall $border;
+    color: $text;
+    padding: 0 1;
+    height: 3;
+}
+
+Input:focus {
+    border: tall $border-focus;
+    background: #1c2040;
+}
+
+/* ── Button — all variants clearly visible ── */
+Button {
+    background: $surface-raised;
+    border: tall #4a4f6e;
+    color: $text-muted;
+    min-width: 10;
+    margin: 0 1;
+}
+
+Button:hover {
+    background: #252840;
+    border: tall #7a82aa;
+    color: $text;
+}
+
+Button.-primary {
+    background: $accent-dim;
+    border: tall $accent;
+    color: $text;
+    text-style: bold;
+}
+
+Button.-primary:hover {
+    background: #1e4694;
+    border: tall #7aa6ff;
+}
+
+Button.-error {
+    background: #3a1010;
+    border: tall #a05050;
+    color: #f87171;
+}
+
+/* ── DataTable ── */
+DataTable {
+    background: $background;
+    color: $text;
+}
+
+DataTable > .datatable--header {
+    background: $surface;
+    color: $text-muted;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $accent-dim;
+    color: $text;
+}
+
+DataTable > .datatable--hover {
+    background: $surface-raised;
+}
+
+DataTable > .datatable--even-row {
+    background: $surface;
+}
+
+/* ── ProgressBar ── */
+ProgressBar > .bar--bar {
+    color: $accent;
+}
+
+ProgressBar > .bar--complete {
+    color: $success;
+}
+
+/* ── Select ── */
+Select {
+    background: $surface-raised;
+    border: tall $border;
+    color: $text;
+}
+
+SelectOverlay {
+    background: $surface;
+    border: round $border-focus;
+    color: $text;
+}
+
+/* ── ScrollBar ── */
+ScrollBar {
+    background: $surface;
+}
+
+ScrollBarThumb {
+    background: $border;
+}
+
+ScrollBarThumb:hover {
+    background: $text-dim;
+}
+
+/* ── Modal ── */
+ModalScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.75);
+}

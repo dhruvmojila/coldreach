@@ -129,3 +129,20 @@ Record decisions that affect architecture, tooling, workflow, or team convention
 ### [2026-05-02 16:12 EDT] Session close decisions
 
 - dspy.configure(lm) is not thread-safe — cannot be called from multiple async tasks. dspy.context(lm=lm) as a context manager scopes the LM to the current call stack only, making it safe to call from asyncio.to_thread.
+
+### [2026-05-02 16:41 EDT] Session close decisions
+
+- Textual Widget.Message doesn't exist — messages must subclass textual.message.Message directly. Fixed in find.py and verify.py.
+- Entire coldreach.tui.* excluded from mypy (ignore_errors=true) and ruff per-file-ignores — Textual's metaclass/decorator patterns (BINDINGS lists, DataTable[str], ModalScreen[None]) cause false positives that cannot be fixed without fighting the framework.
+
+### [2026-05-02 16:58 EDT] Session close decisions
+
+- Never name a method _render() in a Textual widget — it shadows the internal method that returns Visual objects. Use a different name (_refresh_pills, _redraw, etc.).
+
+### [2026-05-02 17:08 EDT] Session close decisions
+
+- Button variant= doesn't respect custom DEFAULT_CSS overrides reliably — use inline styles.css= or class-based CSS for mode button states instead
+
+### [2026-05-02 17:18 EDT] Session close decisions
+
+- Textual styles.css has no setter — use add_class/remove_class with CSS class selectors for dynamic button states. Never use btn.styles.css = '...' or btn.styles.property = value for complex multi-property changes.

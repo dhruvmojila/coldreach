@@ -72,7 +72,7 @@ async def check_reacher(
         return CheckResult.skip("Reacher request timed out")
     except httpx.RequestError as exc:
         logger.debug("Reacher request error: %s", exc)
-        return CheckResult.skip(f"Reacher request failed: {exc}")
+        return CheckResult.skip(f"Reacher request failed: {exc or 'connection error'}")
 
     if resp.status_code != 200:
         return CheckResult.skip(f"Reacher HTTP {resp.status_code}")

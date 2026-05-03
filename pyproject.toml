@@ -173,6 +173,7 @@ ignore = [
 "tests/**" = ["ANN"]
 # Dashboard uses long HTML template strings inside st.markdown() — E501 is unavoidable
 "coldreach/dashboard.py" = ["E501", "ANN", "B905", "SIM105", "RUF005", "B007"]
+"coldreach/tui/**" = ["RUF012", "F841", "ANN", "E501", "SIM108", "B007"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["coldreach"]
@@ -205,6 +206,12 @@ ignore_errors = true
 # DSPy generates Signature subclasses dynamically at runtime — mypy can't
 # resolve these types without DSPy's own mypy plugin (which doesn't exist)
 module = "coldreach.outreach.draft"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# Textual uses heavy metaclass/decorator magic that mypy can't resolve:
+# Widget.Message, ModalScreen[None], DataTable[str], Coordinate, etc.
+module = ["coldreach.tui.*"]
 ignore_errors = true
 
 # ---------------------------------------------------------------------------

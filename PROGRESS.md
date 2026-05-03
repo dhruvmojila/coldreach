@@ -2,6 +2,45 @@
 
 ---
 
+## [2026-05-02 20:00] — TUI polish: layout fixes, Reacher port fix, logging redirect, status mapping, mode switching
+
+### What Was Done
+- Fixed Tab labels invisible (`border-bottom: tall` on `Tabs Tab` collapsed height to 0 — removed it, underline now via `Tabs Underline .underline--bar`)
+- Made Tab bar taller: `Tabs { height: 5 }`, `Tabs Tab { height: 3; content-align: center middle }` — labels centered in 3-row tall bar
+- Fixed cache/verify action buttons showing empty boxes (Rich markup `[f]`, `[x]`, `[h]` silently stripped — changed to `"f: Open in Find"` etc.)
+- Fixed `#cache-actions` container border consuming button height (removed `border: round`)
+- Removed vertical padding from `#find-top` (`padding: 0 2`) so buttons render all 3 border rows
+- Redirected all Python logging to `~/.coldreach/tui.log` before TUI launch — prevents whois/httpx errors from corrupting terminal display
+- Fixed mode switching stuck on Standard: `variant="primary"` was permanent on Standard button; now `_set_mode()` dynamically sets `btn.variant` between `"primary"` and `"default"`
+- Fixed Find results status always "unknown": now maps confidence → `likely` (≥70), `unverified` (<70), `pattern` (role emails)
+- Fixed Reacher always failing: Docker port mapping was `8083:8083` but Reacher 0.11.6 ignores `RCH_HTTP_PORT` and always listens on port 8080 — fixed to `8083:8080`
+- Fixed `_build_sources` ImportError in scan worker: was importing from `coldreach.core.finder` (wrong), now imports from `coldreach.api` (correct)
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/tui/coldreach.tcss` | Modified | Tabs height 5, Tab height 3, centered labels, removed border-bottom from Tab |
+| `coldreach/tui/screens/find.py` | Modified | Fixed markup labels, mode variant switching, status mapping, import fix, padding fix |
+| `coldreach/tui/screens/cache.py` | Modified | Fixed markup labels, removed container border |
+| `coldreach/tui/screens/verify.py` | Modified | Fixed markup labels, tighter layout |
+| `coldreach/tui/app.py` | Modified | Logging redirect to `~/.coldreach/tui.log` before TUI launch |
+| `coldreach/verify/reacher.py` | Modified | Fallback text for empty exception string |
+| `docker-compose.yml` | Modified | Reacher port `8083:8083` → `8083:8080`; removed broken `RCH_HTTP_PORT`; fixed healthcheck port |
+| `docs/tui.md` | Modified | Updated Find tab status column docs, scan mode table |
+
+### Major Logic / Code Changes
+- **Reacher port**: `RCH_HTTP_PORT` env var is silently ignored in Reacher 0.11.6 — it always starts on internal port 8080. Docker mapping was routing host:8083 → container:8083 (empty), causing "connection reset by peer". Fixed to `8083:8080`.
+- **Logging redirect**: All 3rd-party loggers (whois, httpx, spiderfoot) write to stderr by default. In TUI mode this corrupts terminal rendering. `run()` now sets `force=True` basicConfig to file before `ColdReachApp().run()`.
+- **Mode switching**: Textual `Button.variant` is reactive — setting it directly updates CSS classes. `_set_mode()` now calls `btn.variant = "primary"` for active, `"default"` for inactive.
+- **Rich markup in Button labels**: `[f]`, `[x]`, `[h]` etc. are valid Rich markup syntax (color tags). Rich silently strips unrecognised tags, leaving empty labels. Changed to `"f: ..."` format.
+- **Tab height**: Textual `Tabs Tab` widgets size to label height by default (1 row). Vertical padding collapses them to 0. Fixed by setting explicit `height: 3` matching the non-Underline space available in a `height: 5` Tabs container.
+
+### Notes
+- Debug TUI logs live at `~/.coldreach/tui.log` — `tail -f` in a second terminal for diagnostics
+- Reacher now returns real SMTP results: `● valid`, `○ catch_all`, `✗ invalid`
+
+---
+
 ## [2026-04-25 22:30] — Zero-friction setup: health checks, Makefile, rewritten setup.sh, Firecrawl separation, status/find UI improvements
 
 ### What Was Done
@@ -900,4 +939,81 @@
 
 ### Next
 - Phase 4: Textual TUI — coldreach with no args launches interactive full-screen terminal app (Find/Verify/Status/Cache screens)
+
+
+## [2026-05-02 16:41 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 4 Textual TUI complete: coldreach (no args) launches full-screen terminal app. Find screen with live scan worker streaming emails row-by-row. Verify screen with animated pipeline steps. Status screen with service health cards. Cache browser. Inline Groq draft panel. Help modal. Design tokens in coldreach.tcss. CLI entry wired with invoke_without_command=True.
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach to smoke-test TUI: tab switching, scan stripe.com, verify an email, check status, cache browser
+
+
+## [2026-05-02 16:46 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Update docs for Phase 4 TUI: new docs/tui.md (full TUI guide — Find/Verify/Status/Cache screens, all shortcuts, Groq draft panel, headless --cli mode), cli-reference.md updated with TUI as default entry + shortcuts table, mkdocs.yml nav updated with 'Interactive TUI' page
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Test TUI live: coldreach → tabs switch, scan stripe.com, verify email, check status, cache browser, ? help overlay
+
+
+## [2026-05-02 16:54 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix TUI startup errors: all Widget subclasses now accept **kwargs and forward to super().__init__(**kwargs) so Textual can pass id= at compose time; duplicate id='section-label' in StatusScreen renamed to section-label-services and section-label-packages
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach live to confirm TUI launches — all 4 tabs navigate, Find scan works, ? help overlay shows
+
+
+## [2026-05-02 16:58 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix TUI AttributeError NoneType.render_strips: SourcePanel._render() shadowed Textual's internal _render() which must return a Visual object. Renamed to _refresh_pills() and added on_mount() call so the panel renders on first display.
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach live — should open full-screen TUI. Test: type stripe.com in Find tab, press Enter, watch emails stream in
+
+
+## [2026-05-02 17:08 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix TUI UI issues: (1) domain input now visible with blue border + auto-focused on mount so typing works immediately; (2) active tab highlighted white-on-blue with underline; (3) mode buttons styled distinctly — selected is blue-on-dark, unselected is grey; (4) global Button colors fixed so default/primary/error are all visually distinct; (5) removed emoji from mode buttons to avoid width glitches
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Run coldreach — verify: can type domain immediately, tabs show clear active state, mode buttons clearly distinguished, scan works
+
+
+## [2026-05-02 17:18 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Fix TUI layout/color issues: (1) btn.styles.css has no setter — replaced with add_class/remove_class('.mode-selected'); (2) tab labels were #6b7099 on #1a1d27 (invisible) — changed to #9aa0c0 inactive / #ffffff active with blue underline; (3) footer was #6b7099 on dark — changed to #c9cde8; (4) complete TCSS rewrite for consistency; (5) _set_mode called on mount so Standard starts selected
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- User tests the TUI live — should see visible tabs, typeable input, clear mode button states, readable footer keybindings
+
+
+## [2026-05-02 20:25 EDT] — Session close (Claude Code)
+
+### What Was Done
+- TUI Phase 4 polish: fixed invisible Tab labels (height: 5 + Tab height: 3 + content-align), fixed cache/verify buttons empty text (Rich markup [f]/[x] stripping), fixed terminal corruption from 3rd-party logging (redirect to ~/.coldreach/tui.log), fixed mode switching stuck on Standard (dynamic btn.variant swap), fixed Find results always showing 'unknown' status (confidence-based mapping), fixed Reacher always failing (Docker port was 8083:8083 but Reacher 0.11.6 listens on internal 8080 — fixed to 8083:8080, SMTP verification now working)
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Phase 5: wire Groq cold email draft panel — draft_panel.py exists in tui/widgets/, needs Groq API call connected and end-to-end test
 

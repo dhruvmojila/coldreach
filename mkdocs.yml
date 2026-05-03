@@ -79,6 +79,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - CLI Reference: cli-reference.md
+  - Interactive TUI: tui.md
   - Configuration: configuration.md
   - How It Works: how-it-works.md
   - Discovery Sources: sources.md
