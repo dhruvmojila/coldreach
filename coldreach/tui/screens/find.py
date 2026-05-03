@@ -135,7 +135,9 @@ class ResultsTable(DataTable):
     def add_email(self, email: str, confidence: int, status: str, source: str) -> None:
         src_short = source.split("/")[-1]
         # Use confidence-based status when caller passes raw "unknown"
-        display_status = status if status != "unknown" else self._conf_to_status(confidence, src_short)
+        display_status = (
+            status if status != "unknown" else self._conf_to_status(confidence, src_short)
+        )
         color = self._STATUS_STYLE.get(display_status, "#6b7099")
         dot = "●" if display_status in ("valid", "likely") else "○"
         self.add_row(

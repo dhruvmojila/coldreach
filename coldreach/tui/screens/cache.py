@@ -97,7 +97,8 @@ class CacheScreen(Widget):
     def action_open_in_find(self) -> None:
         table = self.query_one("#cache-table", DataTable)
         row = table.cursor_row
-        if row < 0:
+        if row < 0 or row >= table.row_count:
+            self.app.notify("No domain selected", severity="warning")
             return
         domain = str(table.get_cell_at((row, 0)))
         self.app.switch_to_find(domain)
@@ -105,7 +106,8 @@ class CacheScreen(Widget):
     def action_delete_entry(self) -> None:
         table = self.query_one("#cache-table", DataTable)
         row = table.cursor_row
-        if row < 0:
+        if row < 0 or row >= table.row_count:
+            self.app.notify("No domain selected", severity="warning")
             return
         domain = str(table.get_cell_at((row, 0)))
         from coldreach.storage.cache import CacheStore
