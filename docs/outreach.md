@@ -62,6 +62,8 @@ coldreach find --domain stripe.com --draft \
 
 ## Flow B — TUI Outreach tab (recommended)
 
+![Draft panel — company preview, 3 subjects, copy in one keypress](images/draft.gif)
+
 The fastest workflow — no browser needed:
 
 ```

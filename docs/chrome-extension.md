@@ -31,6 +31,8 @@ when ColdReach has detected a job posting on the current tab.
 
 ## Usage
 
+![Chrome extension — one-click email find on job boards](images/chrome-extension.png)
+
 1. Start the API server in a terminal:
    ```bash
    coldreach serve

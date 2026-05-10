@@ -32,6 +32,8 @@ No `coldreach serve` needed — the TUI calls Python APIs directly and works off
 
 The primary screen. Type a domain and watch emails stream in as each source completes.
 
+![Find tab — live streaming scan](images/demo.gif)
+
 ```
 Domain: stripe.com_          [Quick]  [Standard]  [Full]  [▶ Scan]  [■ Stop]
 ┌─ Sources ────────────────┬─ Results ────────────────────────────────────┐
@@ -120,6 +122,8 @@ Your name is remembered across sessions. Press `Esc` to close without generating
 
 Single-email pipeline check with animated steps.
 
+![Verify tab — 5-step pipeline](images/verify.png)
+
 ```
 Email: patrick@stripe.com_                              [▶ Verify]
 
@@ -148,6 +152,8 @@ Email: patrick@stripe.com_                              [▶ Verify]
 ## Status tab (`s`)
 
 Live service health. Auto-refreshes every 30 seconds.
+
+![Status tab — service health cards](images/status.png)
 
 ```
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
@@ -196,6 +202,8 @@ aurven.com          2026-04-28 14:33  ✗ expired
 ## Outreach tab (`o`)
 
 Track every contact you have drafted, sent, or heard back from.
+
+![Outreach tab — contact tracker](images/outreach.png)
 
 ```
 3 contacts  ·  1 replied  ·  1 sent  ·  1 draft

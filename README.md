@@ -11,6 +11,10 @@ Free alternative to Hunter.io and Apollo.io. Runs entirely on your machine.
 
 ---
 
+![ColdReach — find emails and draft outreach from your terminal](docs/images/demo.gif)
+
+---
+
 ```
 $ coldreach
 
@@ -97,7 +101,12 @@ coldreach serve                                    # start API server at localho
 - **8 discovery sources** — web crawl, GitHub commits, WHOIS, SearXNG, Reddit, SpiderFoot, theHarvester
 - **SMTP verification** — 5-step pipeline ending with a real SMTP handshake via self-hosted Reacher
 - **Groq drafting** — 3 subject variants + body generated from scraped company context (~2s)
+
+  ![Draft panel — pick a subject, copy the full email](docs/images/draft.gif)
+
 - **Outreach tracker** — draft → sent → replied, stored in SQLite, managed from the TUI
+
+  ![Outreach tab](docs/images/outreach.png)
 - **Chrome extension** — one-click find on Greenhouse, Lever, Indeed, LinkedIn, Workable
 - **Local API server** — `coldreach serve` at localhost:8765 for scripting and automation
 
