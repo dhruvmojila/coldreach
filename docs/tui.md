@@ -193,6 +193,45 @@ aurven.com          2026-04-28 14:33  ✗ expired
 
 ---
 
+## Outreach tab (`o`)
+
+Track every contact you have drafted, sent, or heard back from.
+
+```
+3 contacts  ·  1 replied  ·  1 sent  ·  1 draft
+
+Email                    Domain          Status      Subject                  Sent At
+─────────────────────────────────────────────────────────────────────────────────────
+patrick@stripe.com       stripe.com      ✓ replied   Partnership on Stripe…   May 2
+legal@kayak.com          kayak.com       → sent      Quick question about …   May 3
+press@airbnb.com         airbnb.com      ● draft     Exploring a collabora…   —
+```
+
+Contacts are added automatically when you press `d` on an email in the Find tab and generate a draft.
+
+**Shortcuts:**
+
+| Key | Action |
+|-----|--------|
+| `d` | Open draft panel for selected contact |
+| `s` | Mark as sent |
+| `R` | Mark as replied |
+| `x` | Remove from list |
+| `y` | Copy saved draft to clipboard |
+| `f` | Jump to Find tab for that domain |
+| `r` | Refresh |
+
+**Status icons:**
+
+| Icon | Color | Meaning |
+|------|-------|---------|
+| `○` | dim | Added, not yet drafted |
+| `●` | blue | Draft generated |
+| `→` | yellow | Marked as sent |
+| `✓` | green | Replied |
+
+---
+
 ## Help overlay (`?`)
 
 Press `?` anywhere to see all keyboard shortcuts.

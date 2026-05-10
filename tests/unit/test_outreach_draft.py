@@ -100,7 +100,7 @@ class TestDraftEmail:
                 api_key=None,
             )
 
-    # All DSPy tests now patch _run_dspy_in_thread which returns (subject, body)
+    # All DSPy tests patch _run_dspy_in_thread which returns (subj_a, subj_b, subj_c, body)
     # This avoids the dspy.configure() thread-safety issue in tests.
 
     @pytest.mark.asyncio
@@ -111,6 +111,8 @@ class TestDraftEmail:
                 "coldreach.outreach.draft._run_dspy_in_thread",
                 return_value=(
                     "Quick question about Stripe's API",
+                    "Partnership on Stripe's embedded payments?",
+                    "Exploring a collaboration — Jane Smith",
                     "Hi Patrick, I came across Stripe's embedded finance work.",
                 ),
             ),
@@ -125,6 +127,8 @@ class TestDraftEmail:
         assert isinstance(draft, EmailDraft)
         assert draft.to == "patrick@stripe.com"
         assert draft.subject == "Quick question about Stripe's API"
+        assert len(draft.subjects) == 3
+        assert draft.subjects[0] == "Quick question about Stripe's API"
         assert draft.email_type == EmailType.PARTNERSHIP
 
     @pytest.mark.asyncio
@@ -133,7 +137,12 @@ class TestDraftEmail:
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
             patch(
                 "coldreach.outreach.draft._run_dspy_in_thread",
-                return_value=("Interview request", "Hi, I'm interested in the role."),
+                return_value=(
+                    "Interview request",
+                    "Job at Stripe?",
+                    "Quick question",
+                    "Hi, I'm interested in the role.",
+                ),
             ),
         ):
             draft = await draft_email(
@@ -152,7 +161,12 @@ class TestDraftEmail:
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
             patch(
                 "coldreach.outreach.draft._run_dspy_in_thread",
-                return_value=("Sales pitch", "We solve payments."),
+                return_value=(
+                    "Sales pitch",
+                    "Question for Stripe",
+                    "Quick intro",
+                    "We solve payments.",
+                ),
             ),
         ):
             draft = await draft_email(
@@ -171,7 +185,7 @@ class TestDraftEmail:
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
             patch(
                 "coldreach.outreach.draft._run_dspy_in_thread",
-                return_value=("", "Hi there!"),
+                return_value=("", "", "", "Hi there!"),
             ),
         ):
             draft = await draft_email(
@@ -189,7 +203,7 @@ class TestDraftEmail:
             patch("coldreach.outreach.draft._resolve_api_key", return_value="test-key"),
             patch(
                 "coldreach.outreach.draft._run_dspy_in_thread",
-                return_value=("Subject", ""),
+                return_value=("Subject", "Alt subject", "Short", ""),
             ),
             pytest.raises(ValueError, match="empty body"),
         ):
@@ -211,6 +225,7 @@ class TestEmailDraftFormatted:
         draft = EmailDraft(
             to="test@co.com",
             subject="Hello",
+            subjects=["Hello", "Alt subject", "Short"],
             body="Hi there.",
             email_type=EmailType.INTRODUCTION,
         )
@@ -223,6 +238,7 @@ class TestEmailDraftFormatted:
         draft = EmailDraft(
             to="test@co.com",
             subject="Hello",
+            subjects=["Hello", "Alt subject", "Short"],
             body="Hi there.",
             email_type=EmailType.INTRODUCTION,
         )

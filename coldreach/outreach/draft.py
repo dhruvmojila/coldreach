@@ -38,6 +38,7 @@ class EmailDraft:
 
     to: str
     subject: str
+    subjects: list[str]  # all 3 variants; subject = subjects[0] by default
     body: str
     email_type: EmailType
     tokens_used: int = 0
@@ -57,8 +58,11 @@ def _run_dspy_in_thread(
     sender_name: str,
     sender_intent: str,
     template_guidance: str,
-) -> tuple[str, str]:
+) -> tuple[str, str, str, str]:
     """Run DSPy prediction entirely within one thread using dspy.context().
+
+    Returns (subject_a, subject_b, subject_c, body) — three subject variants
+    and a single body. The caller picks which subject to use.
 
     ``dspy.configure()`` sets global state and must not be called from
     multiple async tasks.  ``dspy.context()`` is the thread-safe alternative —
@@ -69,7 +73,8 @@ def _run_dspy_in_thread(
     class ColdEmailSignature(dspy.Signature):
         """Write a short, genuine, personalised cold email.
         Be specific about the company. No fluff. No fake enthusiasm.
-        No 'I hope this email finds you well'. Maximum 4 sentences in the body."""
+        No 'I hope this email finds you well'. Maximum 4 sentences in the body.
+        Generate 3 distinct subject lines covering different angles."""
 
         company_context: str = dspy.InputField(
             desc="What the company does, their product, recent news, location"
@@ -81,14 +86,20 @@ def _run_dspy_in_thread(
         )
         template_guidance: str = dspy.InputField(desc="Tone, style, length and what to avoid")
 
-        subject: str = dspy.OutputField(
-            desc="Email subject line, under 60 characters, no clickbait, no ALL CAPS"
+        subject_a: str = dspy.OutputField(
+            desc="Subject line option A — specific, references the company or role, under 60 chars"
+        )
+        subject_b: str = dspy.OutputField(
+            desc="Subject line option B — question or curiosity-driven, under 60 chars"
+        )
+        subject_c: str = dspy.OutputField(
+            desc="Subject line option C — direct and minimal, under 50 chars"
         )
         body: str = dspy.OutputField(
             desc="Plain text email body, 2-4 sentences max, no bullet points, no sign-off"
         )
 
-    lm = dspy.LM(model, api_key=api_key, max_tokens=300)
+    lm = dspy.LM(model, api_key=api_key, max_tokens=400)
     drafter = dspy.Predict(ColdEmailSignature)
 
     # dspy.context() scopes the LM to this call only — thread-safe unlike configure()
@@ -101,7 +112,12 @@ def _run_dspy_in_thread(
             template_guidance=template_guidance,
         )
 
-    return str(result.subject).strip(), str(result.body).strip()
+    return (
+        str(result.subject_a).strip(),
+        str(result.subject_b).strip(),
+        str(result.subject_c).strip(),
+        str(result.body).strip(),
+    )
 
 
 async def draft_email(
@@ -153,7 +169,7 @@ async def draft_email(
 
     try:
         # Run entirely in one thread — dspy.context() scopes the LM safely
-        subject, body = await asyncio.to_thread(
+        subject_a, subject_b, subject_c, body = await asyncio.to_thread(
             _run_dspy_in_thread,
             resolved_key,
             model,
@@ -165,15 +181,16 @@ async def draft_email(
         )
 
         # Sanity-check outputs — DSPy occasionally returns empty fields
-        if not subject:
-            subject = f"Quick question about {context.name}"
+        fallback_subject = f"Quick question about {context.name or email.split('@')[1]}"
+        subjects = [s or fallback_subject for s in (subject_a, subject_b, subject_c)]
         if not body:
             raise ValueError("Groq returned empty body — retrying is recommended")
 
         logger.info("Draft generated for %s (%d chars body)", email, len(body))
         return EmailDraft(
             to=email,
-            subject=subject,
+            subject=subjects[0],
+            subjects=subjects,
             body=body,
             email_type=detected_type,
             model=model,

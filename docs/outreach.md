@@ -60,7 +60,50 @@ coldreach find --domain stripe.com --draft \
 
 ---
 
-## Flow B — Dashboard (most visual)
+## Flow B — TUI Outreach tab (recommended)
+
+The fastest workflow — no browser needed:
+
+```
+coldreach
+```
+
+1. **Find tab** (`f`) → scan a domain → emails stream in
+2. Select an email → press `d` → DraftPanel opens below
+3. Company info appears immediately at the top (fetched in background)
+4. Fill **Your name** + **What you want**, choose Fast or Quality model
+5. Press **Generate** → 3 subject line variants appear + body
+6. Press `1`, `2`, or `3` to pick a subject
+7. Press `y` → full email copied to clipboard
+8. Switch to **Outreach tab** (`o`) → contact auto-added with status `draft`
+9. After sending: press `s` → status becomes `sent`
+10. When they reply: press `R` → status becomes `replied`
+
+```
+┌─ Draft for patrick@stripe.com ─────────────────────────────────────────┐
+│  Stripe  ·  Fintech  ·  San Francisco                                  │
+│  "Global payments infrastructure for internet businesses"              │
+│                                                                        │
+│  Your name:    [Jane Smith              ]                              │
+│  What you want:[explore a payment integration partnership    ]         │
+│  Type:   [Auto] [Partner] [Sales] [Job] [Intro]                       │
+│  Model:  [Fast (llama-3.1-8b)]  [Quality (llama-3.3-70b)]            │
+│                           [Generate]  [Regenerate]                    │
+│  ────────────────────────────────────────────────────────────────────  │
+│  A: Partnership on Stripe's embedded payments  ← selected (press 1)  │
+│  B: Quick question about your payment API program  (press 2)          │
+│  C: Exploring fintech collaboration — Jane Smith  (press 3)           │
+│                                                                        │
+│  Hi Patrick, I've been following Stripe's recent expansion into...     │
+│                                     [y: Copy full email]  [Esc: Close]│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**No Groq key?** The panel still works — it shows a template skeleton with `[PLACEHOLDER]` fields you can fill manually.
+
+---
+
+## Flow C — Dashboard (most visual)
 
 ```bash
 coldreach dashboard
@@ -114,14 +157,27 @@ ColdReach uses [DSPy](https://dspy.ai/) with Groq for structured email generatio
 ```
 domain → scrape homepage/about page
        → extract: company name, description, industry, location
-       → feed to Groq (llama-3.1-8b-instant)
-       → structured output: { subject, body }
+       → feed to Groq (llama-3.1-8b-instant or llama-3.3-70b-versatile)
+       → structured output: { subject_a, subject_b, subject_c, body }
 ```
+
+**3 subject variants** — Groq generates three distinct angles in one call:
+- **A** — specific, references the company or role
+- **B** — question or curiosity-driven
+- **C** — direct and minimal
+
+Pick the one that fits your style. The TUI lets you switch with `1`/`2`/`3`.
+
+**Model choice:**
+| Model | Speed | Quality | Best for |
+|-------|-------|---------|----------|
+| Fast (llama-3.1-8b-instant) | ~2s | Good | Most drafts |
+| Quality (llama-3.3-70b-versatile) | ~8s | Excellent | High-value contacts |
 
 **What makes it not generic:**
 - Company description comes from their actual website (not Wikipedia)
 - Template guidance tells Groq the tone, length, and what to avoid
-- Subject is constrained to <60 chars, no clickbait
+- Subjects are constrained to <60 chars, no clickbait
 - Body is capped at 4 sentences — forces clarity
 
 **What Groq DOESN'T know:**
@@ -133,16 +189,22 @@ You should review and edit every draft before sending.
 
 ---
 
-## Saving drafts
+## Outreach tracking
 
-Drafts are saved to `~/.coldreach/drafts.json`:
+Contacts and drafts are stored in `~/.coldreach/cache.db` (same SQLite file as the email cache):
 
 ```bash
-# View all saved drafts
-cat ~/.coldreach/drafts.json | jq '.[].subject'
+# View outreach contacts via SQLite
+sqlite3 ~/.coldreach/cache.db "SELECT email, status, subject FROM outreach ORDER BY created_at DESC"
 
-# Clear drafts
-rm ~/.coldreach/drafts.json
+# Count by status
+sqlite3 ~/.coldreach/cache.db "SELECT status, COUNT(*) FROM outreach GROUP BY status"
+```
+
+The TUI Outreach tab (`o`) gives you a full UI to manage this. Status flow:
+
+```
+new → draft → sent → replied
 ```
 
 ---
@@ -176,7 +238,8 @@ for line in resp.text.split("\n"):
 ## Troubleshooting
 
 **"Groq API key required"**
-→ Add `COLDREACH_GROQ_API_KEY=gsk_xxx` to your `.env` and restart `coldreach serve`.
+→ In the TUI, the draft panel will show a template skeleton — you can still draft manually.
+→ For CLI/API: add `COLDREACH_GROQ_API_KEY=gsk_xxx` to your `.env`.
 
 **"Draft generation failed"**
 → Check `coldreach serve` is running (`coldreach status`). Groq may be rate-limited —

@@ -277,12 +277,16 @@ class FindScreen(Widget):
         domain = self.query_one("#domain-input", Input).value.strip()
         if domain:
             self._start_scan(domain)
+        else:
+            self.app.notify("Enter a domain first", severity="warning", timeout=2)
 
     @on(Input.Submitted, "#domain-input")
     def _start_from_enter(self, event: Input.Submitted) -> None:
         domain = event.value.strip()
         if domain:
             self._start_scan(domain)
+        else:
+            self.app.notify("Enter a domain first", severity="warning", timeout=2)
 
     @on(Button.Pressed, "#stop-btn")
     def _stop_scan(self) -> None:
@@ -482,6 +486,12 @@ class FindScreen(Widget):
             self._start_scan(self._domain)
 
     def action_yank_email(self) -> None:
+        # If a draft panel is open and has a draft, copy the full draft instead
+        panels = list(self.query(DraftPanel))
+        if panels and panels[0].copy_draft():
+            self.app.notify("Draft copied to clipboard", timeout=2)
+            return
+
         table = self.query_one("#results-table", ResultsTable)
         row = table.cursor_row
         if row < 0:

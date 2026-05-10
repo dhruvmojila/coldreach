@@ -17,6 +17,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from coldreach.tui.screens.cache import CacheScreen
 from coldreach.tui.screens.find import FindScreen
+from coldreach.tui.screens.outreach import OutreachScreen
 from coldreach.tui.screens.status import StatusScreen
 from coldreach.tui.screens.verify import VerifyScreen
 from coldreach.tui.widgets.help_modal import HelpModal
@@ -42,6 +43,7 @@ class ColdReachApp(App[None]):
         Binding("v", "switch_tab('verify')", "Verify", show=True),
         Binding("s", "switch_tab('status')", "Status", show=True),
         Binding("c", "switch_tab('cache')", "Cache", show=True),
+        Binding("o", "switch_tab('outreach')", "Outreach", show=True),
         Binding("q,ctrl+c", "quit", "Quit", show=True),
         Binding("question_mark", "show_help", "Help", show=True),
     ]
@@ -57,6 +59,8 @@ class ColdReachApp(App[None]):
                 yield StatusScreen(id="status-screen")
             with TabPane("⊟ Cache", id="cache"):
                 yield CacheScreen(id="cache-screen")
+            with TabPane("✉ Outreach", id="outreach"):
+                yield OutreachScreen(id="outreach-screen")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -73,6 +77,12 @@ class ColdReachApp(App[None]):
         if domain:
             screen = self.query_one("#find-screen", FindScreen)
             screen.prefill_domain(domain)
+
+    def switch_to_outreach(self) -> None:
+        """Jump to Outreach tab and refresh the contact list."""
+        self.action_switch_tab("outreach")
+        screen = self.query_one("#outreach-screen", OutreachScreen)
+        screen._refresh_table()
 
     # ── Help overlay ──────────────────────────────────────────────────────────
 
