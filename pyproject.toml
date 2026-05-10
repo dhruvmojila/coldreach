@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "coldreach"
-version = "0.1.0"
+version = "0.2.0"
 description = "Open-source email finder and lead discovery — the free alternative to Hunter.io and Apollo.io"
 readme = "README.md"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ keywords = [
   "sales-tools",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "Intended Audience :: End Users/Desktop",

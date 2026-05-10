@@ -113,7 +113,8 @@ coldreach --cli verify john@stripe.com
 | **Phase 2** | ✅ Complete | Docker stack (SearXNG, Reacher, SpiderFoot, theHarvester) + health checks      |
 | **Phase 3** | ✅ Complete | Local FastAPI server (`coldreach serve`) + Chrome extension (5 job boards)     |
 | **Phase 4** | ✅ Complete | Full-screen Textual TUI — Find, Verify, Status, Cache tabs                     |
-| Phase 5     | 🔄 Next     | Groq-powered cold email drafting + outreach dashboard                          |
+| **Phase 5** | ✅ Complete | Groq-powered email drafting · 3 subject variants · Outreach tab (draft/sent/replied tracking) |
+| Phase 6     | 🔄 Next     | BYOK (Hunter.io/Apollo.io as fallback) · Common Crawl index · Community plugins |
 
 ---
 
@@ -122,7 +123,7 @@ coldreach --cli verify john@stripe.com
 ```
 coldreach                          # → launches TUI (no args)
 
-  ⚡ Find  ✓ Verify  ● Status  ⊟ Cache
+  ⚡ Find  ✓ Verify  ● Status  ⊟ Cache  ✉ Outreach
   ──────────────────────────────────────
   Domain: stripe.com_   [Quick] [Standard] [Full]  [▶ Scan]
 
