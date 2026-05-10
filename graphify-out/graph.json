@@ -5627,27 +5627,27 @@
       "file_type": "rationale",
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L230",
-      "id": "draft_panel_rationale_230",
       "community": 2,
-      "norm_label": "refresh subjects display and current_draft from stored state."
+      "norm_label": "refresh subjects display and current_draft from stored state.",
+      "id": "draft_panel_rationale_230"
     },
     {
       "label": "Show template skeleton when Groq key is missing.",
       "file_type": "rationale",
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L246",
-      "id": "draft_panel_rationale_246",
       "community": 2,
-      "norm_label": "show template skeleton when groq key is missing."
+      "norm_label": "show template skeleton when groq key is missing.",
+      "id": "draft_panel_rationale_246"
     },
     {
       "label": "Copy current draft to clipboard. Returns True if content was available.",
       "file_type": "rationale",
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L308",
-      "id": "draft_panel_rationale_308",
       "community": 2,
-      "norm_label": "copy current draft to clipboard. returns true if content was available."
+      "norm_label": "copy current draft to clipboard. returns true if content was available.",
+      "id": "draft_panel_rationale_308"
     },
     {
       "label": "patterns.py",
@@ -54699,11 +54699,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L200",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_230",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_panel_rationale_230",
+      "confidence_score": 0.5,
       "source": "templates_emailtype",
-      "target": "draft_panel_rationale_230",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_230"
     },
     {
       "relation": "uses",
@@ -54711,11 +54711,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L200",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_246",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_panel_rationale_246",
+      "confidence_score": 0.5,
       "source": "templates_emailtype",
-      "target": "draft_panel_rationale_246",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_246"
     },
     {
       "relation": "uses",
@@ -54723,11 +54723,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L200",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_308",
-      "_tgt": "templates_emailtype",
+      "_src": "templates_emailtype",
+      "_tgt": "draft_panel_rationale_308",
+      "confidence_score": 0.5,
       "source": "templates_emailtype",
-      "target": "draft_panel_rationale_308",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_308"
     },
     {
       "relation": "calls",
@@ -55491,11 +55491,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L285",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_230",
-      "_tgt": "tracker_outreachtracker",
+      "_src": "tracker_outreachtracker",
+      "_tgt": "draft_panel_rationale_230",
+      "confidence_score": 0.5,
       "source": "tracker_outreachtracker",
-      "target": "draft_panel_rationale_230",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_230"
     },
     {
       "relation": "uses",
@@ -55503,11 +55503,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L285",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_246",
-      "_tgt": "tracker_outreachtracker",
+      "_src": "tracker_outreachtracker",
+      "_tgt": "draft_panel_rationale_246",
+      "confidence_score": 0.5,
       "source": "tracker_outreachtracker",
-      "target": "draft_panel_rationale_246",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_246"
     },
     {
       "relation": "uses",
@@ -55515,11 +55515,11 @@
       "source_file": "coldreach/tui/widgets/draft_panel.py",
       "source_location": "L285",
       "weight": 0.8,
-      "_src": "draft_panel_rationale_308",
-      "_tgt": "tracker_outreachtracker",
+      "_src": "tracker_outreachtracker",
+      "_tgt": "draft_panel_rationale_308",
+      "confidence_score": 0.5,
       "source": "tracker_outreachtracker",
-      "target": "draft_panel_rationale_308",
-      "confidence_score": 0.5
+      "target": "draft_panel_rationale_308"
     },
     {
       "relation": "uses",
