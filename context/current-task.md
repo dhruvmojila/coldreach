@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Resolved all 3 GitHub issues: #1 docs/index.md updated (Phase 1→4 complete, TUI demo, Chrome ext, API server); #2 Cache tab crash fixed (cursor_row returns 0 not -1 on empty DataTable, added row>=table.row_count guard); #3 TUI scan results now saved to cache (builds DomainResult from collected emails, CacheStore.set after completion). Also fixed ruff format failure. Committed 69716fb and pushed to main.
+- Objective: Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
 
 ## In Progress
 
-- [ ] Phase 5: wire Groq cold email draft panel — tui/widgets/draft_panel.py exists, needs Groq API call and end-to-end test in TUI
+- [ ] Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
 
 ## Done In This Session
 
-- Resolved all 3 GitHub issues: #1 docs/index.md updated (Phase 1→4 complete, TUI demo, Chrome ext, API server); #2 Cache tab crash fixed (cursor_row returns 0 not -1 on empty DataTable, added row>=table.row_count guard); #3 TUI scan results now saved to cache (builds DomainResult from collected emails, CacheStore.set after completion). Also fixed ruff format failure. Committed 69716fb and pushed to main.
+- Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
 
 ## Next Action (Single Concrete Step)
 
-- Phase 5: wire Groq cold email draft panel — tui/widgets/draft_panel.py exists, needs Groq API call and end-to-end test in TUI
+- Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 482 tests pass; ruff format --check clean; git pushed to main; all 3 issues auto-closed by commit
+- 491 tests pass; docs/tui.md has Outreach tab; docs/outreach.md has 3-subject workflow; memory updated

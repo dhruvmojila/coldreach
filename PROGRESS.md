@@ -2,6 +2,43 @@
 
 ---
 
+## [2026-05-09] — Phase 5 extended: Outreach tab, 3-subject drafts, OutreachTracker, DraftPanel upgrade
+
+### What Was Done
+- **OutreachTracker** (`coldreach/outreach/tracker.py`): SQLite CRUD for contacts — upsert, save_draft, mark_sent, mark_replied, remove, list_contacts, stats. Shares `~/.coldreach/cache.db`. 9 unit tests.
+- **DraftPanel upgraded** (`tui/widgets/draft_panel.py`): company context preview on mount, 3 subject variants (DSPy returns subject_a/b/c — pick with 1/2/3), Fast/Quality model toggle (llama-3.1-8b vs llama-3.3-70b), Regenerate button, auto-saves to OutreachTracker, no-key fallback shows template skeleton
+- **Outreach tab** (`tui/screens/outreach.py`): 5th TUI tab (`o` key), DataTable of contacts with status icons, d/s/R/x/y/f/r bindings, stats header showing replied/sent/draft counts
+- **outreach/draft.py**: `EmailDraft.subjects: list[str]` field, `_run_dspy_in_thread` now returns 4-tuple (subj_a/b/c + body), fallback fills all empty subjects
+- **T4/T8 gaps closed**: `y` key copies full draft when DraftPanel open, empty-domain press Enter → "Enter a domain first" warning notify
+- **Docs updated**: `docs/tui.md` — Outreach tab section; `docs/outreach.md` — Flow B TUI added, 3-subject model choice docs, outreach tracking docs
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/outreach/tracker.py` | Added | OutreachTracker SQLite CRUD |
+| `coldreach/tui/screens/outreach.py` | Added | OutreachScreen — 5th TUI tab |
+| `coldreach/tui/widgets/draft_panel.py` | Modified | Company preview, 3 subjects, model toggle, regenerate, auto-save, no-key fallback |
+| `coldreach/outreach/draft.py` | Modified | EmailDraft.subjects list, 3-subject DSPy signature, 4-tuple return |
+| `coldreach/tui/app.py` | Modified | 5th Outreach tab wired, switch_to_outreach() |
+| `coldreach/tui/screens/find.py` | Modified | y copies draft when panel open, empty-domain notify |
+| `tests/unit/test_outreach_tracker.py` | Added | 9 tests for OutreachTracker |
+| `tests/unit/test_outreach_draft.py` | Modified | Updated mocks to 4-tuple, added subjects assertion |
+| `docs/tui.md` | Modified | Outreach tab section added |
+| `docs/outreach.md` | Modified | TUI Flow B, 3-subject docs, outreach tracking |
+
+### Major Logic / Code Changes
+- **3-subject DSPy**: Changed `ColdEmailSignature` to output `subject_a`, `subject_b`, `subject_c` as separate fields. Groq generates 3 distinct angles in one call. `_run_dspy_in_thread` returns `(str, str, str, str)` — callers pick subject by index.
+- **OutreachTracker**: SQLite `outreach` table in same db as email cache. Contact status state machine: `new → draft → sent → replied`. `save_draft()` upserts and sets all draft fields atomically.
+- **DraftPanel context fetch**: `_fetch_context()` worker runs on mount (not on Generate) so company info is shown immediately when panel opens — reduces perceived latency.
+- **No-key fallback**: catches `ValueError("Groq API key required")` → renders template skeleton with `[PLACEHOLDER]` fields, still useful without Groq.
+
+### Notes
+- 491 tests pass (was 482 before Phase 5)
+- Outreach data in `~/.coldreach/cache.db` table `outreach` — persistent across TUI restarts
+- Quality model `groq/llama-3.3-70b-versatile` ~4x slower but noticeably better output for high-value contacts
+
+---
+
 ## [2026-05-02 20:00] — TUI polish: layout fixes, Reacher port fix, logging redirect, status mapping, mode switching
 
 ### What Was Done
@@ -1027,4 +1064,26 @@
 
 ### Next
 - Phase 5: wire Groq cold email draft panel — tui/widgets/draft_panel.py exists, needs Groq API call and end-to-end test in TUI
+
+
+## [2026-05-09 20:25 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 5 extended outreach system: (1) T4/T8 gaps closed — y copies draft when panel open, empty-domain notify added; (2) OutreachTracker SQLite CRUD in coldreach/outreach/tracker.py with 9 unit tests; (3) DraftPanel upgraded — company context preview on mount, 3 subject variants via DSPy (pick with 1/2/3), fast/quality model toggle, regenerate button, auto-saves to OutreachTracker, no-key fallback shows template skeleton; (4) New Outreach tab (o key) in TUI — DataTable of contacts with status icons, d/s/R/x/y/f bindings, stats header; (5) outreach/draft.py updated — EmailDraft.subjects list[str], _run_dspy_in_thread returns 4-tuple (subj_a/b/c + body); (6) 491 tests pass, ruff clean
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Update docs/outreach.md and docs/tui.md with Outreach tab + 3-subject workflow, then commit and push
+
+
+## [2026-05-09 20:30 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
 

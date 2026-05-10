@@ -663,3 +663,41 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Phase 5: wire Groq cold email draft panel — tui/widgets/draft_panel.py exists, needs Groq API call and end-to-end test in TUI
 
+### [2026-05-09 20:25 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 5 extended outreach system: (1) T4/T8 gaps closed — y copies draft when panel open, empty-domain notify added; (2) OutreachTracker SQLite CRUD in coldreach/outreach/tracker.py with 9 unit tests; (3) DraftPanel upgraded — company context preview on mount, 3 subject variants via DSPy (pick with 1/2/3), fast/quality model toggle, regenerate button, auto-saves to OutreachTracker, no-key fallback shows template skeleton; (4) New Outreach tab (o key) in TUI — DataTable of contacts with status icons, d/s/R/x/y/f bindings, stats header; (5) outreach/draft.py updated — EmailDraft.subjects list[str], _run_dspy_in_thread returns 4-tuple (subj_a/b/c + body); (6) 491 tests pass, ruff clean
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 491 tests pass; ruff check --select E,F,W all passed; imports clean; headless test: Tab height=3, Standard variant=primary, Outreach tab mounts and _refresh_table() callable
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Update docs/outreach.md and docs/tui.md with Outreach tab + 3-subject workflow, then commit and push
+
+### [2026-05-09 20:30 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 491 tests pass; docs/tui.md has Outreach tab; docs/outreach.md has 3-subject workflow; memory updated
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
+
