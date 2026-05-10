@@ -146,11 +146,25 @@ class OutreachScreen(Widget):
         if not email:
             self.app.notify("Select a contact first", severity="warning")
             return
-        from coldreach.outreach.tracker import OutreachTracker
+        # Two-step confirmation: first press arms, second press within 3s deletes
+        if getattr(self, "_pending_delete", None) == email:
+            from coldreach.outreach.tracker import OutreachTracker
 
-        OutreachTracker().remove(email)
-        self.app.notify(f"Removed: {email}", timeout=2)
-        self._refresh_table()
+            OutreachTracker().remove(email)
+            self._pending_delete = None
+            self.app.notify(f"Removed {email}", timeout=2)
+            self._refresh_table()
+        else:
+            self._pending_delete = email
+            self.app.notify(
+                f"Press x again to delete {email}",
+                severity="warning",
+                timeout=3,
+            )
+            self.set_timer(3, self._clear_pending_delete)
+
+    def _clear_pending_delete(self) -> None:
+        self._pending_delete = None
 
     def action_copy_draft(self) -> None:
         panels = list(self.query(DraftPanel))

@@ -29,8 +29,10 @@ class DraftPanel(Widget):
         background: #1a1d27;
         border: tall #3a3f5e;
         height: auto;
+        max-height: 24;
         padding: 1 2;
         margin: 1 0;
+        overflow-y: auto;
     }
     DraftPanel #context-bar {
         color: #9aa0c0;
@@ -140,7 +142,9 @@ class DraftPanel(Widget):
             )
             self._ctx = ctx
         except Exception:
-            self.query_one("#context-bar", Static).update(f"[dim]{self.domain}[/]")
+            self.query_one("#context-bar", Static).update(
+                f"[#9aa0c0]{self.domain}[/]  [dim #f59e0b]· could not fetch company info[/]"
+            )
             self._ctx = None
 
     # ── Model toggle ──────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 _DEFAULT_DB = "~/.coldreach/cache.db"
 
@@ -60,7 +60,7 @@ class OutreachTracker:
 
     def upsert(self, email: str, domain: str, **kwargs: object) -> None:
         """Add or update a contact. Only provided kwargs are updated."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._connect() as conn:
             existing = conn.execute(
                 "SELECT email FROM outreach WHERE email = ?", (email.lower(),)
@@ -99,7 +99,7 @@ class OutreachTracker:
         )
 
     def mark_sent(self, email: str) -> None:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._connect() as conn:
             conn.execute(
                 "UPDATE outreach SET status = 'sent', sent_at = ? WHERE email = ?",
@@ -107,7 +107,7 @@ class OutreachTracker:
             )
 
     def mark_replied(self, email: str) -> None:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._connect() as conn:
             conn.execute(
                 "UPDATE outreach SET status = 'replied', replied_at = ? WHERE email = ?",

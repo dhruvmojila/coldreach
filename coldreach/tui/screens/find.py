@@ -206,7 +206,7 @@ class FindScreen(Widget):
 
     BINDINGS = [
         Binding("r", "rescan", "Re-scan"),
-        Binding("y", "yank_email", "Copy email"),
+        Binding("y", "yank_email", "Copy"),
         Binding("d", "draft_email", "Draft"),
         Binding("e", "export_csv", "Export"),
     ]
@@ -524,7 +524,6 @@ class FindScreen(Widget):
         for panel in self.query(DraftPanel):
             panel.remove()
         results_panel.mount(DraftPanel(email, self._domain))
-        self.app.notify(f"Draft panel opened for {email}", timeout=2)
 
     def action_export_csv(self) -> None:
         if not self._emails:
