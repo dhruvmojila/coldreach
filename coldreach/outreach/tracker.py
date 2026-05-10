@@ -68,7 +68,7 @@ class OutreachTracker:
             if existing:
                 if kwargs:
                     sets = ", ".join(f"{k} = ?" for k in kwargs)
-                    vals = list(kwargs.values()) + [email.lower()]
+                    vals = [*list(kwargs.values()), email.lower()]
                     conn.execute(f"UPDATE outreach SET {sets} WHERE email = ?", vals)
             else:
                 conn.execute(

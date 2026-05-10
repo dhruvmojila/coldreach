@@ -146,9 +146,7 @@ class DraftPanel(Widget):
     # ── Model toggle ──────────────────────────────────────────────────────────
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-generate":
-            self._generate()
-        elif event.button.id == "btn-regen":
+        if event.button.id in ("btn-generate", "btn-regen"):
             self._generate()
         elif event.button.id == "btn-fast":
             self._set_model(_FAST_MODEL)
@@ -234,7 +232,7 @@ class DraftPanel(Widget):
             return
         labels = ["A", "B", "C"]
         lines = []
-        for i, (label, subj) in enumerate(zip(labels, self._subjects)):
+        for i, (label, subj) in enumerate(zip(labels, self._subjects, strict=False)):
             if i == self._selected_subject_idx:
                 lines.append(f"[bold #5b8cff]{label}: {subj}[/]  ← selected")
             else:
