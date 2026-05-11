@@ -515,15 +515,17 @@ class FindScreen(Widget):
     def action_draft_email(self) -> None:
         table = self.query_one("#results-table", ResultsTable)
         row = table.cursor_row
-        if row < 0:
+        if row < 0 or row >= table.row_count:
             self.app.notify("Select an email first", severity="warning")
             return
         email = str(table.get_cell_at((row, 0)))
-        results_panel = self.query_one("#results-panel")
         # Remove any existing panel first
         for panel in self.query(DraftPanel):
             panel.remove()
-        results_panel.mount(DraftPanel(email, self._domain))
+        # Mount on FindScreen itself (not inside #results-panel where ResultsTable
+        # takes height: 100% and leaves no room). Mounting before #progress-row
+        # gives DraftPanel its own space — #find-body shrinks to accommodate it.
+        self.mount(DraftPanel(email, self._domain), before="#progress-row")
 
     def action_export_csv(self) -> None:
         if not self._emails:
