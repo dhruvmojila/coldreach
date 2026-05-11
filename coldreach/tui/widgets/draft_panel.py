@@ -53,14 +53,15 @@ class DraftPanel(Widget):
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: auto;
+        height: 5;
         margin-bottom: 1;
     }
     DraftPanel #draft-body-box {
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: auto;
+        height: 8;
+        overflow-y: auto;
         color: #c9cde8;
     }
     """
@@ -199,13 +200,29 @@ class DraftPanel(Widget):
         self.query_one("#draft-body-box", Static).update("")
         self._subjects = []
         self._current_draft = ""
+        # thread=True: runs completely off the event loop so UI stays responsive
+        # during the Groq API call (which can take 2-8 seconds)
         self.run_worker(
-            self._run_draft(name, intent, etype),
+            self._run_draft,
+            name,
+            intent,
+            etype,
             name="draft-worker",
             exclusive=True,
+            thread=True,
         )
 
-    async def _run_draft(self, name: str, intent: str, etype: str) -> None:
+    def _run_draft(self, name: str, intent: str, etype: str) -> None:
+        """Blocking draft generation — runs in a thread worker off the event loop."""
+        import asyncio
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(self._run_draft_async(name, intent, etype))
+        finally:
+            loop.close()
+
+    async def _run_draft_async(self, name: str, intent: str, etype: str) -> None:
         try:
             from coldreach.outreach.context import get_company_context
             from coldreach.outreach.draft import draft_email
@@ -229,22 +246,30 @@ class DraftPanel(Widget):
             self._body = draft.body
             self._body_safe = _esc(draft.body)
             self._selected_subject_idx = 0
-            self._rebuild_draft()
-            self._save_to_outreach(draft.subjects[0], draft.body, str(draft.email_type))
-            self.query_one("#draft-status", Static).update(
-                "[#34d399]Done — press [bold]1/2/3[/] to pick subject, [bold]y[/] to copy[/]"
+            # UI updates must go through call_from_thread when in a thread worker
+            self.app.call_from_thread(self._rebuild_draft)
+            self.app.call_from_thread(
+                self._save_to_outreach, draft.subjects[0], draft.body, str(draft.email_type)
+            )
+            self.app.call_from_thread(
+                self.query_one("#draft-status", Static).update,
+                "[#34d399]Done — press [bold]1/2/3[/] to pick subject, [bold]y[/] to copy[/]",
             )
         except ValueError as exc:
             msg = str(exc)
             if "Groq API key" in msg:
-                self._render_template_mode(etype)
+                self.app.call_from_thread(self._render_template_mode, etype)
             else:
                 from rich.markup import escape
-                self.query_one("#draft-status", Static).update(f"[#f87171]{escape(msg)}[/]")
+                self.app.call_from_thread(
+                    self.query_one("#draft-status", Static).update,
+                    f"[#f87171]{escape(msg)}[/]",
+                )
         except Exception as exc:
             from rich.markup import escape
-            self.query_one("#draft-status", Static).update(
-                f"[#f87171]Draft failed: {escape(str(exc))}[/]"
+            self.app.call_from_thread(
+                self.query_one("#draft-status", Static).update,
+                f"[#f87171]Draft failed: {escape(str(exc))}[/]",
             )
 
     def _rebuild_draft(self) -> None:
