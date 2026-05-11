@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Input, Label, Select, Static
+from textual.widgets import Button, Input, Select, Static
 
 _FAST_MODEL = "groq/llama-3.1-8b-instant"
 _QUALITY_MODEL = "groq/llama-3.3-70b-versatile"
@@ -33,6 +33,7 @@ class DraftPanel(Widget):
         padding: 1 2;
         margin: 1 0;
     }
+    /* Header: company · email on one line */
     DraftPanel #context-bar {
         color: #9aa0c0;
         height: 1;
@@ -40,18 +41,19 @@ class DraftPanel(Widget):
         padding: 0 1;
         margin-bottom: 1;
     }
-    DraftPanel #draft-title { color: #5b8cff; text-style: bold; height: 1; }
-    /* Row 1: name + intent side-by-side */
-    DraftPanel #inputs-row { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #sender-name  { width: 1fr; margin-right: 1; }
-    DraftPanel #sender-intent { width: 2fr; }
-    /* Row 2: type selector + model + buttons all in one row */
-    DraftPanel #controls-row { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #email-type { width: 18; margin-right: 1; }
-    DraftPanel #btn-fast    { min-width: 18; margin-right: 1; }
-    DraftPanel #btn-quality { min-width: 24; margin-right: 1; }
-    DraftPanel #btn-generate { min-width: 16; margin-right: 1; }
-    DraftPanel #btn-regen   { min-width: 13; }
+    /* Row 1: name input | intent input */
+    DraftPanel #inputs-row   { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #sender-name  { width: 26; margin-right: 1; }
+    DraftPanel #sender-intent { width: 1fr; }
+    /* Row 2: type select (wide) | model toggle */
+    DraftPanel #type-row     { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #email-type   { width: 26; margin-right: 2; }
+    DraftPanel #btn-fast     { min-width: 20; margin-right: 1; }
+    DraftPanel #btn-quality  { min-width: 26; }
+    /* Row 3: generate | regen */
+    DraftPanel #action-row   { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #btn-generate { min-width: 18; margin-right: 1; }
+    DraftPanel #btn-regen    { min-width: 14; }
     DraftPanel #draft-status { color: #5b8cff; height: 1; margin-bottom: 1; }
     DraftPanel #subjects-box {
         background: #13151f;
@@ -65,7 +67,7 @@ class DraftPanel(Widget):
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: 7;
+        height: 6;
         overflow-y: auto;
         color: #c9cde8;
     }
@@ -98,21 +100,20 @@ class DraftPanel(Widget):
     def compose(self) -> ComposeResult:
         from textual.containers import Horizontal
 
-        yield Label(f"Draft for [bold]{self.email}[/bold]", id="draft-title")
         yield Static("Fetching company info…", id="context-bar")
-        # Row 1: name + intent side-by-side
+        # Row 1: name | intent
         with Horizontal(id="inputs-row"):
             yield Input(placeholder="Your name", id="sender-name", value=self._recall_name())
             yield Input(placeholder="What you want — one sentence", id="sender-intent")
-        # Row 2: type + model toggle + generate — all in one row
-        with Horizontal(id="controls-row"):
+        # Row 2: email type select | model toggle (each widget has room to breathe)
+        with Horizontal(id="type-row"):
             yield Select(
                 [
-                    ("Auto", "auto"),
-                    ("Partner", "partnership"),
-                    ("Job", "job_application"),
-                    ("Sales", "sales"),
-                    ("Intro", "introduction"),
+                    ("Auto-detect", "auto"),
+                    ("Partnership", "partnership"),
+                    ("Job application", "job_application"),
+                    ("Sales outreach", "sales"),
+                    ("Introduction", "introduction"),
                 ],
                 id="email-type",
                 value="auto",
@@ -120,8 +121,10 @@ class DraftPanel(Widget):
             )
             yield Button("Fast (llama-3.1-8b)", id="btn-fast", variant="primary")
             yield Button("Quality (llama-3.3-70b)", id="btn-quality", variant="default")
-            yield Button("Generate draft", id="btn-generate", variant="primary")
-            yield Button("Regenerate", id="btn-regen", variant="default")
+        # Row 3: action buttons
+        with Horizontal(id="action-row"):
+            yield Button("▶  Generate draft", id="btn-generate", variant="primary")
+            yield Button("↺  Regenerate", id="btn-regen", variant="default")
         yield Static("", id="draft-status")
         yield Static("", id="subjects-box")
         yield Static("", id="draft-body-box")
@@ -142,11 +145,11 @@ class DraftPanel(Widget):
             desc = escape((ctx.description or "")[:100])
             if not self.is_attached:
                 return
-            self.query_one("#context-bar", Static).update(
-                f"[bold #9aa0c0]{summary}[/]\n[dim]{desc}[/]"
-                if desc
-                else f"[bold #9aa0c0]{summary}[/]"
-            )
+            # height: 1 — show company summary on one line, skip long description
+            line = f"[bold #9aa0c0]{summary}[/]"
+            if desc:
+                line += f"  [dim]{desc[:60]}…[/]" if len(desc) > 60 else f"  [dim]{desc}[/]"
+            self.query_one("#context-bar", Static).update(line)
             self._ctx = ctx
         except Exception:
             if not self.is_attached:
