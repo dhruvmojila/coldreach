@@ -82,8 +82,10 @@ class DraftPanel(Widget):
         self.domain = domain
         self._current_draft: str = ""
         self._subjects: list[str] = []
+        self._subjects_safe: list[str] = []
         self._selected_subject_idx: int = 0
         self._body: str = ""
+        self._body_safe: str = ""
         self._sender_name: str = ""
         self._model: str = _FAST_MODEL
 
@@ -219,13 +221,18 @@ class DraftPanel(Widget):
                 email_type=resolved_type,
                 model=self._model,
             )
+            from rich.markup import escape as _esc
+
+            # Store originals for clipboard; store escaped for display
             self._subjects = draft.subjects
+            self._subjects_safe = [_esc(s) for s in draft.subjects]
             self._body = draft.body
+            self._body_safe = _esc(draft.body)
             self._selected_subject_idx = 0
             self._rebuild_draft()
             self._save_to_outreach(draft.subjects[0], draft.body, str(draft.email_type))
             self.query_one("#draft-status", Static).update(
-                "[#34d399]Done — press [bold]1/2/3[/bold] to pick subject, [bold]y[/bold] to copy[/]"
+                "[#34d399]Done — press [bold]1/2/3[/] to pick subject, [bold]y[/] to copy[/]"
             )
         except ValueError as exc:
             msg = str(exc)
@@ -244,19 +251,21 @@ class DraftPanel(Widget):
         """Refresh subjects display and current_draft from stored state."""
         if not self._subjects:
             return
-        from rich.markup import escape
+        # Use pre-escaped strings stored at generation time — never re-escape
+        subjects_safe = getattr(self, "_subjects_safe", self._subjects)
+        body_safe = getattr(self, "_body_safe", self._body)
 
         labels = ["A", "B", "C"]
         lines = []
-        for i, (label, subj) in enumerate(zip(labels, self._subjects, strict=False)):
-            safe = escape(subj)
+        for i, (label, safe) in enumerate(zip(labels, subjects_safe, strict=False)):
             if i == self._selected_subject_idx:
                 lines.append(f"[bold #5b8cff]{label}: {safe}[/]  ← selected")
             else:
                 lines.append(f"[dim]{label}: {safe}[/]  [dim](press {i + 1})[/]")
         self.query_one("#subjects-box", Static).update("\n".join(lines))
+        # Use [/] not [/bold] — compound styles need [/] to close cleanly
         self.query_one("#draft-body-box", Static).update(
-            f"[bold #5b8cff]Body[/bold]\n{escape(self._body)}"
+            f"[bold #5b8cff]Body[/]\n{body_safe}"
         )
         selected = self._subjects[self._selected_subject_idx]
         self._current_draft = f"Subject: {selected}\n\n{self._body}\n\nBest,\n{self._sender_name}"
