@@ -285,12 +285,14 @@ class DraftPanel(Widget):
                 self.app.call_from_thread(self._render_template_mode, etype)
             else:
                 from rich.markup import escape
+
                 self.app.call_from_thread(
                     self.query_one("#draft-status", Static).update,
                     f"[#f87171]{escape(msg)}[/]",
                 )
         except Exception as exc:
             from rich.markup import escape
+
             self.app.call_from_thread(
                 self.query_one("#draft-status", Static).update,
                 f"[#f87171]Draft failed: {escape(str(exc))}[/]",
@@ -398,11 +400,19 @@ class DraftPanel(Widget):
         ]:
             try:
                 subprocess.run(
-                    cmd, input=data, check=True, capture_output=True, timeout=3,
+                    cmd,
+                    input=data,
+                    check=True,
+                    capture_output=True,
+                    timeout=3,
                 )
                 return "clipboard"
-            except (FileNotFoundError, subprocess.CalledProcessError,
-                    subprocess.TimeoutExpired, OSError):
+            except (
+                FileNotFoundError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+                OSError,
+            ):
                 continue
         # Clipboard unavailable (headless/SSH) — write to file as fallback
         try:
