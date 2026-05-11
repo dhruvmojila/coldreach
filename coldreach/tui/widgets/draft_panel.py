@@ -29,31 +29,35 @@ class DraftPanel(Widget):
         background: #1a1d27;
         border: tall #3a3f5e;
         height: auto;
-        max-height: 34;
+        max-height: 30;
         padding: 1 2;
         margin: 1 0;
-        overflow-y: auto;
     }
     DraftPanel #context-bar {
         color: #9aa0c0;
-        height: 2;
-        margin-bottom: 1;
+        height: 1;
         background: #13151f;
         padding: 0 1;
+        margin-bottom: 1;
     }
     DraftPanel #draft-title { color: #5b8cff; text-style: bold; height: 1; }
-    DraftPanel #form-row { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #model-row { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #btn-fast { min-width: 22; margin-right: 1; }
-    DraftPanel #btn-quality { min-width: 28; }
-    DraftPanel #btn-generate { min-width: 18; margin-right: 1; }
-    DraftPanel #btn-regen { min-width: 16; }
+    /* Row 1: name + intent side-by-side */
+    DraftPanel #inputs-row { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #sender-name  { width: 1fr; margin-right: 1; }
+    DraftPanel #sender-intent { width: 2fr; }
+    /* Row 2: type selector + model + buttons all in one row */
+    DraftPanel #controls-row { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #email-type { width: 18; margin-right: 1; }
+    DraftPanel #btn-fast    { min-width: 18; margin-right: 1; }
+    DraftPanel #btn-quality { min-width: 24; margin-right: 1; }
+    DraftPanel #btn-generate { min-width: 16; margin-right: 1; }
+    DraftPanel #btn-regen   { min-width: 13; }
     DraftPanel #draft-status { color: #5b8cff; height: 1; margin-bottom: 1; }
     DraftPanel #subjects-box {
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: 9;
+        height: 7;
         overflow-y: auto;
         margin-bottom: 1;
     }
@@ -61,7 +65,7 @@ class DraftPanel(Widget):
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: 8;
+        height: 7;
         overflow-y: auto;
         color: #c9cde8;
     }
@@ -92,35 +96,30 @@ class DraftPanel(Widget):
         self._model: str = _FAST_MODEL
 
     def compose(self) -> ComposeResult:
-        yield Label(f"Draft for [bold]{self.email}[/bold]", id="draft-title")
-        yield Static("Fetching company info…", id="context-bar")
-        yield Input(
-            placeholder="Your name",
-            id="sender-name",
-            value=self._recall_name(),
-        )
-        yield Input(
-            placeholder="What you want — one sentence",
-            id="sender-intent",
-        )
-        yield Select(
-            [
-                ("Auto-detect", "auto"),
-                ("Partnership", "partnership"),
-                ("Job application", "job_application"),
-                ("Sales outreach", "sales"),
-                ("Introduction", "introduction"),
-            ],
-            id="email-type",
-            value="auto",
-            allow_blank=False,
-        )
         from textual.containers import Horizontal
 
-        with Horizontal(id="model-row"):
+        yield Label(f"Draft for [bold]{self.email}[/bold]", id="draft-title")
+        yield Static("Fetching company info…", id="context-bar")
+        # Row 1: name + intent side-by-side
+        with Horizontal(id="inputs-row"):
+            yield Input(placeholder="Your name", id="sender-name", value=self._recall_name())
+            yield Input(placeholder="What you want — one sentence", id="sender-intent")
+        # Row 2: type + model toggle + generate — all in one row
+        with Horizontal(id="controls-row"):
+            yield Select(
+                [
+                    ("Auto", "auto"),
+                    ("Partner", "partnership"),
+                    ("Job", "job_application"),
+                    ("Sales", "sales"),
+                    ("Intro", "introduction"),
+                ],
+                id="email-type",
+                value="auto",
+                allow_blank=False,
+            )
             yield Button("Fast (llama-3.1-8b)", id="btn-fast", variant="primary")
             yield Button("Quality (llama-3.3-70b)", id="btn-quality", variant="default")
-        with Horizontal(id="form-row"):
             yield Button("Generate draft", id="btn-generate", variant="primary")
             yield Button("Regenerate", id="btn-regen", variant="default")
         yield Static("", id="draft-status")
@@ -359,43 +358,48 @@ class DraftPanel(Widget):
 
     # ── Copy & close ─────────────────────────────────────────────────────────
 
-    def copy_draft(self) -> bool:
+    def copy_draft(self) -> str:
         """Copy current draft to clipboard (safe to call from any thread).
 
-        Returns True if content existed and a clipboard tool accepted it.
+        Returns 'clipboard' on success, 'file' if saved to fallback file, 'empty' if no draft.
         """
         draft = self._current_draft
         if not draft:
-            return False
+            return "empty"
         import subprocess
 
         data = draft.encode()
         for cmd in [
             ["xclip", "-selection", "clipboard"],
+            ["wl-copy"],
             ["pbcopy"],
             ["xsel", "--clipboard", "--input"],
         ]:
             try:
                 subprocess.run(
-                    cmd,
-                    input=data,
-                    check=True,
-                    capture_output=True,
-                    timeout=3,  # never block more than 3s if xclip hangs
+                    cmd, input=data, check=True, capture_output=True, timeout=3,
                 )
-                return True
+                return "clipboard"
             except (FileNotFoundError, subprocess.CalledProcessError,
                     subprocess.TimeoutExpired, OSError):
                 continue
-        return False
+        # Clipboard unavailable (headless/SSH) — write to file as fallback
+        try:
+            from pathlib import Path
+
+            out = Path("~/.coldreach/last-draft.txt").expanduser()
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(draft)
+            return "file"
+        except Exception:
+            return "failed"
 
     def action_copy_draft(self) -> None:
         """Run clipboard in a thread so xclip can never freeze the event loop."""
         if not self._current_draft:
             self.app.notify("Generate a draft first", severity="warning", timeout=2)
             return
-        # Show feedback immediately — before the subprocess even starts
-        self.app.notify("Copying draft…", timeout=1)
+        self.app.notify("Copying…", timeout=1)
         import functools
 
         self.run_worker(
@@ -405,12 +409,16 @@ class DraftPanel(Widget):
         )
 
     def _do_copy_in_thread(self) -> None:
-        success = self.copy_draft()
+        result = self.copy_draft()
         if not self.is_attached:
             return
-        msg = "Draft copied to clipboard" if success else "Copy failed — paste manually"
-        sev = "information" if success else "warning"
-        self.app.call_from_thread(self.app.notify, msg, severity=sev, timeout=2)
+        if result == "clipboard":
+            msg, sev = "Draft copied to clipboard", "information"
+        elif result == "file":
+            msg, sev = "Saved to ~/.coldreach/last-draft.txt", "warning"
+        else:
+            msg, sev = "Copy failed — no clipboard tool found", "error"
+        self.app.call_from_thread(self.app.notify, msg, severity=sev, timeout=3)
 
     def action_close_panel(self) -> None:
         self.remove()
