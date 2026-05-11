@@ -135,6 +135,8 @@ class DraftPanel(Widget):
             parts = [p for p in [ctx.name, ctx.industry, ctx.location] if p]
             summary = "  ·  ".join(parts) if parts else self.domain
             desc = (ctx.description or "")[:100]
+            if not self.is_attached:
+                return
             self.query_one("#context-bar", Static).update(
                 f"[bold #9aa0c0]{summary}[/]\n[dim]{desc}[/]"
                 if desc
@@ -142,6 +144,8 @@ class DraftPanel(Widget):
             )
             self._ctx = ctx
         except Exception:
+            if not self.is_attached:
+                return
             self.query_one("#context-bar", Static).update(
                 f"[#9aa0c0]{self.domain}[/]  [dim #f59e0b]· could not fetch company info[/]"
             )
