@@ -82,23 +82,26 @@ coldreach
 10. When they reply: press `R` → status becomes `replied`
 
 ```
-┌─ Draft for patrick@stripe.com ─────────────────────────────────────────┐
-│  Stripe  ·  Fintech  ·  San Francisco                                  │
-│  "Global payments infrastructure for internet businesses"              │
-│                                                                        │
-│  Your name:    [Jane Smith              ]                              │
-│  What you want:[explore a payment integration partnership    ]         │
-│  Type:   [Auto] [Partner] [Sales] [Job] [Intro]                       │
-│  Model:  [Fast (llama-3.1-8b)]  [Quality (llama-3.3-70b)]            │
-│                           [Generate]  [Regenerate]                    │
-│  ────────────────────────────────────────────────────────────────────  │
-│  A: Partnership on Stripe's embedded payments  ← selected (press 1)  │
-│  B: Quick question about your payment API program  (press 2)          │
-│  C: Exploring fintech collaboration — Jane Smith  (press 3)           │
-│                                                                        │
-│  Hi Patrick, I've been following Stripe's recent expansion into...     │
-│                                     [y: Copy full email]  [Esc: Close]│
-└────────────────────────────────────────────────────────────────────────┘
+Stripe  ·  fintech  Stripe | Financial Infrastructure to Grow…
+
+[Jane Smith         ] [explore a payment integration partnership  ]
+
+[Auto] [Partner] [Job] [Sales] [Intro]  ·  [Fast (8b)] [Quality]
+
+[▶  Generate draft  ] [↺  Regenerate]
+
+Done — press 1/2/3 to pick subject, y to copy
+
+┌─ subjects ────────────────────────────────────────────────────┐
+│ A: Partnership on Stripe's embedded payments  ← selected      │
+│ B: Quick question about your payment API  (press 2)           │
+│ C: Exploring fintech collaboration  (press 3)                 │
+└───────────────────────────────────────────────────────────────┘
+Body
+┌───────────────────────────────────────────────────────────────┐
+│ Hi Patrick, I've been following Stripe's recent expansion…    │
+│                               [y: Copy]  [Esc: Close]        │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 **No Groq key?** The panel still works — it shows a template skeleton with `[PLACEHOLDER]` fields you can fill manually.

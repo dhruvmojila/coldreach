@@ -701,3 +701,22 @@ Use this for Cursor <-> Claude Code transfer. Newest entry on top.
 - Exact next step for receiver:
   - Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
 
+### [2026-05-11 02:14 EDT] From Claude Code to Cursor
+
+- Branch: `main`
+- Commit(s): pending
+- Files changed:
+  - update manually before commit
+- What was completed:
+  - Phase 5 DraftPanel fully production-hardened: fixed invisible mounting (wrong container), Rich markup crashes (escape at generation time), UI freeze (thread worker), xclip blocking (thread+timeout+file fallback), Select dropdown clipping (replaced with toggle buttons), body invisible (separate Label + plain Static), compacted form to 3 horizontal rows. HN launch assets complete: README rewritten, demo.gif recorded, hn-launch.md post copy ready, pyproject.toml v0.2.0/Beta. Phase 6 plan documented in context/phase6-plan.md (Hunter/Apollo BYOK, Common Crawl index, plugin API, Discord). All CI passing. 491 tests.
+- What was attempted but not finished:
+  - none noted
+- Open risks/blockers:
+  - update manually if any
+- Verification performed:
+  - 491 tests pass; ruff format+check clean; CI passing; draft panel tested end-to-end
+- Graph refresh:
+  - graphify_update_ok
+- Exact next step for receiver:
+  - Record remaining images (draft.gif, verify.png, status.png, outreach.png, chrome-extension.png per CAPTURE_GUIDE.md), then post HN using docs/hn-launch.md. After HN, start Phase 6 with HunterSource BYOK (coldreach/sources/hunter.py)
+

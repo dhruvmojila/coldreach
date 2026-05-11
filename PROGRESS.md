@@ -2,6 +2,42 @@
 
 ---
 
+## [2026-05-11] — DraftPanel production hardening: layout, freeze, clipboard, body rendering
+
+### What Was Done
+- **DraftPanel visible**: fixed mounting inside `#results-panel` (ResultsTable has `height: 100%` leaving 0px) → now mounts on FindScreen itself `before="#progress-row"`
+- **Rich markup crash**: LLM output with `[bold]`/`[/bold]` was injected raw into markup strings → `rich.markup.escape()` applied at generation time, stored in `_body_safe`/`_subjects_safe`; `[/bold]` → `[/]` for compound styles
+- **UI freeze during generation**: async worker ran on Textual event loop; Groq call (2–8s) blocked all keypress events → converted to `thread=True` worker + `call_from_thread` for UI updates
+- **`y` copy froze UI**: `xclip` hangs waiting for clipboard consumer, blocking event loop → moved to thread worker, `timeout=3` on subprocess, file fallback (`~/.coldreach/last-draft.txt`) for headless/SSH
+- **Only 1 subject visible**: `height: 5` with padding gave 3 content rows; long subjects wrapped → `height: 9` subjects-box
+- **Body invisible**: `[bold #5b8cff]Body[/]` markup header combined with escaped text caused silent Static.update() failure → split into separate `Label("Body")` + plain-text-only `Static` for body
+- **Select dropdown clipping**: Select overlay clipped inside panel bounds → replaced with 5 toggle buttons (Auto/Partner/Job/Sales/Intro), same `add_class`/`remove_class` pattern as mode buttons
+- **Form too tall**: 5 stacked form elements → 3 horizontal rows (inputs | type+model | generate)
+- **`functools.partial`**: fixed `name` kwarg collision in `run_worker` call
+- **ruff format**: fixed CI format failures in draft_panel.py
+- **HN launch assets**: README rewritten with terminal demo, docs/index.md updated, docs/hn-launch.md created with exact post copy, pyproject.toml v0.1.0→0.2.0 / Alpha→Beta
+
+### Files Changed
+| File | Action | Summary |
+|------|--------|---------|
+| `coldreach/tui/widgets/draft_panel.py` | Modified | All DraftPanel production fixes (see above) |
+| `coldreach/tui/screens/find.py` | Modified | Mount DraftPanel on FindScreen not #results-panel |
+| `README.md` | Modified | Terminal demo, 7-bullet features, accuracy caveat |
+| `docs/index.md` | Modified | Phase 5 complete, Phase 6 added, Outreach tab in demo |
+| `docs/hn-launch.md` | Added | HN Show HN post copy + submission checklist |
+| `docs/images/` | Added | Placeholder images + CAPTURE_GUIDE.md |
+| `docs/tui.md` | Modified | Image slots pre-wired for demo.gif/verify.png/etc. |
+| `pyproject.toml` | Modified | v0.2.0, Beta classifier |
+| `mkdocs.yml` | Modified | exclude_docs for hn-launch.md and CAPTURE_GUIDE.md |
+
+### Notes
+- HN launch is READY but pending because screenshot/GIF capture is still in progress
+- demo.gif is recorded, remaining: draft.gif, verify.png, status.png, outreach.png, chrome-extension.png
+- Copy from SSH: draft saved to `~/.coldreach/last-draft.txt` when clipboard tools unavailable
+- Groq on free tier: sometimes returns brackets in output — all LLM text is now escaped before display
+
+---
+
 ## [2026-05-09] — Phase 5 extended: Outreach tab, 3-subject drafts, OutreachTracker, DraftPanel upgrade
 
 ### What Was Done
@@ -1086,4 +1122,15 @@
 
 ### Next
 - Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
+
+
+## [2026-05-11 02:14 EDT] — Session close (Claude Code)
+
+### What Was Done
+- Phase 5 DraftPanel fully production-hardened: fixed invisible mounting (wrong container), Rich markup crashes (escape at generation time), UI freeze (thread worker), xclip blocking (thread+timeout+file fallback), Select dropdown clipping (replaced with toggle buttons), body invisible (separate Label + plain Static), compacted form to 3 horizontal rows. HN launch assets complete: README rewritten, demo.gif recorded, hn-launch.md post copy ready, pyproject.toml v0.2.0/Beta. Phase 6 plan documented in context/phase6-plan.md (Hunter/Apollo BYOK, Common Crawl index, plugin API, Discord). All CI passing. 491 tests.
+- Context files were synchronized for cross-agent handoff.
+- Graph refresh status: `graphify_update_ok`
+
+### Next
+- Record remaining images (draft.gif, verify.png, status.png, outreach.png, chrome-extension.png per CAPTURE_GUIDE.md), then post HN using docs/hn-launch.md. After HN, start Phase 6 with HunterSource BYOK (coldreach/sources/hunter.py)
 

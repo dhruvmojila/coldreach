@@ -4,19 +4,19 @@
 
 - Owner agent: Claude Code
 - Branch: `main`
-- Objective: Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
+- Objective: Phase 5 DraftPanel fully production-hardened: fixed invisible mounting (wrong container), Rich markup crashes (escape at generation time), UI freeze (thread worker), xclip blocking (thread+timeout+file fallback), Select dropdown clipping (replaced with toggle buttons), body invisible (separate Label + plain Static), compacted form to 3 horizontal rows. HN launch assets complete: README rewritten, demo.gif recorded, hn-launch.md post copy ready, pyproject.toml v0.2.0/Beta. Phase 6 plan documented in context/phase6-plan.md (Hunter/Apollo BYOK, Common Crawl index, plugin API, Discord). All CI passing. 491 tests.
 
 ## In Progress
 
-- [ ] Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
+- [ ] Record remaining images (draft.gif, verify.png, status.png, outreach.png, chrome-extension.png per CAPTURE_GUIDE.md), then post HN using docs/hn-launch.md. After HN, start Phase 6 with HunterSource BYOK (coldreach/sources/hunter.py)
 
 ## Done In This Session
 
-- Updated docs and memory for Phase 5 extended: docs/tui.md now has Outreach tab section; docs/outreach.md has TUI Flow B with 3-subject walkthrough, model choice table, outreach tracking sqlite docs; project_coldreach.md memory refreshed with Phase 5 status, all new files, 491 test count; PROGRESS.md entry added for Phase 5 session
+- Phase 5 DraftPanel fully production-hardened: fixed invisible mounting (wrong container), Rich markup crashes (escape at generation time), UI freeze (thread worker), xclip blocking (thread+timeout+file fallback), Select dropdown clipping (replaced with toggle buttons), body invisible (separate Label + plain Static), compacted form to 3 horizontal rows. HN launch assets complete: README rewritten, demo.gif recorded, hn-launch.md post copy ready, pyproject.toml v0.2.0/Beta. Phase 6 plan documented in context/phase6-plan.md (Hunter/Apollo BYOK, Common Crawl index, plugin API, Discord). All CI passing. 491 tests.
 
 ## Next Action (Single Concrete Step)
 
-- Commit and push Phase 5 work (git add + commit coldreach/outreach/tracker.py, tui/screens/outreach.py, tui/widgets/draft_panel.py, outreach/draft.py, tui/app.py, tui/screens/find.py, tests/, docs/), then verify end-to-end with a real Groq key
+- Record remaining images (draft.gif, verify.png, status.png, outreach.png, chrome-extension.png per CAPTURE_GUIDE.md), then post HN using docs/hn-launch.md. After HN, start Phase 6 with HunterSource BYOK (coldreach/sources/hunter.py)
 
 ## Blockers
 
@@ -24,4 +24,4 @@
 
 ## Verification Status
 
-- 491 tests pass; docs/tui.md has Outreach tab; docs/outreach.md has 3-subject workflow; memory updated
+- 491 tests pass; ruff format+check clean; CI passing; draft panel tested end-to-end
