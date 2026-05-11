@@ -201,12 +201,13 @@ class DraftPanel(Widget):
         self._subjects = []
         self._current_draft = ""
         # thread=True: runs completely off the event loop so UI stays responsive
-        # during the Groq API call (which can take 2-8 seconds)
+        # during the Groq API call (which can take 2-8 seconds).
+        # Use partial to avoid collision between sender `name` var and
+        # run_worker's own `name=` keyword argument.
+        import functools
+
         self.run_worker(
-            self._run_draft,
-            name,
-            intent,
-            etype,
+            functools.partial(self._run_draft, name, intent, etype),
             name="draft-worker",
             exclusive=True,
             thread=True,
