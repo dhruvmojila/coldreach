@@ -132,9 +132,11 @@ class DraftPanel(Widget):
             from coldreach.outreach.context import get_company_context
 
             ctx = await get_company_context(self.domain)
+            from rich.markup import escape
+
             parts = [p for p in [ctx.name, ctx.industry, ctx.location] if p]
-            summary = "  ·  ".join(parts) if parts else self.domain
-            desc = (ctx.description or "")[:100]
+            summary = escape("  ·  ".join(parts) if parts else self.domain)
+            desc = escape((ctx.description or "")[:100])
             if not self.is_attached:
                 return
             self.query_one("#context-bar", Static).update(
@@ -230,23 +232,32 @@ class DraftPanel(Widget):
             if "Groq API key" in msg:
                 self._render_template_mode(etype)
             else:
-                self.query_one("#draft-status", Static).update(f"[#f87171]{msg}[/]")
+                from rich.markup import escape
+                self.query_one("#draft-status", Static).update(f"[#f87171]{escape(msg)}[/]")
         except Exception as exc:
-            self.query_one("#draft-status", Static).update(f"[#f87171]Draft failed: {exc}[/]")
+            from rich.markup import escape
+            self.query_one("#draft-status", Static).update(
+                f"[#f87171]Draft failed: {escape(str(exc))}[/]"
+            )
 
     def _rebuild_draft(self) -> None:
         """Refresh subjects display and current_draft from stored state."""
         if not self._subjects:
             return
+        from rich.markup import escape
+
         labels = ["A", "B", "C"]
         lines = []
         for i, (label, subj) in enumerate(zip(labels, self._subjects, strict=False)):
+            safe = escape(subj)
             if i == self._selected_subject_idx:
-                lines.append(f"[bold #5b8cff]{label}: {subj}[/]  ← selected")
+                lines.append(f"[bold #5b8cff]{label}: {safe}[/]  ← selected")
             else:
-                lines.append(f"[dim]{label}: {subj}[/]  [dim](press {i + 1})[/]")
+                lines.append(f"[dim]{label}: {safe}[/]  [dim](press {i + 1})[/]")
         self.query_one("#subjects-box", Static).update("\n".join(lines))
-        self.query_one("#draft-body-box", Static).update(f"[bold #5b8cff]Body[/bold]\n{self._body}")
+        self.query_one("#draft-body-box", Static).update(
+            f"[bold #5b8cff]Body[/bold]\n{escape(self._body)}"
+        )
         selected = self._subjects[self._selected_subject_idx]
         self._current_draft = f"Subject: {selected}\n\n{self._body}\n\nBest,\n{self._sender_name}"
 
