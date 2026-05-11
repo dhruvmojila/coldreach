@@ -29,7 +29,7 @@ class DraftPanel(Widget):
         background: #1a1d27;
         border: tall #3a3f5e;
         height: auto;
-        max-height: 24;
+        max-height: 34;
         padding: 1 2;
         margin: 1 0;
         overflow-y: auto;
@@ -53,7 +53,8 @@ class DraftPanel(Widget):
         background: #13151f;
         border: tall #2a2d3e;
         padding: 1 1;
-        height: 5;
+        height: 9;
+        overflow-y: auto;
         margin-bottom: 1;
     }
     DraftPanel #draft-body-box {
@@ -359,29 +360,57 @@ class DraftPanel(Widget):
     # ── Copy & close ─────────────────────────────────────────────────────────
 
     def copy_draft(self) -> bool:
-        """Copy current draft to clipboard. Returns True if content was available."""
+        """Copy current draft to clipboard (safe to call from any thread).
+
+        Returns True if content existed and a clipboard tool accepted it.
+        """
         draft = self._current_draft
         if not draft:
             return False
         import subprocess
 
+        data = draft.encode()
         for cmd in [
             ["xclip", "-selection", "clipboard"],
             ["pbcopy"],
             ["xsel", "--clipboard", "--input"],
         ]:
             try:
-                subprocess.run(cmd, input=draft.encode(), check=True, capture_output=True)
+                subprocess.run(
+                    cmd,
+                    input=data,
+                    check=True,
+                    capture_output=True,
+                    timeout=3,  # never block more than 3s if xclip hangs
+                )
                 return True
-            except (FileNotFoundError, subprocess.CalledProcessError):
+            except (FileNotFoundError, subprocess.CalledProcessError,
+                    subprocess.TimeoutExpired, OSError):
                 continue
         return False
 
     def action_copy_draft(self) -> None:
-        if self.copy_draft():
-            self.app.notify("Draft copied to clipboard", timeout=2)
-        else:
+        """Run clipboard in a thread so xclip can never freeze the event loop."""
+        if not self._current_draft:
             self.app.notify("Generate a draft first", severity="warning", timeout=2)
+            return
+        # Show feedback immediately — before the subprocess even starts
+        self.app.notify("Copying draft…", timeout=1)
+        import functools
+
+        self.run_worker(
+            functools.partial(self._do_copy_in_thread),
+            name="copy-draft",
+            thread=True,
+        )
+
+    def _do_copy_in_thread(self) -> None:
+        success = self.copy_draft()
+        if not self.is_attached:
+            return
+        msg = "Draft copied to clipboard" if success else "Copy failed — paste manually"
+        sev = "information" if success else "warning"
+        self.app.call_from_thread(self.app.notify, msg, severity=sev, timeout=2)
 
     def action_close_panel(self) -> None:
         self.remove()
