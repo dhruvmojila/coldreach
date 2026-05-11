@@ -1,12 +1,12 @@
-# Graph Report - coldemailer  (2026-05-09)
+# Graph Report - coldemailer  (2026-05-11)
 
 ## Corpus Check
-- 110 files · ~93,183 words
+- 110 files · ~336,215 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1824 nodes · 6516 edges · 55 communities detected
-- Extraction: 29% EXTRACTED · 71% INFERRED · 0% AMBIGUOUS · INFERRED: 4639 edges (avg confidence: 0.56)
+- 1832 nodes · 6531 edges · 55 communities detected
+- Extraction: 29% EXTRACTED · 71% INFERRED · 0% AMBIGUOUS · INFERRED: 4653 edges (avg confidence: 0.56)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -98,60 +98,60 @@
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.09
-Nodes (202): _build_sources(), DraftRequest, ColdReach local API server.  Exposes a FastAPI application on localhost:8765 so, Parameters for single-email verification., Parameters for a domain email discovery run., Parameters for single-email verification., Parameters for a domain email discovery run., Build FinderConfig from an API request. (+194 more)
+Cohesion: 0.08
+Nodes (211): _build_sources(), DraftRequest, ColdReach local API server.  Exposes a FastAPI application on localhost:8765 so, Parameters for single-email verification., Parameters for a domain email discovery run., Parameters for single-email verification., Parameters for a domain email discovery run., Build FinderConfig from an API request. (+203 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.03
-Nodes (129): find(), _find_with_progress(), _finder_config(), FindRequest, _resolve(), VerifyRequest, version(), BaseModel (+121 more)
+Nodes (165): ABC, BaseSource, fetch(), Abstract base class for all ColdReach email discovery sources.  Every source fol, A single email address found by a source.      Attributes     ----------     ema, Execution summary for one source run., Abstract base for all email discovery sources.      Subclasses must implement :m, Discover emails for *domain*.          Parameters         ----------         dom (+157 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.02
-Nodes (98): cache_clear(), ColdReachApp, ColdReach TUI — full-screen interactive terminal app.  Launch:  coldreach, Entry point called from CLI., Entry point called from CLI., Persistent bottom bar — shows domain, email count, service dots., Persistent bottom bar — shows domain, email count, service dots., The main TUI application. (+90 more)
+Nodes (110): cache_clear(), cache_list(), Store *result* for *domain* in all available cache layers., Delete cached entries.          Parameters         ----------         domain:, Return all cached domains as (domain, cached_at, is_expired) tuples., Return basic cache statistics., Return a cached DomainResult for *domain*, or ``None`` on miss/expiry., cache_list() (+102 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.02
-Nodes (107): cache_list(), Store *result* for *domain* in all available cache layers., Return all cached domains as (domain, cached_at, is_expired) tuples., Return basic cache statistics., Return a cached DomainResult for *domain*, or ``None`` on miss/expiry., cache_stats(), _extract_domain_from_ddg_html(), Company name → primary domain resolver.  Strategy (tried in order, stops on firs (+99 more)
+Cohesion: 0.03
+Nodes (65): _find_with_progress(), DraftPanel, Inline Groq draft panel — used in the Find screen., Fetch company context immediately on mount — shown before user generates., Slides in below a selected email row to generate a Groq draft.      Features:, Refresh subjects display and current_draft from stored state., Show template skeleton when Groq key is missing., _recall_name() (+57 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.03
-Nodes (166): ABC, BaseSource, fetch(), Abstract base class for all ColdReach email discovery sources.  Every source fol, Safe wrapper around :meth:`fetch` — never raises.          Returns the results l, A single email address found by a source.      Attributes     ----------     ema, Execution summary for one source run., Abstract base for all email discovery sources.      Subclasses must implement :m (+158 more)
+Nodes (113): _drain_job_queue(), find(), find_stream(), _finder_config(), _finder_config_v2(), FindRequest, _resolve(), root() (+105 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.03
-Nodes (70): CompanyContext, get_company_context(), _parse_context(), Company context fetcher for email personalization.  Scrapes the company's public, Remove HTML tags and collapse whitespace., Heuristically extract structured fields from raw page text., Structured company context used for email personalization., Format context as a concise paragraph for Groq prompts. (+62 more)
+Nodes (68): ColdReachApp, ColdReach TUI — full-screen interactive terminal app.  Launch:  coldreach, Entry point called from CLI., Entry point called from CLI., Persistent bottom bar — shows domain, email count, service dots., Persistent bottom bar — shows domain, email count, service dots., The main TUI application., The main TUI application. (+60 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.04
-Nodes (69): verify(), _banner(), cache(), cache_list(), _configure_logging(), dashboard(), _domain_result_to_dict(), find() (+61 more)
+Cohesion: 0.03
+Nodes (61): CompanyContext, get_company_context(), _parse_context(), Company context fetcher for email personalization.  Scrapes the company's public, Remove HTML tags and collapse whitespace., Heuristically extract structured fields from raw page text., Structured company context used for email personalization., Format context as a concise paragraph for Groq prompts. (+53 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.05
-Nodes (49): checkServerOnline(), resolveCompany(), _domain_to_slug(), _is_noreply(), handleUse(), _make_commit(), _mock_json_response(), Unit tests for coldreach.sources.github  All HTTP calls are mocked. (+41 more)
+Cohesion: 0.03
+Nodes (55): checkServerOnline(), resolveCompany(), _domain_to_slug(), _is_noreply(), handleUse(), _make_commit(), _mock_json_response(), Unit tests for coldreach.sources.github  All HTTP calls are mocked. (+47 more)
 
 ### Community 8 - "Community 8"
+Cohesion: 0.04
+Nodes (64): check_catchall(), clear_cache(), is_catch_all(), _probe_via_reacher(), _random_local(), Catch-all domain detection.  A "catch-all" mail server accepts RCPT TO for ANY a, Return True/False/None for catch-all status.      Convenience wrapper around :fu, Send a probe to Reacher. Returns True=catch-all, False=not, None=unknown. (+56 more)
+
+### Community 9 - "Community 9"
 Cohesion: 0.05
 Nodes (28): learn_format(), Domain email format learner.  Infers a company's email format from confirmed add, Return the most likely email format_name for *domain*.      Analyses the local p, Generate targeted email candidates for *full_name* at *domain*.      When a doma, targeted_patterns(), _clean_name_part(), EmailPattern, generate_patterns() (+20 more)
 
-### Community 9 - "Community 9"
+### Community 10 - "Community 10"
 Cohesion: 0.04
 Nodes (58): Format Learner: Infers Email Format from Known Emails, generate_patterns(): Email Address Generation, find_emails(config: FinderConfig) Async Entry Point, Python Public API (importable modules), run_basic_pipeline() Async Entry Point, DomainResult: Top-Level Result Pydantic Model, EmailRecord: Per-Email Pydantic Model with Confidence, SourceRecord: Per-Source Discovery Result (+50 more)
 
-### Community 10 - "Community 10"
+### Community 11 - "Community 11"
 Cohesion: 0.06
 Nodes (17): BaseSettings, cache_clear(), get_settings(), ColdReach configuration via pydantic-settings.  All settings are read from envir, Return the singleton Settings instance.      Results are cached after the first, All runtime configuration for ColdReach.      Every field can be overridden by a, Settings, _clear_settings_cache() (+9 more)
 
-### Community 11 - "Community 11"
+### Community 12 - "Community 12"
 Cohesion: 0.07
 Nodes (14): check_disposable(), is_disposable(), _load_domains(), Disposable / throwaway email domain detection.  Checks whether the domain part o, Parse and cache the bundled disposable domain blocklist.      Returns     ------, Return True if *email* uses a known disposable / throwaway domain.      Paramete, Pipeline checker: fail if email uses a disposable domain.      Parameters     --, Unit tests for coldreach.verify.disposable  All tests are pure CPU — the blockli (+6 more)
 
-### Community 12 - "Community 12"
-Cohesion: 0.08
-Nodes (29): _drain_job_queue(), find_stream(), _finder_config_v2(), root(), _run_v2_scan(), _sse_event(), _sse_iter(), status() (+21 more)
-
 ### Community 13 - "Community 13"
-Cohesion: 0.14
-Nodes (11): _make_result(), TestExportCSV, TestExportJSON, TestExportValidation, export_results(), Export DomainResult to CSV or JSON.  Format is inferred from the output file ext, Write *result* to *output_path* in CSV or JSON format.      Format is determined, Write one row per email to a UTF-8 CSV file. (+3 more)
+Cohesion: 0.09
+Nodes (30): status(), verify(), Safe wrapper around :meth:`fetch` — never raises.          Returns the results l, _banner(), cache(), _configure_logging(), dashboard(), _domain_result_to_dict() (+22 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.1
@@ -162,24 +162,24 @@ Cohesion: 0.13
 Nodes (27): check_dns(), domain_exists(), get_mx_records(), Async DNS / MX record checker.  Resolves MX records for an email's domain to con, Pipeline checker: verify the email's domain has a valid MX record.      Scoring, Resolve MX records for *domain*, sorted by priority (lowest first).      Paramet, Return True if *domain* resolves to at least one A or AAAA record.      Used as, _make_mx_answer() (+19 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.11
-Nodes (25): check_catchall(), clear_cache(), is_catch_all(), _probe_via_reacher(), _random_local(), Catch-all domain detection.  A "catch-all" mail server accepts RCPT TO for ANY a, Return True/False/None for catch-all status.      Convenience wrapper around :fu, Send a probe to Reacher. Returns True=catch-all, False=not, None=unknown. (+17 more)
+Cohesion: 0.17
+Nodes (9): _extract_domain_emails(), _build_queries(), _extract_domain_emails(), _query_brave(), _query_ddg_lite(), _query_searxng(), TestExtractDomainEmails, TestBuildQueries (+1 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.13
-Nodes (6): TestBelongsToDomain, TestExtractEmails, _base_url(), _belongs_to_domain(), _classify_path(), _extract_emails()
+Cohesion: 0.16
+Nodes (14): Exception, ColdReachError, ConfigError, RateLimitError, ColdReach custom exceptions.  Hierarchy --------- ColdReachError ├── ConfigError, Base exception for all ColdReach errors., Raised when configuration is invalid or missing., Raised when a data source fails to return results. (+6 more)
 
 ### Community 18 - "Community 18"
+Cohesion: 0.17
+Nodes (7): detectGreenhouse(), detectIndeed(), detect(), run(), detectLever(), detectLinkedIn(), detectWorkable()
+
+### Community 19 - "Community 19"
 Cohesion: 0.24
 Nodes (3): _classify_path(), _is_junk(), TestClassifyPath
 
-### Community 19 - "Community 19"
+### Community 20 - "Community 20"
 Cohesion: 0.36
 Nodes (11): append_decisions(), append_handoff(), append_progress(), ensure_context_files(), git_branch(), main(), now_stamp(), parse_args() (+3 more)
-
-### Community 20 - "Community 20"
-Cohesion: 0.18
-Nodes (4): ColdReach core Pydantic models.  These are the primary data structures that flow, Return current UTC time as a timezone-naive datetime., source_names(), _utcnow()
 
 ### Community 21 - "Community 21"
 Cohesion: 0.29
@@ -390,11 +390,11 @@ Nodes (1): Project PLAN.md: Feature Roadmap and Architecture Notes
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `EmailSource` connect `Community 4` to `Community 0`, `Community 1`, `Community 2`, `Community 3`, `Community 5`, `Community 7`, `Community 13`, `Community 17`, `Community 18`, `Community 20`, `Community 21`?**
-  _High betweenness centrality (0.118) - this node is a cross-community bridge._
-- **Why does `CacheStore` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 5`, `Community 6`, `Community 10`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Why does `find_emails()` connect `Community 1` to `Community 0`, `Community 3`, `Community 4`, `Community 6`, `Community 8`, `Community 12`?**
+- **Why does `EmailSource` connect `Community 1` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 7`, `Community 13`, `Community 16`, `Community 19`, `Community 21`?**
+  _High betweenness centrality (0.111) - this node is a cross-community bridge._
+- **Why does `CacheStore` connect `Community 0` to `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 11`?**
+  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `find_emails()` connect `Community 3` to `Community 0`, `Community 1`, `Community 2`, `Community 4`, `Community 9`, `Community 13`, `Community 17`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **Are the 307 inferred relationships involving `SourceResult` (e.g. with `ScanJob` and `FindRequest`) actually correct?**
   _`SourceResult` has 307 INFERRED edges - model-reasoned connections that need verification._
