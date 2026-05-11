@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Input, Select, Static
+from textual.widgets import Button, Input, Static
 
 _FAST_MODEL = "groq/llama-3.1-8b-instant"
 _QUALITY_MODEL = "groq/llama-3.3-70b-versatile"
@@ -29,11 +29,10 @@ class DraftPanel(Widget):
         background: #1a1d27;
         border: tall #3a3f5e;
         height: auto;
-        max-height: 30;
+        max-height: 32;
         padding: 1 2;
         margin: 1 0;
     }
-    /* Header: company · email on one line */
     DraftPanel #context-bar {
         color: #9aa0c0;
         height: 1;
@@ -41,20 +40,23 @@ class DraftPanel(Widget):
         padding: 0 1;
         margin-bottom: 1;
     }
-    /* Row 1: name input | intent input */
-    DraftPanel #inputs-row   { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #sender-name  { width: 26; margin-right: 1; }
+    /* Row 1: name | intent */
+    DraftPanel #inputs-row    { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #sender-name   { width: 26; margin-right: 1; }
     DraftPanel #sender-intent { width: 1fr; }
-    /* Row 2: type select (wide) | model toggle */
-    DraftPanel #type-row     { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #email-type   { width: 26; margin-right: 2; }
-    DraftPanel #btn-fast     { min-width: 20; margin-right: 1; }
-    DraftPanel #btn-quality  { min-width: 26; }
+    /* Row 2: type toggle buttons | model toggle */
+    DraftPanel #type-model-row { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel .type-btn  { min-width: 10; margin: 0 1 0 0; }
+    DraftPanel .type-btn.type-selected { background: #1a2850; color: #7aa6ff; border: tall #5b8cff; text-style: bold; }
+    DraftPanel #btn-model-sep { width: 2; color: #2a2d3e; }
+    DraftPanel #btn-fast      { min-width: 18; margin-right: 1; }
+    DraftPanel #btn-quality   { min-width: 24; }
     /* Row 3: generate | regen */
-    DraftPanel #action-row   { height: 3; align: left middle; margin-bottom: 1; }
-    DraftPanel #btn-generate { min-width: 18; margin-right: 1; }
-    DraftPanel #btn-regen    { min-width: 14; }
-    DraftPanel #draft-status { color: #5b8cff; height: 1; margin-bottom: 1; }
+    DraftPanel #action-row    { height: 3; align: left middle; margin-bottom: 1; }
+    DraftPanel #btn-generate  { min-width: 18; margin-right: 1; }
+    DraftPanel #btn-regen     { min-width: 14; }
+    DraftPanel #draft-status  { color: #5b8cff; height: 1; margin-bottom: 1; }
+    /* Results: subjects + body label + body text */
     DraftPanel #subjects-box {
         background: #13151f;
         border: tall #2a2d3e;
@@ -63,6 +65,7 @@ class DraftPanel(Widget):
         overflow-y: auto;
         margin-bottom: 1;
     }
+    DraftPanel #body-label { color: #5b8cff; text-style: bold; height: 1; }
     DraftPanel #draft-body-box {
         background: #13151f;
         border: tall #2a2d3e;
@@ -95,38 +98,35 @@ class DraftPanel(Widget):
         self._body: str = ""
         self._body_safe: str = ""
         self._sender_name: str = ""
+        self._email_type: str = "auto"
         self._model: str = _FAST_MODEL
 
     def compose(self) -> ComposeResult:
         from textual.containers import Horizontal
+        from textual.widgets import Label
 
         yield Static("Fetching company info…", id="context-bar")
         # Row 1: name | intent
         with Horizontal(id="inputs-row"):
             yield Input(placeholder="Your name", id="sender-name", value=self._recall_name())
             yield Input(placeholder="What you want — one sentence", id="sender-intent")
-        # Row 2: email type select | model toggle (each widget has room to breathe)
-        with Horizontal(id="type-row"):
-            yield Select(
-                [
-                    ("Auto-detect", "auto"),
-                    ("Partnership", "partnership"),
-                    ("Job application", "job_application"),
-                    ("Sales outreach", "sales"),
-                    ("Introduction", "introduction"),
-                ],
-                id="email-type",
-                value="auto",
-                allow_blank=False,
-            )
+        # Row 2: type toggle buttons (no Select overlay issues) + model toggle
+        with Horizontal(id="type-model-row"):
+            yield Button("Auto", id="type-auto", classes="type-btn type-selected")
+            yield Button("Partner", id="type-partner", classes="type-btn")
+            yield Button("Job", id="type-job", classes="type-btn")
+            yield Button("Sales", id="type-sales", classes="type-btn")
+            yield Button("Intro", id="type-intro", classes="type-btn")
+            yield Static("  ·  ", id="btn-model-sep")
             yield Button("Fast (llama-3.1-8b)", id="btn-fast", variant="primary")
             yield Button("Quality (llama-3.3-70b)", id="btn-quality", variant="default")
-        # Row 3: action buttons
+        # Row 3: generate | regenerate
         with Horizontal(id="action-row"):
             yield Button("▶  Generate draft", id="btn-generate", variant="primary")
             yield Button("↺  Regenerate", id="btn-regen", variant="default")
         yield Static("", id="draft-status")
         yield Static("", id="subjects-box")
+        yield Label("Body", id="body-label")
         yield Static("", id="draft-body-box")
 
     def on_mount(self) -> None:
@@ -161,13 +161,33 @@ class DraftPanel(Widget):
 
     # ── Model toggle ──────────────────────────────────────────────────────────
 
+    _TYPE_MAP = {
+        "type-auto": "auto",
+        "type-partner": "partnership",
+        "type-job": "job_application",
+        "type-sales": "sales",
+        "type-intro": "introduction",
+    }
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id in ("btn-generate", "btn-regen"):
+        bid = event.button.id
+        if bid in ("btn-generate", "btn-regen"):
             self._generate()
-        elif event.button.id == "btn-fast":
+        elif bid == "btn-fast":
             self._set_model(_FAST_MODEL)
-        elif event.button.id == "btn-quality":
+        elif bid == "btn-quality":
             self._set_model(_QUALITY_MODEL)
+        elif bid in self._TYPE_MAP:
+            self._set_email_type(bid)
+
+    def _set_email_type(self, btn_id: str) -> None:
+        self._email_type = self._TYPE_MAP[btn_id]
+        for tid in self._TYPE_MAP:
+            btn = self.query_one(f"#{tid}", Button)
+            if tid == btn_id:
+                btn.add_class("type-selected")
+            else:
+                btn.remove_class("type-selected")
 
     def _set_model(self, model: str) -> None:
         self._model = model
@@ -195,7 +215,7 @@ class DraftPanel(Widget):
             return
         self._sender_name = name
         self._save_name(name)
-        etype = str(self.query_one("#email-type", Select).value)
+        etype = self._email_type
         self.query_one("#draft-status", Static).update(
             "[#5b8cff]Reading company site… writing draft…[/]"
         )
@@ -292,10 +312,8 @@ class DraftPanel(Widget):
             else:
                 lines.append(f"[dim]{label}: {safe}[/]  [dim](press {i + 1})[/]")
         self.query_one("#subjects-box", Static).update("\n".join(lines))
-        # Use [/] not [/bold] — compound styles need [/] to close cleanly
-        self.query_one("#draft-body-box", Static).update(
-            f"[bold #5b8cff]Body[/]\n{body_safe}"
-        )
+        # Body label is a separate widget — body box gets plain escaped text only
+        self.query_one("#draft-body-box", Static).update(body_safe)
         selected = self._subjects[self._selected_subject_idx]
         self._current_draft = f"Subject: {selected}\n\n{self._body}\n\nBest,\n{self._sender_name}"
 
